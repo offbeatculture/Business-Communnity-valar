@@ -15,6 +15,7 @@ export type Profile = {
   role: 'member' | 'admin'
   tagline: string | null
   banner_color: string | null
+  password_set: boolean | null
   created_at: string
   updated_at: string
 }
@@ -22,12 +23,16 @@ export type Profile = {
 export type Subscription = {
   id: string
   user_id: string
-  razorpay_payment_id: string
+  razorpay_payment_id: string | null
   razorpay_order_id: string | null
+  razorpay_subscription_id: string | null
   plan_name: string
   amount_paid: number
   currency: string
   status: 'active' | 'expired' | 'cancelled'
+  recurring_status: 'active' | 'paused' | 'cancelled' | 'completed' | null
+  plan_label: string | null
+  base_amount_paise: number | null
   starts_at: string
   expires_at: string
   created_at: string
@@ -322,4 +327,40 @@ export type RecordVisitResult = {
   grace_used?: boolean
   streak_bonus?: number
   total_gp: number
+}
+
+// =============================================
+// Onboarding & Magic Link Types
+// =============================================
+
+export type OnboardingSession = {
+  id: string
+  email: string
+  plan_id: string
+  razorpay_subscription_id: string | null
+  status: 'pending' | 'payment_pending' | 'paid' | 'user_created' | 'completed' | 'expired' | 'failed'
+  user_id: string | null
+  metadata: Record<string, unknown>
+  expires_at: string
+  created_at: string
+  updated_at: string
+}
+
+export type MagicLoginToken = {
+  id: string
+  user_id: string
+  token_hash: string
+  expires_at: string
+  used_at: string | null
+  created_at: string
+}
+
+export type WebhookEvent = {
+  id: string
+  event_type: string
+  razorpay_event_id: string
+  payload: Record<string, unknown>
+  processed_at: string | null
+  error: string | null
+  created_at: string
 }

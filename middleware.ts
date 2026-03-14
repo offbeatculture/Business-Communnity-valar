@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 // Routes that don't need auth
-const publicRoutes = ["/", "/login", "/reset-password"]
+const publicRoutes = ["/", "/login", "/reset-password", "/plans", "/payment-success", "/set-password"]
 
 // Routes that authenticated users can access even without active subscription
 const noSubscriptionRoutes = ["/subscription", "/profile", "/setup", "/renew"]
@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({
@@ -59,6 +59,11 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Onboarding API routes — pass through (no auth required)
+  if (pathname.startsWith("/api/onboarding") || pathname.startsWith("/api/auth/magic-link")) {
+    return supabaseResponse
+  }
+
   // No user — redirect to login
   if (!user) {
     const url = request.nextUrl.clone()
@@ -66,43 +71,47 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Setup redirect — incomplete profile goes to /setup
-  // Skip for: API routes, setup page itself, profile routes, members routes
-  const skipSetupCheck =
+  // Combined profile query (one DB call for password_set + business_name + role)
+  const skipProfileCheck =
     pathname.startsWith("/api/") ||
-    pathname.startsWith("/setup") ||
-    pathname.startsWith("/profile") ||
-    pathname.startsWith("/members")
+    pathname.startsWith("/set-password")
 
-  if (!skipSetupCheck && !pathname.startsWith("/admin")) {
-    const { data: setupProfile } = await supabase
+  if (!skipProfileCheck) {
+    const { data: profile } = await supabase
       .from("profiles")
-      .select("business_name")
+      .select("business_name, password_set, role")
       .eq("user_id", user.id)
       .single()
 
-    if (setupProfile && !setupProfile.business_name) {
+    // Password not yet set — redirect to /set-password
+    // Strict check: only false triggers redirect (NULL and true pass through)
+    if (profile && profile.password_set === false && !pathname.startsWith("/set-password")) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/set-password"
+      return NextResponse.redirect(url)
+    }
+
+    // Admin routes — check admin role
+    if (pathname.startsWith("/admin")) {
+      if (profile?.role !== "admin") {
+        const url = request.nextUrl.clone()
+        url.pathname = "/dashboard"
+        return NextResponse.redirect(url)
+      }
+      return supabaseResponse
+    }
+
+    // Setup redirect — incomplete profile goes to /setup
+    const skipSetupCheck =
+      pathname.startsWith("/setup") ||
+      pathname.startsWith("/profile") ||
+      pathname.startsWith("/members")
+
+    if (!skipSetupCheck && profile && !profile.business_name) {
       const url = request.nextUrl.clone()
       url.pathname = "/setup"
       return NextResponse.redirect(url)
     }
-  }
-
-  // Admin routes — check admin role
-  if (pathname.startsWith("/admin")) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("user_id", user.id)
-      .single()
-
-    if (profile?.role !== "admin") {
-      const url = request.nextUrl.clone()
-      url.pathname = "/dashboard"
-      return NextResponse.redirect(url)
-    }
-
-    return supabaseResponse
   }
 
   // Skip subscription check for routes that don't require it
@@ -111,12 +120,13 @@ export async function middleware(request: NextRequest) {
   )
 
   if (!isNoSubRoute && !pathname.startsWith("/api/")) {
-    // Check subscription
+    // Check subscription — include recurring_status filter
     const { data: subscription } = await supabase
       .from("subscriptions")
-      .select("expires_at")
+      .select("expires_at, recurring_status")
       .eq("user_id", user.id)
       .gte("expires_at", new Date().toISOString())
+      .or("recurring_status.is.null,recurring_status.in.(active,paused)")
       .order("expires_at", { ascending: false })
       .limit(1)
       .single()
@@ -133,13 +143,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files (images, etc.)
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 }
