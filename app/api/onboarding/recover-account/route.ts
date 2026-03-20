@@ -3,14 +3,14 @@ import { z } from "zod/v4"
 import { rateLimit } from "@/lib/rate-limit"
 import { recoverAccount } from "@/lib/recovery"
 
-const resendSchema = z.object({
+const recoverSchema = z.object({
   email: z.email("Invalid email address"),
 })
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const parsed = resendSchema.safeParse(body)
+    const parsed = recoverSchema.safeParse(body)
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     // Rate limit: 3 per email per 10 minutes
     const { allowed } = rateLimit({
-      key: `resend:${normalizedEmail}`,
+      key: `recover:${normalizedEmail}`,
       limit: 3,
       windowMs: 10 * 60 * 1000,
     })
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log(`[resend] Resend attempt for ${normalizedEmail}`)
+    console.log(`[recover-account] Recovery attempt for ${normalizedEmail}`)
 
     const result = await recoverAccount({
       type: "email",
@@ -45,19 +45,14 @@ export async function POST(request: Request) {
     })
 
     if (!result.success) {
-      // Still return safe message to avoid revealing account existence
-      return NextResponse.json({
-        message: "If an account exists for this email, a login link has been sent.",
-      })
+      return NextResponse.json({ error: result.error }, { status: 400 })
     }
 
-    return NextResponse.json({
-      message: "If an account exists for this email, a login link has been sent.",
-    })
+    return NextResponse.json({ message: result.message })
   } catch (error) {
-    console.error("POST /api/auth/magic-link/resend error:", error)
+    console.error("POST /api/onboarding/recover-account error:", error)
     return NextResponse.json(
-      { error: "Failed to resend login link" },
+      { error: "Something went wrong. Please try again." },
       { status: 500 }
     )
   }

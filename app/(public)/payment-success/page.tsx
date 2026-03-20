@@ -13,6 +13,8 @@ export default function PaymentSuccessPage() {
   const [resending, setResending] = useState(false)
   const [resendMessage, setResendMessage] = useState("")
   const [resendError, setResendError] = useState("")
+  const [opening, setOpening] = useState(false)
+  const [openError, setOpenError] = useState("")
 
   const handleResend = async () => {
     setResending(true)
@@ -45,6 +47,32 @@ export default function PaymentSuccessPage() {
       setResendError("Something went wrong")
     } finally {
       setResending(false)
+    }
+  }
+
+  const handleOpenAccount = async () => {
+    if (!sessionId) return
+    setOpening(true)
+    setOpenError("")
+
+    try {
+      const res = await fetch("/api/onboarding/open-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setOpenError(data.error ?? "Unable to open account right now.")
+      } else if (data.redirectUrl) {
+        window.location.href = data.redirectUrl
+      }
+    } catch {
+      setOpenError("Something went wrong. Please try again.")
+    } finally {
+      setOpening(false)
     }
   }
 
@@ -101,6 +129,27 @@ export default function PaymentSuccessPage() {
             )}
             {resendError && (
               <p className="text-sm text-destructive">{resendError}</p>
+            )}
+
+            {sessionId && (
+              <Button
+                className="w-full"
+                onClick={handleOpenAccount}
+                disabled={opening}
+              >
+                {opening ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Opening...
+                  </>
+                ) : (
+                  "Open My Account Now"
+                )}
+              </Button>
+            )}
+
+            {openError && (
+              <p className="text-sm text-destructive">{openError}</p>
             )}
           </div>
 
