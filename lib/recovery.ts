@@ -38,7 +38,7 @@ export async function recoverAccount(input: RecoveryInput): Promise<RecoveryResu
       .from("onboarding_sessions")
       .select("*")
       .eq("email", normalizedEmail)
-      .in("status", [...RECOVERABLE_STATUSES, "payment_pending"])
+      .in("status", RECOVERABLE_STATUSES)
       .order("created_at", { ascending: false })
       .limit(1)
       .single()
@@ -89,10 +89,8 @@ export async function recoverAccount(input: RecoveryInput): Promise<RecoveryResu
 
   // For sessionId-based recovery, also accept "paid" status even without subscription row yet
   // (webhook may not have fired yet)
-  const isEligible =
-    isRecoverableByStatus ||
-    hasActiveSubscription ||
-    (sessionStatus === "payment_pending" && rzpSubscriptionId)
+const isEligible =
+  isRecoverableByStatus || hasActiveSubscription
 
   if (!isEligible) {
     if (input.type === "email") {

@@ -1,15 +1,26 @@
-import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
+import nodemailer from "nodemailer"
 
-const ses = new SESClient({
-  region: process.env.AWS_SES_REGION ?? "ap-south-1",
-  credentials: {
-    accessKeyId: process.env.AWS_SES_ACCESS_KEY_ID ?? "",
-    secretAccessKey: process.env.AWS_SES_SECRET_ACCESS_KEY ?? "",
+const SMTP_HOST = process.env.SES_SMTP_HOST ?? "email-smtp.ap-south-1.amazonaws.com"
+const SMTP_PORT = Number(process.env.SES_SMTP_PORT ?? "587")
+const SMTP_SECURE = SMTP_PORT === 465
+
+const SMTP_USERNAME = process.env.SES_SMTP_USERNAME ?? ""
+const SMTP_PASSWORD = process.env.SES_SMTP_PASSWORD ?? ""
+
+const FROM_EMAIL =
+  process.env.SES_FROM_EMAIL ?? "noreply@superhumanentrepreneur.com"
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_SECURE,
+  auth: {
+    user: SMTP_USERNAME,
+    pass: SMTP_PASSWORD,
   },
 })
-
-const FROM_EMAIL = process.env.SES_FROM_EMAIL ?? "noreply@superhumanentrepreneur.com"
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
 type SendEmailParams = {
   to: string
@@ -18,20 +29,23 @@ type SendEmailParams = {
   text: string
 }
 
-export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
-  const command = new SendEmailCommand({
-    Source: FROM_EMAIL,
-    Destination: { ToAddresses: [to] },
-    Message: {
-      Subject: { Data: subject, Charset: "UTF-8" },
-      Body: {
-        Html: { Data: html, Charset: "UTF-8" },
-        Text: { Data: text, Charset: "UTF-8" },
-      },
-    },
-  })
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  text,
+}: SendEmailParams) {
+  if (!SMTP_USERNAME || !SMTP_PASSWORD) {
+    throw new Error("Missing SES SMTP credentials")
+  }
 
-  return ses.send(command)
+  return transporter.sendMail({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    html,
+    text,
+  })
 }
 
 export async function sendMagicLinkEmail({

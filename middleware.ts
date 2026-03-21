@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 // Routes that don't need auth
-const publicRoutes = ["/", "/login", "/reset-password", "/plans", "/payment-success", "/set-password"]
+const publicRoutes = ["/", "/login", "/reset-password", "/plans", "/payment-success", "/set-password" , "/access-account"]
 
 // Routes that authenticated users can access even without active subscription
 const noSubscriptionRoutes = ["/subscription", "/profile", "/setup", "/renew"]
