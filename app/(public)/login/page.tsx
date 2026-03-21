@@ -106,6 +106,13 @@ export default function LoginPage() {
               Get Started
             </Link>
           </p>
+
+          <p className="text-sm text-muted-foreground text-center mt-2">
+            Paid but can&apos;t access your account?{" "}
+            <Link href="/access-account" className="text-[#E53935] hover:underline">
+              Recover access
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </div>

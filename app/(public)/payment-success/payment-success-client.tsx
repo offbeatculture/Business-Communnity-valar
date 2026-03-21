@@ -13,6 +13,8 @@ export default function PaymentSuccessClient() {
   const [resending, setResending] = useState(false)
   const [resendMessage, setResendMessage] = useState("")
   const [resendError, setResendError] = useState("")
+    const [opening, setOpening] = useState(false)
+  const [openError, setOpenError] = useState("")
 
   const handleResend = async () => {
     setResending(true)
@@ -46,8 +48,37 @@ export default function PaymentSuccessClient() {
     }
   }
 
+
+  const handleOpenAccount = async () => {
+    if (!sessionId) return
+    setOpening(true)
+    setOpenError("")
+
+    try {
+      const res = await fetch("/api/onboarding/open-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setOpenError(data.error ?? "Unable to open account right now.")
+      } else if (data.redirectUrl) {
+        window.location.href = data.redirectUrl
+      }
+    } catch {
+      setOpenError("Something went wrong. Please try again.")
+    } finally {
+      setOpening(false)
+    }
+  }
+
+
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardContent className="pt-10 pb-8 text-center space-y-6">
           <div className="flex justify-center">
@@ -99,6 +130,27 @@ export default function PaymentSuccessClient() {
             )}
             {resendError && (
               <p className="text-sm text-destructive">{resendError}</p>
+            )}
+
+            {sessionId && (
+              <Button
+                className="w-full"
+                onClick={handleOpenAccount}
+                disabled={opening}
+              >
+                {opening ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Opening...
+                  </>
+                ) : (
+                  "Open My Account Now"
+                )}
+              </Button>
+            )}
+
+            {openError && (
+              <p className="text-sm text-destructive">{openError}</p>
             )}
           </div>
 
