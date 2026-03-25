@@ -8,6 +8,8 @@ export const GP_VALUES = {
   like_given: 1,
   daily_visit: 3,
   content_view: 2,
+  profile_setup: 15,
+  assessment_complete: 20,
 } as const
 
 export const DAILY_CAPS = {

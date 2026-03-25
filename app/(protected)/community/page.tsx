@@ -11,6 +11,8 @@ type Props = {
     category?: string
     sort?: string
     page?: string
+    compose?: string
+    compose_category?: string
   }>
 }
 
@@ -23,15 +25,27 @@ export default async function CommunityPage({ searchParams }: Props) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, full_name, city, business_name, industry")
     .eq("user_id", user.id)
     .single()
 
   const userRole = (profile?.role ?? "member") as "member" | "admin"
 
+  // Build intro template if compose=introduction
+  let composeContent: string | undefined
+  let composeCategory: "win" | "question" | "discussion" | "introduction" | undefined
+  if (params.compose === "introduction" && profile) {
+    const name = profile.full_name?.split(" ")[0] ?? ""
+    const city = profile.city ?? ""
+    const biz = profile.business_name ?? ""
+    const industry = profile.industry ?? ""
+    composeContent = `Hey everyone! 👋 I'm ${name}${city ? ` from ${city}` : ""}.${biz ? `\n\nI run ${biz}${industry ? ` in the ${industry} space` : ""}.` : ""}\n\nI joined this community because \n\nOne thing I'm working on right now is `
+    composeCategory = "introduction"
+  }
+
   const rawCategory = params.category
   const isSpecialFilter = rawCategory === "mine" || rawCategory === "saved"
-  const category = isSpecialFilter ? undefined : (rawCategory as "win" | "question" | "discussion" | undefined)
+  const category = isSpecialFilter ? undefined : (rawCategory as "win" | "question" | "discussion" | "introduction" | undefined)
   const filter = isSpecialFilter ? (rawCategory as "mine" | "saved") : undefined
   const sort = (params.sort as "newest" | "popular") ?? "newest"
 
@@ -55,7 +69,7 @@ export default async function CommunityPage({ searchParams }: Props) {
       </p>
 
       <div className="space-y-6">
-        <ComposeBox />
+        <ComposeBox defaultContent={composeContent} defaultCategory={composeCategory} />
 
         <Suspense>
           <CommunityFilters />

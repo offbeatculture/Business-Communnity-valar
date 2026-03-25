@@ -14,6 +14,7 @@ const categoryConfig: Record<string, { label: string; className: string }> = {
   win: { label: "Win", className: "bg-green-500/10 text-green-500 border-green-500/20" },
   question: { label: "Question", className: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" },
   discussion: { label: "Discussion", className: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+  introduction: { label: "Introduction", className: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
 }
 
 interface PostCardProps {

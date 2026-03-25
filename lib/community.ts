@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { PostWithAuthor, CommentWithAuthor } from "@/types"
 
-type PostCategory = "win" | "question" | "discussion"
+type PostCategory = "win" | "question" | "discussion" | "introduction"
 type PostSort = "newest" | "popular"
 
 type ProfileInfo = { id: string; full_name: string | null; avatar_url: string | null; business_name?: string | null }
@@ -211,4 +211,34 @@ export async function fetchUserInteractions(
     likedIds: new Set(likesResult.data?.map((l) => l.post_id) ?? []),
     savedIds: new Set(savesResult.data?.map((s) => s.post_id) ?? []),
   }
+}
+
+// ── Onboarding checks ──
+
+export async function hasIntroPost(userId: string): Promise<boolean> {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from("posts")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("category", "introduction")
+    .limit(1)
+    .maybeSingle()
+
+  return !!data
+}
+
+export async function hasCommentedOnOthersPost(userId: string): Promise<boolean> {
+  const supabase = await createClient()
+
+  // Find any comment by this user on a post that isn't theirs
+  const { data } = await supabase
+    .from("comments")
+    .select("id, posts!inner(user_id)")
+    .eq("user_id", userId)
+    .neq("posts.user_id", userId)
+    .limit(1)
+    .maybeSingle()
+
+  return !!data
 }

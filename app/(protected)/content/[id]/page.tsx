@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { fetchContentById } from "@/lib/content"
+import { fetchPromptsByContentId } from "@/lib/prompts"
 import { RelatedContent } from "@/components/content/RelatedContent"
+import { PromptCard } from "@/components/prompts/PromptCard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -26,7 +28,10 @@ type Props = {
 
 export default async function ContentDetailPage({ params }: Props) {
   const { id } = await params
-  const item = await fetchContentById(id)
+  const [item, relatedPrompts] = await Promise.all([
+    fetchContentById(id),
+    fetchPromptsByContentId(id),
+  ])
 
   if (!item) notFound()
 
@@ -46,6 +51,17 @@ export default async function ContentDetailPage({ params }: Props) {
         <ResourceDetail item={item} />
       ) : (
         <VideoSummaryDetail item={item} />
+      )}
+
+      {relatedPrompts.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold mb-3">Related Prompts</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {relatedPrompts.map((prompt) => (
+              <PromptCard key={prompt.id} prompt={prompt} />
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="mt-8">

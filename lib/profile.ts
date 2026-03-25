@@ -7,22 +7,25 @@ import type { Profile, ProfileWithSubscription, ProfileStats, AdminStats, PostWi
 export async function fetchProfile(userId: string): Promise<ProfileWithSubscription | null> {
   const supabase = await createClient()
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .single()
+  const [profileRes, subRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single(),
+    supabase
+      .from("subscriptions")
+      .select("expires_at")
+      .eq("user_id", userId)
+      .order("expires_at", { ascending: false })
+      .limit(1)
+      .single(),
+  ])
 
+  const profile = profileRes.data
   if (!profile) return null
 
-  // Fetch latest subscription
-  const { data: sub } = await supabase
-    .from("subscriptions")
-    .select("expires_at")
-    .eq("user_id", userId)
-    .order("expires_at", { ascending: false })
-    .limit(1)
-    .single()
+  const sub = subRes.data
 
   let subscription_status: ProfileWithSubscription["subscription_status"] = "none"
   let subscription_expires_at: string | null = null

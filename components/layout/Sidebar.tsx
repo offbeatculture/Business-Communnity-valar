@@ -12,12 +12,17 @@ import {
   Shield,
   Users,
   Lightbulb,
+  Sparkles,
+  ClipboardCheck,
+  FileQuestion,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
   { label: "Content Library", href: "/content", icon: BookOpen },
+  { label: "Prompts", href: "/prompts", icon: Sparkles },
+  { label: "Assessments", href: "/assessment", icon: FileQuestion },
   { label: "Community", href: "/community", icon: MessageSquare },
   { label: "My Profile", href: "/profile", icon: User },
   { label: "Subscription", href: "/subscription", icon: CreditCard },
@@ -26,6 +31,8 @@ const navItems = [
 const adminItems = [
   { label: "Admin Panel", href: "/admin", icon: Shield },
   { label: "Daily Prompts", href: "/admin/prompts", icon: Lightbulb },
+  { label: "Prompt Library", href: "/admin/prompts-library", icon: Sparkles },
+  { label: "Assessment", href: "/admin/assessment", icon: ClipboardCheck },
 ]
 
 type SidebarProps = {

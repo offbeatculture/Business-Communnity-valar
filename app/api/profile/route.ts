@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import { z } from "zod/v4"
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
+import { awardPoints } from "@/lib/engagement"
+import { GP_VALUES } from "@/lib/engagement-constants"
 
 const updateProfileSchema = z.object({
   full_name: z.string().min(1).max(100).optional(),
@@ -68,6 +71,22 @@ export async function PATCH(request: Request) {
     if (error) {
       console.error("Update profile error:", error)
       return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
+    }
+
+    // Award GP for profile setup (once) if business_name and city are now filled
+    if (profile.business_name && profile.city) {
+      const admin = createAdminClient()
+      const { data: alreadyAwarded } = await admin
+        .from("engagement_log")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("action", "profile_setup")
+        .limit(1)
+        .maybeSingle()
+
+      if (!alreadyAwarded) {
+        await awardPoints(user.id, "profile_setup", GP_VALUES.profile_setup)
+      }
     }
 
     return NextResponse.json(profile)
