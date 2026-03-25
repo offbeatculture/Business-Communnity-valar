@@ -11,16 +11,21 @@ const categories = [
   { value: "win" as const, label: "Win", emoji: "🏆" },
   { value: "question" as const, label: "Question", emoji: "❓" },
   { value: "discussion" as const, label: "Discussion", emoji: "💬" },
+  { value: "introduction" as const, label: "Introduction", emoji: "👋" },
 ]
+
+type CategoryValue = "win" | "question" | "discussion" | "introduction"
 
 type Props = {
   promptId?: string
+  defaultContent?: string
+  defaultCategory?: CategoryValue
 }
 
-export function ComposeBox({ promptId }: Props = {}) {
+export function ComposeBox({ promptId, defaultContent, defaultCategory }: Props = {}) {
   const router = useRouter()
-  const [content, setContent] = useState("")
-  const [category, setCategory] = useState<"win" | "question" | "discussion">("discussion")
+  const [content, setContent] = useState(defaultContent ?? "")
+  const [category, setCategory] = useState<CategoryValue>(defaultCategory ?? "discussion")
   const [isPosting, setIsPosting] = useState(false)
 
   async function handlePost() {

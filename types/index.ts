@@ -75,7 +75,7 @@ export type Post = {
   id: string
   user_id: string
   content: string
-  category: 'win' | 'question' | 'discussion'
+  category: 'win' | 'question' | 'discussion' | 'introduction'
   is_pinned: boolean
   like_count: number
   comment_count: number
@@ -327,6 +327,67 @@ export type RecordVisitResult = {
   grace_used?: boolean
   streak_bonus?: number
   total_gp: number
+}
+
+// =============================================
+// Prompt Library Types
+// =============================================
+
+export type PromptLibraryItem = {
+  id: string
+  title: string
+  prompt_text: string
+  category: string
+  linked_content_id: string | null
+  linked_content_type: 'resource' | 'video_summary' | null
+  is_published: boolean
+  copy_count: number
+  created_at: string
+  updated_at: string
+}
+
+// =============================================
+// Assessment Types
+// =============================================
+
+export type Assessment = {
+  id: string
+  title: string
+  slug: string
+  description: string
+  scoring_type: 'scale-code' | 'generic'
+  is_published: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type AssessmentQuestionOption = {
+  label: string
+  value: string
+  score: number
+}
+
+export type AssessmentQuestion = {
+  id: string
+  assessment_id: string
+  category: string
+  question_text: string
+  options: AssessmentQuestionOption[]
+  sort_order: number
+  is_active: boolean
+  created_at: string
+}
+
+export type AssessmentResult = {
+  id: string
+  user_id: string
+  assessment_id: string
+  answers: Record<string, string>
+  scores: Record<string, unknown>
+  total_score: number
+  max_possible_score: number
+  completed_at: string
+  created_at: string
 }
 
 // =============================================

@@ -7,7 +7,7 @@ import { GP_VALUES } from "@/lib/engagement-constants"
 
 const createPostSchema = z.object({
   content: z.string().min(1).max(2000),
-  category: z.enum(["win", "question", "discussion"]),
+  category: z.enum(["win", "question", "discussion", "introduction"]),
   prompt_id: z.string().uuid().optional(),
 })
 

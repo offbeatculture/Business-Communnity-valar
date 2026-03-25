@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { fetchProfile, fetchProfileStats, fetchProfilePosts } from "@/lib/profile"
+import { fetchProfile, fetchProfileStats } from "@/lib/profile"
 import { fetchPosts } from "@/lib/community"
 import { fetchMemberLevel } from "@/lib/engagement"
 import { ProfileHeader } from "@/components/profile/ProfileHeader"
@@ -16,36 +16,24 @@ export default async function ProfilePage() {
 
   if (!user) redirect("/login")
 
-  const [profile, stats, memberLevel] = await Promise.all([
+  const [profile, stats, memberLevel, myPosts, savedPosts, { data: latestSub }] = await Promise.all([
     fetchProfile(user.id),
     fetchProfileStats(user.id),
     fetchMemberLevel(user.id),
+    fetchPosts({ filter: "mine", userId: user.id, page: 1, perPage: 5 }),
+    fetchPosts({ filter: "saved", userId: user.id, page: 1, perPage: 5 }),
+    supabase
+      .from("subscriptions")
+      .select("plan_name, starts_at, expires_at")
+      .eq("user_id", user.id)
+      .order("expires_at", { ascending: false })
+      .limit(1)
+      .single(),
   ])
 
   if (!profile) redirect("/login")
 
-  const { data: roleData } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("user_id", user.id)
-    .single()
-
-  const userRole = (roleData?.role ?? "member") as "member" | "admin"
-
-  // Fetch recent posts and saved posts
-  const [myPosts, savedPosts] = await Promise.all([
-    fetchPosts({ filter: "mine", userId: user.id, page: 1, perPage: 5 }),
-    fetchPosts({ filter: "saved", userId: user.id, page: 1, perPage: 5 }),
-  ])
-
-  // Fetch latest subscription details
-  const { data: latestSub } = await supabase
-    .from("subscriptions")
-    .select("plan_name, starts_at, expires_at")
-    .eq("user_id", user.id)
-    .order("expires_at", { ascending: false })
-    .limit(1)
-    .single()
+  const userRole = profile.role ?? "member"
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">

@@ -13,6 +13,7 @@ import {
 
 const categoryTabs = [
   { value: "all", label: "All" },
+  { value: "introduction", label: "Intros" },
   { value: "win", label: "Wins" },
   { value: "question", label: "Questions" },
   { value: "discussion", label: "Discussions" },
