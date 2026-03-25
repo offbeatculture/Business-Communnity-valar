@@ -19,7 +19,7 @@ import type { Profile } from "@/types"
 import { INDUSTRIES } from "@/types"
 
 const BANNER_COLORS = [
-  { value: "red", label: "Red", className: "bg-red-500" },
+  { value: "red", label: "Red", className: "bg-primary" },
   { value: "blue", label: "Blue", className: "bg-blue-500" },
   { value: "green", label: "Green", className: "bg-green-500" },
   { value: "purple", label: "Purple", className: "bg-purple-500" },

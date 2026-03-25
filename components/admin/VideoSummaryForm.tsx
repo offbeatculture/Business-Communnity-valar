@@ -11,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, Sparkles, Save } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Loader2, Sparkles, Save, Plus, X } from "lucide-react"
 import { toast } from "sonner"
 import type { Category } from "@/types"
 
@@ -32,19 +33,65 @@ type GeneratedSummary = {
   video_duration_minutes?: number
 }
 
+function extractVideoId(url: string): string | null {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname === "youtu.be") {
+      return parsed.pathname.slice(1) || null
+    }
+    if (
+      parsed.hostname === "www.youtube.com" ||
+      parsed.hostname === "youtube.com"
+    ) {
+      if (parsed.searchParams.has("v")) {
+        return parsed.searchParams.get("v")
+      }
+      const match = parsed.pathname.match(/^\/(embed|shorts)\/([^/?]+)/)
+      if (match) return match[2]
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 export function VideoSummaryForm({ categories, onSuccess }: Props) {
+  const [mode, setMode] = useState<"ai" | "manual">("ai")
+
+  // Shared state
   const [youtubeUrl, setYoutubeUrl] = useState("")
+  const [category, setCategory] = useState("")
+  const [saving, setSaving] = useState(false)
+
+  // AI mode state
   const [manualTranscript, setManualTranscript] = useState("")
   const [showTranscript, setShowTranscript] = useState(false)
-  const [category, setCategory] = useState("")
   const [generating, setGenerating] = useState(false)
-  const [saving, setSaving] = useState(false)
   const [summary, setSummary] = useState<GeneratedSummary | null>(null)
 
-  // Editable fields after generation
+  // Editable fields (used by both modes after AI generation or in manual mode)
   const [title, setTitle] = useState("")
   const [takeaway, setTakeaway] = useState("")
   const [fullSummary, setFullSummary] = useState("")
+  const [keyPoints, setKeyPoints] = useState<{ point: string; timestamp?: string }[]>([])
+  const [actionItems, setActionItems] = useState<string[]>([])
+  const [videoDuration, setVideoDuration] = useState("")
+  const [readTime, setReadTime] = useState("")
+
+  function resetForm() {
+    setYoutubeUrl("")
+    setManualTranscript("")
+    setShowTranscript(false)
+    setCategory("")
+    setSummary(null)
+    setTitle("")
+    setTakeaway("")
+    setFullSummary("")
+    setKeyPoints([])
+    setActionItems([])
+    setVideoDuration("")
+    setReadTime("")
+  }
 
   async function handleGenerate() {
     if (!youtubeUrl) {
@@ -79,6 +126,8 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
       setTitle(data.title)
       setTakeaway(data.one_line_takeaway)
       setFullSummary(data.full_summary)
+      setKeyPoints(data.key_points)
+      setActionItems(data.action_items)
       toast.success("Summary generated! Review and edit below.")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong")
@@ -88,29 +137,45 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
   }
 
   async function handleSave() {
-    if (!summary || !category) {
+    if (!youtubeUrl) {
+      toast.error("Please enter a YouTube URL")
+      return
+    }
+    if (!title) {
+      toast.error("Please enter a title")
+      return
+    }
+    if (!category) {
       toast.error("Please select a category")
+      return
+    }
+
+    // In AI mode, require summary to be generated first
+    if (mode === "ai" && !summary) {
+      toast.error("Please generate a summary first")
       return
     }
 
     setSaving(true)
 
     try {
+      const videoId = summary?.youtube_video_id ?? extractVideoId(youtubeUrl)
+
       const res = await fetch("/api/admin/content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content_type: "video_summary",
           title,
-          youtube_url: summary.youtube_url,
-          youtube_video_id: summary.youtube_video_id,
+          youtube_url: youtubeUrl,
+          youtube_video_id: videoId,
           category,
-          video_duration_minutes: summary.video_duration_minutes,
-          read_time_minutes: summary.read_time_minutes,
-          one_line_takeaway: takeaway,
-          key_points: summary.key_points,
-          action_items: summary.action_items,
-          full_summary: fullSummary,
+          video_duration_minutes: videoDuration ? Number(videoDuration) : (summary?.video_duration_minutes ?? undefined),
+          read_time_minutes: readTime ? Number(readTime) : (summary?.read_time_minutes ?? undefined),
+          one_line_takeaway: takeaway || undefined,
+          key_points: keyPoints.length > 0 ? keyPoints : undefined,
+          action_items: actionItems.length > 0 ? actionItems : undefined,
+          full_summary: fullSummary || undefined,
           is_published: true,
         }),
       })
@@ -121,15 +186,7 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
       }
 
       toast.success("Video summary published!")
-      // Reset form
-      setYoutubeUrl("")
-      setManualTranscript("")
-      setShowTranscript(false)
-      setCategory("")
-      setSummary(null)
-      setTitle("")
-      setTakeaway("")
-      setFullSummary("")
+      resetForm()
       onSuccess()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Something went wrong")
@@ -140,7 +197,21 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Step 1: YouTube URL + Generate */}
+      {/* Mode Toggle */}
+      <Tabs value={mode} onValueChange={(v) => setMode(v as "ai" | "manual")}>
+        <TabsList>
+          <TabsTrigger value="ai">
+            <Sparkles className="size-3.5 mr-1.5" />
+            AI Generate
+          </TabsTrigger>
+          <TabsTrigger value="manual">
+            <Save className="size-3.5 mr-1.5" />
+            Manual Entry
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* YouTube URL — shared by both modes */}
       <div>
         <label className="text-sm font-medium mb-1.5 block">YouTube URL</label>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -150,23 +221,25 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
             placeholder="https://www.youtube.com/watch?v=..."
             disabled={generating}
           />
-          <Button
-            type="button"
-            onClick={handleGenerate}
-            disabled={generating || !youtubeUrl}
-          >
-            {generating ? (
-              <Loader2 className="size-4 animate-spin mr-2" />
-            ) : (
-              <Sparkles className="size-4 mr-2" />
-            )}
-            {generating ? "Generating..." : "Generate"}
-          </Button>
+          {mode === "ai" && (
+            <Button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generating || !youtubeUrl}
+            >
+              {generating ? (
+                <Loader2 className="size-4 animate-spin mr-2" />
+              ) : (
+                <Sparkles className="size-4 mr-2" />
+              )}
+              {generating ? "Generating..." : "Generate"}
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Manual transcript fallback */}
-      {showTranscript && !summary && (
+      {/* AI mode: Manual transcript fallback */}
+      {mode === "ai" && showTranscript && !summary && (
         <div>
           <label className="text-sm font-medium mb-1.5 block">
             Manual Transcript
@@ -183,14 +256,15 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
         </div>
       )}
 
-      {/* Step 2: Edit generated summary */}
-      {summary && (
+      {/* Show editable fields: always in manual mode, after generation in AI mode */}
+      {(mode === "manual" || summary) && (
         <>
           <div>
             <label className="text-sm font-medium mb-1.5 block">Title</label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              placeholder="Video title or summary headline"
             />
           </div>
 
@@ -217,35 +291,110 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
             <Input
               value={takeaway}
               onChange={(e) => setTakeaway(e.target.value)}
+              placeholder="The single most important insight from this video"
             />
           </div>
 
+          {/* Key Points — editable dynamic list */}
           <div>
             <label className="text-sm font-medium mb-1.5 block">
-              Key Points ({summary.key_points.length})
+              Key Points ({keyPoints.length})
             </label>
-            <ul className="space-y-1 text-sm text-muted-foreground">
-              {summary.key_points.map((kp, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-foreground">{i + 1}.</span>
-                  {kp.point}
-                </li>
+            <div className="space-y-2">
+              {keyPoints.map((kp, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input
+                    value={kp.point}
+                    onChange={(e) =>
+                      setKeyPoints((prev) =>
+                        prev.map((p, idx) =>
+                          idx === i ? { ...p, point: e.target.value } : p
+                        )
+                      )
+                    }
+                    placeholder={`Key point ${i + 1}`}
+                    className="flex-1"
+                  />
+                  <Input
+                    value={kp.timestamp ?? ""}
+                    onChange={(e) =>
+                      setKeyPoints((prev) =>
+                        prev.map((p, idx) =>
+                          idx === i ? { ...p, timestamp: e.target.value || undefined } : p
+                        )
+                      )
+                    }
+                    placeholder="0:00"
+                    className="w-20"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() =>
+                      setKeyPoints((prev) => prev.filter((_, idx) => idx !== i))
+                    }
+                  >
+                    <X className="size-3.5 text-destructive" />
+                  </Button>
+                </div>
               ))}
-            </ul>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setKeyPoints((prev) => [...prev, { point: "" }])
+                }
+              >
+                <Plus className="size-4 mr-1" />
+                Add key point
+              </Button>
+            </div>
           </div>
 
+          {/* Action Items — editable dynamic list */}
           <div>
             <label className="text-sm font-medium mb-1.5 block">
-              Action Items ({summary.action_items.length})
+              Action Items ({actionItems.length})
             </label>
-            <ul className="space-y-1 text-sm text-muted-foreground">
-              {summary.action_items.map((item, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-foreground">{i + 1}.</span>
-                  {item}
-                </li>
+            <div className="space-y-2">
+              {actionItems.map((item, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input
+                    value={item}
+                    onChange={(e) =>
+                      setActionItems((prev) =>
+                        prev.map((a, idx) =>
+                          idx === i ? e.target.value : a
+                        )
+                      )
+                    }
+                    placeholder={`Action item ${i + 1}`}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() =>
+                      setActionItems((prev) => prev.filter((_, idx) => idx !== i))
+                    }
+                  >
+                    <X className="size-3.5 text-destructive" />
+                  </Button>
+                </div>
               ))}
-            </ul>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setActionItems((prev) => [...prev, ""])}
+              >
+                <Plus className="size-4 mr-1" />
+                Add action item
+              </Button>
+            </div>
           </div>
 
           <div>
@@ -255,14 +404,41 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
             <Textarea
               value={fullSummary}
               onChange={(e) => setFullSummary(e.target.value)}
+              placeholder="2-3 paragraph summary of the video content"
               rows={8}
             />
+          </div>
+
+          {/* Duration & Read Time — shown in manual mode, or editable after AI gen */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Video Duration (min)
+              </label>
+              <Input
+                type="number"
+                value={videoDuration || (summary?.video_duration_minutes ?? "")}
+                onChange={(e) => setVideoDuration(e.target.value)}
+                placeholder="e.g. 15"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">
+                Read Time (min)
+              </label>
+              <Input
+                type="number"
+                value={readTime || (summary?.read_time_minutes ?? "")}
+                onChange={(e) => setReadTime(e.target.value)}
+                placeholder="e.g. 3"
+              />
+            </div>
           </div>
 
           <Button
             type="button"
             onClick={handleSave}
-            disabled={saving || !category}
+            disabled={saving || !category || !title}
             className="w-full"
           >
             {saving ? (

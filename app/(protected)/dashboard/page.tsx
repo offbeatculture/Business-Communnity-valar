@@ -68,7 +68,7 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-4xl mx-auto pb-10">
       {/* Hero Welcome Card */}
-      <Card className="mb-6 border-red-500/10 bg-gradient-to-br from-card via-card to-red-500/[0.04] shadow-lg shadow-red-500/5 overflow-hidden">
+      <Card className="mb-6 border-primary/10 bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-lg shadow-primary/5 overflow-hidden">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Left: Welcome + Stats */}
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
                     <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="4" className="text-secondary" />
                     <circle
                       cx="32" cy="32" r="28" fill="none" strokeWidth="4"
-                      className="text-red-500"
+                      className="text-primary"
                       strokeLinecap="round"
                       strokeDasharray={`${2 * Math.PI * 28}`}
                       strokeDashoffset={`${2 * Math.PI * 28 * (1 - progressPercent / 100)}`}
@@ -124,7 +124,7 @@ export default async function DashboardPage() {
             <div className="mt-4">
               <div className="h-2 bg-secondary rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -166,10 +166,10 @@ export default async function DashboardPage() {
       {/* Quick Action Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <Link href="/content" className="group">
-          <Card className="h-full border-border/50 hover:border-red-500/30 transition-all duration-200 hover:shadow-md hover:shadow-red-500/5">
+          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5">
             <CardContent className="px-4 py-3 flex items-center gap-3">
-              <div className="size-9 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
-                <BookOpen className="size-4 text-red-500" />
+              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <BookOpen className="size-4 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium">Cheat Sheets</p>
@@ -180,10 +180,10 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/prompts" className="group">
-          <Card className="h-full border-border/50 hover:border-red-500/30 transition-all duration-200 hover:shadow-md hover:shadow-red-500/5">
+          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5">
             <CardContent className="px-4 py-3 flex items-center gap-3">
-              <div className="size-9 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
-                <Sparkles className="size-4 text-red-500" />
+              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Sparkles className="size-4 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium">Prompts</p>
@@ -194,10 +194,10 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/community?compose=introduction" className="group">
-          <Card className="h-full border-border/50 hover:border-red-500/30 transition-all duration-200 hover:shadow-md hover:shadow-red-500/5">
+          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5">
             <CardContent className="px-4 py-3 flex items-center gap-3">
-              <div className="size-9 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
-                <HandMetal className="size-4 text-red-500" />
+              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <HandMetal className="size-4 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium">Introduce Yourself</p>
@@ -208,10 +208,10 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/community" className="group">
-          <Card className="h-full border-border/50 hover:border-red-500/30 transition-all duration-200 hover:shadow-md hover:shadow-red-500/5">
+          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5">
             <CardContent className="px-4 py-3 flex items-center gap-3">
-              <div className="size-9 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
-                <Users className="size-4 text-red-500" />
+              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Users className="size-4 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium">Members</p>
@@ -239,9 +239,9 @@ export default async function DashboardPage() {
         {posts.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="border-l-2 border-red-500 pl-3 text-base font-semibold">Recent Community Posts</h2>
+              <h2 className="border-l-2 border-primary pl-3 text-base font-semibold">Recent Community Posts</h2>
               <Link href="/community">
-                <Button variant="outline" size="sm" className="border-red-500/30 text-red-500 hover:bg-red-500/10">
+                <Button variant="outline" size="sm" className="border-primary/30 text-primary hover:bg-primary/10">
                   View All <ArrowRight className="size-4 ml-1" />
                 </Button>
               </Link>

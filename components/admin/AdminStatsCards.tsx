@@ -19,8 +19,8 @@ export function AdminStatsCards({ stats }: Props) {
       {statConfig.map(({ key, label, icon: Icon }) => (
         <Card key={key} className="py-4">
           <CardContent className="flex items-center gap-3 px-4">
-            <div className="rounded-lg bg-red-500/10 p-2">
-              <Icon className="size-4 text-red-500" />
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Icon className="size-4 text-primary" />
             </div>
             <div>
               <p className="text-2xl font-bold tabular-nums">{stats[key]}</p>

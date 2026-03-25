@@ -60,10 +60,10 @@ export function OnboardingChecklist({
   const totalGP = steps.reduce((sum, s) => sum + s.gp, 0)
 
   return (
-    <Card className="border-red-500/20 bg-red-500/[0.03] shadow-lg shadow-red-500/5">
+    <Card className="border-primary/20 bg-primary/[0.03] shadow-lg shadow-primary/5">
       <CardContent className="px-4 py-4">
         <div className="flex items-center gap-1.5 mb-1">
-          <Sprout className="size-4 text-red-500" />
+          <Sprout className="size-4 text-primary" />
           <p className="text-sm font-medium">
             Welcome, {firstName}! Every founder starts as a Seed.
           </p>
@@ -114,7 +114,7 @@ export function OnboardingChecklist({
           <LevelsGuideDialog />
           <div className="flex-1 h-2.5 bg-secondary rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-500"
               style={{ width: `${Math.min(100, (memberLevel.total_gp / 100) * 100)}%` }}
             />
           </div>

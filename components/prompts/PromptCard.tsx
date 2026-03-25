@@ -28,7 +28,7 @@ export function PromptCard({ prompt }: Props) {
   }
 
   return (
-    <Card className="group hover:border-red-500/50 transition-colors">
+    <Card className="group hover:border-primary/50 transition-colors">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
@@ -41,7 +41,7 @@ export function PromptCard({ prompt }: Props) {
             variant="outline"
             size="sm"
             onClick={handleCopy}
-            className={copied ? "border-green-500/50 text-green-500" : "border-red-500/30 text-red-500 hover:bg-red-500/10"}
+            className={copied ? "border-green-500/50 text-green-500" : "border-primary/30 text-primary hover:bg-primary/10"}
           >
             {copied ? <Check className="size-3.5 mr-1" /> : <Copy className="size-3.5 mr-1" />}
             {copied ? "Copied" : "Copy"}
@@ -55,7 +55,7 @@ export function PromptCard({ prompt }: Props) {
         {prompt.linked_content_id && (
           <Link
             href={`/content/${prompt.linked_content_id}`}
-            className="inline-flex items-center gap-1 text-xs text-red-500 hover:underline"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
           >
             View related content <ExternalLink className="size-3" />
           </Link>

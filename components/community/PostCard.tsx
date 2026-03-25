@@ -75,7 +75,7 @@ export function PostCard({
               ) : (
                 <span className="text-sm font-medium">{authorName}</span>
               )}
-              {post.is_pinned && <Pin size={14} className="text-red-500" />}
+              {post.is_pinned && <Pin size={14} className="text-primary" />}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{timeAgo}</span>
@@ -95,7 +95,7 @@ export function PostCard({
 
       {/* Prompt context */}
       {post.daily_prompts?.prompt_text && (
-        <div className="mb-3 pl-3 border-l-2 border-red-500/40">
+        <div className="mb-3 pl-3 border-l-2 border-primary/40">
           <p className="text-xs font-medium text-muted-foreground mb-0.5">Daily Prompt</p>
           <p className="text-sm text-muted-foreground/80">{post.daily_prompts.prompt_text}</p>
         </div>
@@ -109,7 +109,7 @@ export function PostCard({
         {shouldTruncate && (
           <Link
             href={`/community/${post.id}`}
-            className="text-sm text-red-500 hover:underline"
+            className="text-sm text-primary hover:underline"
           >
             Read more
           </Link>

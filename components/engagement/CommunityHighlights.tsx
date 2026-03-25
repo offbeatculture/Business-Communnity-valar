@@ -39,13 +39,13 @@ export function CommunityHighlights({ highlights }: Props) {
   return (
     <Card>
       <CardHeader className="pb-3 px-4 pt-4">
-        <CardTitle className="border-l-2 border-red-500 pl-3 text-base font-semibold">This Week in the Community</CardTitle>
+        <CardTitle className="border-l-2 border-primary pl-3 text-base font-semibold">This Week in the Community</CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-4">
         {highlights.most_helpful.length > 0 && (
           <div>
             <div className="flex items-center gap-1.5 mb-2">
-              <Heart className="size-3.5 text-red-500" />
+              <Heart className="size-3.5 text-primary" />
               <span className="text-xs font-medium text-muted-foreground">Most Helpful</span>
             </div>
             <div className="space-y-1.5">

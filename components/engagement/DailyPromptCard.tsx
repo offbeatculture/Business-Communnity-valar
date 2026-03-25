@@ -99,10 +99,10 @@ export function DailyPromptCard({ prompt, responseCount, hasResponded: initialHa
   }
 
   return (
-    <Card className="border-red-500/20 bg-red-500/[0.02] border-l-4 border-l-red-500 shadow-lg shadow-red-500/5">
+    <Card className="border-primary/20 bg-primary/[0.02] border-l-4 border-l-primary shadow-lg shadow-primary/5">
       <CardContent className="px-4 py-4">
         <div className="flex items-center justify-between mb-2">
-          <Badge className="bg-red-500/10 text-red-500 border-red-500/20 text-[10px] uppercase tracking-wider">
+          <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase tracking-wider">
             Daily Prompt — {categoryLabels[prompt.category] ?? prompt.category}
           </Badge>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -112,7 +112,7 @@ export function DailyPromptCard({ prompt, responseCount, hasResponded: initialHa
         </div>
 
         <div className="relative">
-          <span className="absolute -top-1 -left-1 text-4xl font-serif text-red-500/10 select-none">&ldquo;</span>
+          <span className="absolute -top-1 -left-1 text-4xl font-serif text-primary/10 select-none">&ldquo;</span>
           <p className="text-base font-medium mb-3 leading-relaxed pl-4">{prompt.prompt_text}</p>
         </div>
 

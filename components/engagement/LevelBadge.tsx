@@ -10,8 +10,8 @@ const colorMap: Record<string, string> = {
   green: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   orange: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
   amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  red: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  "red-gradient": "bg-gradient-to-r from-red-100 to-orange-100 text-red-700 dark:from-red-900/30 dark:to-orange-900/30 dark:text-red-400",
+  red: "bg-primary/10 text-primary",
+  "red-gradient": "bg-gradient-to-r from-primary/10 to-orange-100 text-primary dark:to-orange-900/30",
   "gold-gradient": "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-700 dark:from-yellow-900/30 dark:to-amber-900/30 dark:text-yellow-400",
 }
 

@@ -17,7 +17,7 @@ export function AssessmentCard({ assessment, result }: Props) {
 
   return (
     <Link href={`/assessment/${assessment.slug}`}>
-      <Card className="group hover:border-red-500/50 transition-colors h-full">
+      <Card className="group hover:border-primary/50 transition-colors h-full">
         <CardContent className="p-5 flex flex-col h-full">
           <div className="flex items-start justify-between gap-2 mb-2">
             <h3 className="font-semibold">{assessment.title}</h3>
@@ -27,7 +27,7 @@ export function AssessmentCard({ assessment, result }: Props) {
                 Done
               </Badge>
             ) : (
-              <Badge variant="outline" className="shrink-0 border-red-500/30 text-red-500">
+              <Badge variant="outline" className="shrink-0 border-primary/30 text-primary">
                 Take it
               </Badge>
             )}
@@ -41,7 +41,7 @@ export function AssessmentCard({ assessment, result }: Props) {
             ) : (
               <span className="text-xs text-muted-foreground">+20 GP on completion</span>
             )}
-            <ArrowRight className="size-4 text-muted-foreground group-hover:text-red-500 transition-colors" />
+            <ArrowRight className="size-4 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
         </CardContent>
       </Card>

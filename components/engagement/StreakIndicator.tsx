@@ -9,7 +9,7 @@ type Props = {
 const colorMap: Record<string, string> = {
   gray: "text-muted-foreground",
   orange: "text-orange-500",
-  red: "text-red-500",
+  red: "text-primary",
   purple: "text-purple-500",
   gold: "text-yellow-500",
 }
