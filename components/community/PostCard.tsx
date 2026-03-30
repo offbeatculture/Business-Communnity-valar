@@ -56,7 +56,7 @@ export function PostCard({
   const cat = categoryConfig[post.category]
 
   return (
-    <div className="bg-card border border-border rounded-lg p-4">
+    <div className="bg-card border border-border rounded-lg p-4 shadow-sm active:bg-accent/30 transition-colors">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -118,7 +118,7 @@ export function PostCard({
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-3 border-t border-border">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1">
           <LikeButton
             postId={post.id}
             initialLiked={isLiked}
@@ -126,7 +126,7 @@ export function PostCard({
           />
           <Link
             href={`/community/${post.id}`}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[44px] min-w-[44px] justify-center"
           >
             <MessageCircle size={18} />
             <span>{post.comment_count > 0 ? post.comment_count : ""}</span>

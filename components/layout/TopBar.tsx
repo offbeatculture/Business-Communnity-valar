@@ -26,6 +26,7 @@ import {
   MessageSquare,
   Shield,
   Lightbulb,
+  Sparkles,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -38,10 +39,7 @@ type TopBarProps = {
 }
 
 const mobileNavItems = [
-  { label: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Content Library", href: "/content", icon: BookOpen },
-  { label: "Community", href: "/community", icon: MessageSquare },
-  { label: "My Profile", href: "/profile", icon: User },
+  { label: "Prompts", href: "/prompts", icon: Sparkles },
   { label: "Subscription", href: "/subscription", icon: CreditCard },
 ]
 
@@ -72,7 +70,7 @@ export function TopBar({ profile }: TopBarProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 h-14 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6">
+      <header className="sticky top-0 z-40 h-14 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6 select-none">
         {/* Hamburger - mobile only */}
         <Button
           variant="ghost"
@@ -84,7 +82,7 @@ export function TopBar({ profile }: TopBarProps) {
         </Button>
 
         {/* Search */}
-        <div className="relative w-full max-w-sm ml-2 md:ml-0">
+        <div className="hidden md:block relative w-full max-w-sm ml-2 md:ml-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search..."
@@ -93,9 +91,16 @@ export function TopBar({ profile }: TopBarProps) {
           />
         </div>
 
+        {/* App title — mobile only */}
+        <span className="md:hidden text-sm font-semibold tracking-tight flex-1 text-center">
+          Scale Community
+        </span>
+
         {/* Theme Toggle + User Menu */}
         <div className="flex items-center gap-1 ml-2 shrink-0">
-        <ThemeToggle />
+        <div className="hidden md:block">
+          <ThemeToggle />
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 outline-none cursor-pointer">
             <Avatar className="h-8 w-8">
@@ -128,15 +133,23 @@ export function TopBar({ profile }: TopBarProps) {
       </header>
 
       {/* Mobile slide-down menu */}
-      {menuOpen && (
-        <div className="md:hidden fixed inset-0 top-14 z-30">
+      <div
+        className={cn(
+          "md:hidden fixed inset-0 top-14 z-50 transition-opacity duration-200",
+          menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        aria-hidden={!menuOpen}
+      >
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setMenuOpen(false)}
           />
           {/* Panel */}
-          <nav className="relative bg-card border-b border-border px-4 py-3 space-y-1">
+          <nav className={cn(
+            "relative bg-card border-b border-border px-4 py-3 space-y-1 transition-transform duration-200",
+            menuOpen ? "translate-y-0" : "-translate-y-4"
+          )}>
             {mobileNavItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
               return (
@@ -185,6 +198,12 @@ export function TopBar({ profile }: TopBarProps) {
               </>
             )}
 
+            {/* Theme toggle in mobile menu */}
+            <div className="flex items-center justify-between px-3 py-2.5">
+              <span className="text-sm font-medium text-muted-foreground">Dark Mode</span>
+              <ThemeToggle />
+            </div>
+
             {/* Logout */}
             <div className="border-t border-border my-2" />
             <button
@@ -198,8 +217,7 @@ export function TopBar({ profile }: TopBarProps) {
               Logout
             </button>
           </nav>
-        </div>
-      )}
+      </div>
     </>
   )
 }

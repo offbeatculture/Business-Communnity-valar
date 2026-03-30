@@ -1,55 +1,39 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent } from "@/components/ui/card"
 
 export default function CommunityLoading() {
   return (
-    <div>
-      <Skeleton className="h-7 w-40 mb-1" />
-      <Skeleton className="h-4 w-80 mb-6" />
-
-      <div className="space-y-6">
-        {/* Compose box skeleton */}
-        <div className="rounded-lg border border-border bg-card p-4">
-          <Skeleton className="h-16 w-full rounded-md mb-3" />
-          <div className="flex items-center justify-between">
-            <div className="flex gap-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-20 rounded-md" />
-              ))}
-            </div>
-            <Skeleton className="h-8 w-16 rounded-md" />
-          </div>
-        </div>
-
-        {/* Filter tabs skeleton */}
-        <div className="flex gap-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-8 w-20 rounded-md" />
-          ))}
-        </div>
-
-        {/* 3 post card skeletons */}
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-border bg-card p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="space-y-1.5">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
-                <Skeleton className="h-5 w-16 rounded-full ml-auto" />
-              </div>
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-4/5" />
-              <div className="flex gap-4 pt-1">
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-8 w-16" />
+    <div className="max-w-2xl mx-auto">
+      <div className="h-8 w-40 bg-muted rounded mb-4 animate-pulse" />
+      {/* ComposeBox skeleton */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="h-20 bg-muted rounded mb-3 animate-pulse" />
+          <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+        </CardContent>
+      </Card>
+      {/* Post skeletons */}
+      {[1, 2, 3, 4, 5].map(i => (
+        <Card key={i} className="mb-4">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-9 w-9 bg-muted rounded-full animate-pulse" />
+              <div>
+                <div className="h-4 w-28 bg-muted rounded mb-1 animate-pulse" />
+                <div className="h-3 w-20 bg-muted rounded animate-pulse" />
               </div>
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="space-y-2 mb-3">
+              <div className="h-3 w-full bg-muted rounded animate-pulse" />
+              <div className="h-3 w-5/6 bg-muted rounded animate-pulse" />
+              <div className="h-3 w-2/3 bg-muted rounded animate-pulse" />
+            </div>
+            <div className="flex gap-4 pt-3 border-t border-border">
+              <div className="h-5 w-12 bg-muted rounded animate-pulse" />
+              <div className="h-5 w-12 bg-muted rounded animate-pulse" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }
