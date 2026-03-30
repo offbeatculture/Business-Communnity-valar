@@ -219,9 +219,9 @@ function VideoSummaryDetail({
 
       {/* One-line takeaway */}
       {item.one_line_takeaway && (
-        <Card className="mb-6 border-red-500/30 bg-red-500/5">
+        <Card className="mb-6 border-primary/30 bg-primary/5">
           <CardContent className="flex items-start gap-3 pt-0">
-            <Lightbulb className="size-5 text-red-500 mt-0.5 shrink-0" />
+            <Lightbulb className="size-5 text-primary mt-0.5 shrink-0" />
             <p className="font-medium">{item.one_line_takeaway}</p>
           </CardContent>
         </Card>

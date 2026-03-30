@@ -13,11 +13,11 @@ type Props = {
 function getScoreColor(score: number) {
   if (score >= 8) return { bar: "bg-green-500", text: "text-green-500" }
   if (score >= 5) return { bar: "bg-yellow-500", text: "text-yellow-500" }
-  return { bar: "bg-red-500", text: "text-red-500" }
+  return { bar: "bg-primary", text: "text-primary" }
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
-  CRITICAL: "bg-red-500/10 text-red-500 border-red-500/20",
+  CRITICAL: "bg-primary/10 text-primary border-primary/20",
   HIGH: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   MEDIUM: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   LOW: "bg-muted text-muted-foreground",
@@ -35,7 +35,7 @@ export function AssessmentResults({ result }: Props) {
   return (
     <div className="space-y-6">
       {/* Section 1: Score Card */}
-      <Card className="border-red-500/20 bg-gradient-to-br from-card to-red-500/[0.04] overflow-hidden">
+      <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/[0.04] overflow-hidden">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             {/* Score circle */}
@@ -45,7 +45,7 @@ export function AssessmentResults({ result }: Props) {
                   <circle cx="48" cy="48" r="40" fill="none" stroke="currentColor" strokeWidth="6" className="text-secondary" />
                   <circle
                     cx="48" cy="48" r="40" fill="none" strokeWidth="6"
-                    className="text-red-500"
+                    className="text-primary"
                     strokeLinecap="round"
                     strokeDasharray={`${2 * Math.PI * 40}`}
                     strokeDashoffset={`${2 * Math.PI * 40 * (1 - overallPercent / 100)}`}
@@ -94,12 +94,12 @@ export function AssessmentResults({ result }: Props) {
             const priority = scores.priorities[key]
 
             return (
-              <div key={key} className={`space-y-1 ${isFloor ? "rounded-lg border border-red-500/30 bg-red-500/[0.03] p-3 -mx-3" : ""}`}>
+              <div key={key} className={`space-y-1 ${isFloor ? "rounded-lg border border-primary/30 bg-primary/[0.03] p-3 -mx-3" : ""}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">{PILLAR_NAMES[key]}</span>
                     {isFloor && (
-                      <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500 border-red-500/20">
+                      <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
                         <AlertTriangle className="size-3 mr-0.5" />
                         YOUR FLOOR
                       </Badge>
@@ -123,16 +123,16 @@ export function AssessmentResults({ result }: Props) {
       </div>
 
       {/* Section 3: Floor Recommendation */}
-      <Card className="border-red-500/30 bg-red-500/[0.03]">
+      <Card className="border-primary/30 bg-primary/[0.03]">
         <CardContent className="p-5">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="size-5 text-red-500 mt-0.5 shrink-0" />
+            <AlertTriangle className="size-5 text-primary mt-0.5 shrink-0" />
             <div>
               <h3 className="font-semibold">Your Floor: {scores.floor.pillarName}</h3>
               <p className="text-sm text-muted-foreground mt-2">{scores.recommendation}</p>
               <Link
                 href={`/prompts?category=${scores.floor.pillarKey}`}
-                className="inline-flex items-center gap-1 text-sm text-red-500 hover:underline mt-3"
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-3"
               >
                 <Sparkles className="size-3.5" />
                 Browse {scores.floor.pillarName} prompts
@@ -150,7 +150,7 @@ export function AssessmentResults({ result }: Props) {
             .filter((key) => scores.priorities[key] === "CRITICAL" || scores.priorities[key] === "HIGH")
             .map((key) => (
               <Link key={key} href={`/prompts?category=${key}`}>
-                <Card className="h-full hover:border-red-500/30 transition-colors">
+                <Card className="h-full hover:border-primary/30 transition-colors">
                   <CardContent className="p-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-medium">{PILLAR_NAMES[key]}</span>
@@ -171,7 +171,7 @@ export function AssessmentResults({ result }: Props) {
       {/* CTAs */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Link href="/prompts" className="flex-1">
-          <Button variant="outline" className="w-full border-red-500/30 text-red-500 hover:bg-red-500/10">
+          <Button variant="outline" className="w-full border-primary/30 text-primary hover:bg-primary/10">
             Browse All Prompts <ArrowRight className="size-4 ml-1" />
           </Button>
         </Link>

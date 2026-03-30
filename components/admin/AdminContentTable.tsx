@@ -56,6 +56,12 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  // Video summary edit fields
+  const [editYoutubeUrl, setEditYoutubeUrl] = useState("")
+  const [editTakeaway, setEditTakeaway] = useState("")
+  const [editKeyPoints, setEditKeyPoints] = useState<{ point: string; timestamp?: string }[]>([])
+  const [editActionItems, setEditActionItems] = useState<string[]>([])
+
   async function openEdit(item: ContentItem) {
     setEditItem(item)
     setEditTitle(item.title)
@@ -87,6 +93,13 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
       }
     } else {
       setExistingDocs([])
+      // Populate video summary fields
+      if (item.content_type === "video_summary") {
+        setEditYoutubeUrl(item.youtube_url ?? "")
+        setEditTakeaway(item.one_line_takeaway ?? "")
+        setEditKeyPoints(item.key_points ?? [])
+        setEditActionItems(item.action_items ?? [])
+      }
     }
   }
 
@@ -143,6 +156,10 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
         }
       } else {
         body.full_summary = editDescription || null
+        body.youtube_url = editYoutubeUrl || undefined
+        body.one_line_takeaway = editTakeaway || null
+        body.key_points = editKeyPoints.length > 0 ? editKeyPoints : null
+        body.action_items = editActionItems.length > 0 ? editActionItems : null
       }
 
       const res = await fetch(`/api/admin/content/${editItem.id}`, {
@@ -339,6 +356,124 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
                 rows={4}
               />
             </div>
+
+            {/* Video summary extra fields */}
+            {editItem?.content_type === "video_summary" && (
+              <>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">
+                    YouTube URL
+                  </label>
+                  <Input
+                    value={editYoutubeUrl}
+                    onChange={(e) => setEditYoutubeUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">
+                    One-Line Takeaway
+                  </label>
+                  <Input
+                    value={editTakeaway}
+                    onChange={(e) => setEditTakeaway(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">
+                    Key Points ({editKeyPoints.length})
+                  </label>
+                  <div className="space-y-2">
+                    {editKeyPoints.map((kp, i) => (
+                      <div key={i} className="flex gap-2">
+                        <Input
+                          value={kp.point}
+                          onChange={(e) =>
+                            setEditKeyPoints((prev) =>
+                              prev.map((p, idx) =>
+                                idx === i ? { ...p, point: e.target.value } : p
+                              )
+                            )
+                          }
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() =>
+                            setEditKeyPoints((prev) =>
+                              prev.filter((_, idx) => idx !== i)
+                            )
+                          }
+                        >
+                          <X className="size-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setEditKeyPoints((prev) => [...prev, { point: "" }])
+                      }
+                    >
+                      <Plus className="size-4 mr-1" />
+                      Add key point
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">
+                    Action Items ({editActionItems.length})
+                  </label>
+                  <div className="space-y-2">
+                    {editActionItems.map((item, i) => (
+                      <div key={i} className="flex gap-2">
+                        <Input
+                          value={item}
+                          onChange={(e) =>
+                            setEditActionItems((prev) =>
+                              prev.map((a, idx) =>
+                                idx === i ? e.target.value : a
+                              )
+                            )
+                          }
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() =>
+                            setEditActionItems((prev) =>
+                              prev.filter((_, idx) => idx !== i)
+                            )
+                          }
+                        >
+                          <X className="size-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setEditActionItems((prev) => [...prev, ""])
+                      }
+                    >
+                      <Plus className="size-4 mr-1" />
+                      Add action item
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Documents section for resources */}
             {editItem?.content_type === "resource" && (

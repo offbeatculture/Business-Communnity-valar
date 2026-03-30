@@ -27,7 +27,7 @@ export function SubscriptionBadge({ status, expiresAt }: Props) {
         className={
           isActive
             ? "bg-green-500/10 text-green-500 border-green-500/20"
-            : "bg-red-500/10 text-red-500 border-red-500/20"
+            : "bg-primary/10 text-primary border-primary/20"
         }
       >
         {isActive ? "Active" : "Expired"}

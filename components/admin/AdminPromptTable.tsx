@@ -103,7 +103,7 @@ export function AdminPromptTable({ prompts }: Props) {
                   onClick={() => handleDelete(prompt.id)}
                   disabled={deletingId === prompt.id}
                 >
-                  <Trash2 className="size-3.5 text-red-500" />
+                  <Trash2 className="size-3.5 text-primary" />
                 </Button>
               </div>
             </div>

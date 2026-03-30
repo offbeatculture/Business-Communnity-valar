@@ -52,11 +52,11 @@ export function LikeButton({
         size={18}
         className={
           liked
-            ? "fill-red-500 text-red-500"
+            ? "fill-primary text-primary"
             : "text-muted-foreground group-hover:text-foreground"
         }
       />
-      <span className={liked ? "text-red-500" : "text-muted-foreground"}>
+      <span className={liked ? "text-primary" : "text-muted-foreground"}>
         {count > 0 ? count : ""}
       </span>
     </button>

@@ -43,7 +43,7 @@ export function SaveButton({ postId, initialSaved }: SaveButtonProps) {
         size={18}
         className={
           saved
-            ? "fill-red-500 text-red-500"
+            ? "fill-primary text-primary"
             : "text-muted-foreground group-hover:text-foreground"
         }
       />

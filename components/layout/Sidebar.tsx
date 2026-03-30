@@ -50,7 +50,7 @@ export function Sidebar({ profile }: SidebarProps) {
     <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-card border-r border-border">
       {/* Brand */}
       <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
-        <Users className="h-6 w-6 text-red-500" />
+        <Users className="h-6 w-6 text-primary" />
         <span className="text-lg font-bold">Community</span>
       </div>
 
@@ -65,11 +65,11 @@ export function Sidebar({ profile }: SidebarProps) {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-accent text-accent-foreground border-l-2 border-red-500"
+                  ? "bg-accent text-accent-foreground border-l-2 border-primary"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
               )}
             >
-              <item.icon className={cn("h-4 w-4", isActive && "text-red-500")} />
+              <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
               {item.label}
             </Link>
           )
@@ -90,11 +90,11 @@ export function Sidebar({ profile }: SidebarProps) {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-accent text-accent-foreground border-l-2 border-red-500"
+                      ? "bg-accent text-accent-foreground border-l-2 border-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   )}
                 >
-                  <item.icon className={cn("h-4 w-4", isActive && "text-red-500")} />
+                  <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
                   {item.label}
                 </Link>
               )

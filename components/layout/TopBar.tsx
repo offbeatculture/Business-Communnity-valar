@@ -27,6 +27,7 @@ import {
   Shield,
   Lightbulb,
 } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 type TopBarProps = {
   profile: {
@@ -92,12 +93,14 @@ export function TopBar({ profile }: TopBarProps) {
           />
         </div>
 
-        {/* User Menu */}
+        {/* Theme Toggle + User Menu */}
+        <div className="flex items-center gap-1 ml-2 shrink-0">
+        <ThemeToggle />
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 outline-none cursor-pointer ml-2 shrink-0">
+          <DropdownMenuTrigger className="flex items-center gap-2 outline-none cursor-pointer">
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-red-500/20 text-red-400 text-xs">
+              <AvatarFallback className="bg-primary/20 text-primary text-xs">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -121,6 +124,7 @@ export function TopBar({ profile }: TopBarProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </header>
 
       {/* Mobile slide-down menu */}
@@ -143,11 +147,11 @@ export function TopBar({ profile }: TopBarProps) {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-accent text-accent-foreground border-l-2 border-red-500"
+                      ? "bg-accent text-accent-foreground border-l-2 border-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   )}
                 >
-                  <item.icon className={cn("h-4 w-4", isActive && "text-red-500")} />
+                  <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
                   {item.label}
                 </Link>
               )
@@ -169,11 +173,11 @@ export function TopBar({ profile }: TopBarProps) {
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                         isActive
-                          ? "bg-accent text-accent-foreground border-l-2 border-red-500"
+                          ? "bg-accent text-accent-foreground border-l-2 border-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                       )}
                     >
-                      <item.icon className={cn("h-4 w-4", isActive && "text-red-500")} />
+                      <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
                       {item.label}
                     </Link>
                   )

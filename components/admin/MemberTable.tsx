@@ -95,7 +95,7 @@ export function MemberTable({ initialMembers, initialHasMore }: Props) {
 
   const statusBadge = (s: ProfileWithSubscription["subscription_status"]) => {
     if (s === "active") return <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">Active</Badge>
-    if (s === "expired") return <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">Expired</Badge>
+    if (s === "expired") return <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Expired</Badge>
     return <Badge variant="outline" className="text-muted-foreground">None</Badge>
   }
 

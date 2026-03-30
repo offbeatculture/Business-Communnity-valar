@@ -66,7 +66,7 @@ export function AssessmentWizard({ questions, assessmentSlug }: Props) {
         </div>
         <div className="h-2 bg-secondary rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-300"
+            className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
           />
         </div>
@@ -75,7 +75,7 @@ export function AssessmentWizard({ questions, assessmentSlug }: Props) {
       {/* Question */}
       <Card>
         <CardContent className="p-5">
-          <p className="text-xs font-bold uppercase tracking-widest text-red-500 mb-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-primary mb-2">
             {isRevenue ? "Final Question" : pillarLabel}
           </p>
           <h2 className="text-lg font-semibold mb-4">{currentQuestion.question_text}</h2>
@@ -87,8 +87,8 @@ export function AssessmentWizard({ questions, assessmentSlug }: Props) {
                 onClick={() => selectAnswer(currentQuestion.id, opt.value)}
                 className={`w-full text-left text-sm px-4 py-3 rounded-lg border transition-all ${
                   answers[currentQuestion.id] === opt.value
-                    ? "border-red-500 bg-red-500/10 text-foreground shadow-sm"
-                    : "border-border hover:border-red-500/30 hover:bg-muted/50"
+                    ? "border-primary bg-primary/10 text-foreground shadow-sm"
+                    : "border-border hover:border-primary/30 hover:bg-muted/50"
                 }`}
               >
                 {opt.label}

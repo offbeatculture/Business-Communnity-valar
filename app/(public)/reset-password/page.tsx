@@ -40,7 +40,7 @@ export default function ResetPasswordPage() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2">
-              <Users className="h-8 w-8 text-red-500" />
+              <Users className="h-8 w-8 text-primary" />
               <span className="text-2xl font-bold">Community</span>
             </div>
           </div>

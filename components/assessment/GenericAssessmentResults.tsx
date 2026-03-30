@@ -31,7 +31,7 @@ export function GenericAssessmentResults({ result }: Props) {
 
   return (
     <div className="space-y-6">
-      <Card className="border-red-500/20 bg-gradient-to-br from-card to-red-500/[0.04]">
+      <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/[0.04]">
         <CardContent className="p-6 text-center">
           <p className="text-sm text-muted-foreground mb-1">Your Score</p>
           <p className="text-5xl font-bold tabular-nums">{overallPercent}%</p>
@@ -45,7 +45,7 @@ export function GenericAssessmentResults({ result }: Props) {
         <h2 className="text-base font-semibold mb-3">Category Breakdown</h2>
         <div className="space-y-3">
           {categories.map((cat) => {
-            const color = cat.percent >= 80 ? "bg-green-500" : cat.percent >= 60 ? "bg-yellow-500" : "bg-red-500"
+            const color = cat.percent >= 80 ? "bg-green-500" : cat.percent >= 60 ? "bg-yellow-500" : "bg-primary"
             return (
               <div key={cat.category} className="space-y-1">
                 <div className="flex items-center justify-between">
@@ -77,10 +77,10 @@ export function GenericAssessmentResults({ result }: Props) {
       )}
 
       {weakAreas.length > 0 && (
-        <Card className="border-red-500/20">
+        <Card className="border-primary/20">
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold flex items-center gap-1.5 mb-2">
-              <AlertTriangle className="size-4 text-red-500" /> Areas to Improve
+              <AlertTriangle className="size-4 text-primary" /> Areas to Improve
             </h3>
             <ul className="space-y-1">
               {weakAreas.map((w) => (

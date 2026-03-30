@@ -27,7 +27,7 @@ export function GrowthCard({ memberLevel }: Props) {
     : 100
 
   return (
-    <Card className="shadow-lg shadow-red-500/5">
+    <Card className="shadow-lg shadow-primary/5">
       <CardContent className="px-4 py-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -49,7 +49,7 @@ export function GrowthCard({ memberLevel }: Props) {
             </div>
             <div className="h-3 bg-secondary rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -57,7 +57,7 @@ export function GrowthCard({ memberLevel }: Props) {
               <p className="text-xs text-muted-foreground">
                 {(nextLevel.gp - memberLevel.total_gp).toLocaleString()} GP to {nextLevel.name}
               </p>
-              <p className="text-xs text-red-500/70 font-medium">
+              <p className="text-xs text-primary/70 font-medium">
                 {getMotivation(progressPercent)}
               </p>
             </div>

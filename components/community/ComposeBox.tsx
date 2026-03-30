@@ -71,7 +71,7 @@ export function ComposeBox({ promptId, defaultContent, defaultCategory }: Props 
               onClick={() => setCategory(cat.value)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border ${
                 category === cat.value
-                  ? "bg-red-500/10 text-red-500 border-red-500/30"
+                  ? "bg-primary/10 text-primary border-primary/30"
                   : "bg-secondary text-secondary-foreground border-transparent hover:text-foreground"
               }`}
             >
