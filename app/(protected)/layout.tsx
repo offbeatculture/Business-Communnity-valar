@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { TopBar } from "@/components/layout/TopBar"
 import { VisitTracker } from "@/components/engagement/VisitTracker"
+import { MobileNav } from "@/components/layout/MobileNav"
 
 export default async function ProtectedLayout({
   children,
@@ -31,10 +32,11 @@ export default async function ProtectedLayout({
       <Sidebar profile={profile} />
       <div className="md:pl-64 flex flex-col min-h-screen">
         <TopBar profile={profile} />
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:p-6 pb-20 md:pb-6">
           {children}
         </main>
       </div>
+      <MobileNav />
     </div>
   )
 }

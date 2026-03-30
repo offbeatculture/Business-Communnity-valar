@@ -166,7 +166,7 @@ export default async function DashboardPage() {
       {/* Quick Action Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <Link href="/content" className="group">
-          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5">
+          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5 active:bg-accent/50">
             <CardContent className="px-4 py-3 flex items-center gap-3">
               <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <BookOpen className="size-4 text-primary" />
@@ -180,7 +180,7 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/prompts" className="group">
-          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5">
+          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5 active:bg-accent/50">
             <CardContent className="px-4 py-3 flex items-center gap-3">
               <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <Sparkles className="size-4 text-primary" />
@@ -194,7 +194,7 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/community?compose=introduction" className="group">
-          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5">
+          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5 active:bg-accent/50">
             <CardContent className="px-4 py-3 flex items-center gap-3">
               <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <HandMetal className="size-4 text-primary" />
@@ -208,7 +208,7 @@ export default async function DashboardPage() {
         </Link>
 
         <Link href="/community" className="group">
-          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5">
+          <Card className="h-full border-border/50 hover:border-primary/30 transition-all duration-200 hover:shadow-md hover:shadow-primary/5 active:bg-accent/50">
             <CardContent className="px-4 py-3 flex items-center gap-3">
               <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <Users className="size-4 text-primary" />
