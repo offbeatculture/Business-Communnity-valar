@@ -136,6 +136,13 @@ export async function middleware(request: NextRequest) {
       url.pathname = "/renew"
       return NextResponse.redirect(url)
     }
+
+    // TODO(phase-3): surface tier/tier_rank from subscription into request
+    // context (e.g. response headers consumed by server components). Edge
+    // runtime is fiddly here — Supabase server client + cookie writes are
+    // already in flight, and downstream code should call `getUserTier()`
+    // from `lib/auth/tier.ts` for authoritative checks anyway. Revisit if
+    // header-based hints become a measurable win.
   }
 
   return supabaseResponse
