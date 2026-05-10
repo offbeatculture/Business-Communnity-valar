@@ -10,6 +10,11 @@ import {
   getTierRank,
   type ProductTier,
 } from "@/lib/plans"
+import {
+  createSubscription,
+  getRazorpayPlanIdForTier,
+} from "@/lib/razorpay-subscriptions"
+import { recordTierChange } from "@/lib/subscription/tier-change"
 
 // =============================================================================
 // Tier helpers — shared by activation and one-time payment handlers.
@@ -107,7 +112,12 @@ export async function POST(request: Request) {
         return handleSubscriptionStatusChange(event, adminClient, "cancelled")
 
       case "subscription.completed":
-        return handleSubscriptionStatusChange(event, adminClient, "completed")
+        // Phase 5B: a "completed" event fires when a subscription that was
+        // cancelled with `cancel_at_cycle_end=true` reaches its final cycle.
+        // If the row carries a `pending_downgrade_to`, we execute the actual
+        // downgrade here (cancel old + create new on the target tier).
+        // Otherwise it's a normal completion and we just mark the row.
+        return handleSubscriptionCompleted(event, adminClient)
 
       default:
         return NextResponse.json({ message: "Event ignored" })
@@ -504,7 +514,8 @@ async function handleSubscriptionCharged(
 }
 
 // =============================================
-// NEW FLOW: Subscription cancelled / completed
+// NEW FLOW: Subscription cancelled (recurring stopped, row stays active
+// until cycle end — see handleSubscriptionCompleted for the cycle-end event)
 // =============================================
 
 async function handleSubscriptionStatusChange(
@@ -527,4 +538,302 @@ async function handleSubscriptionStatusChange(
     .eq("razorpay_subscription_id", rzpSubscriptionId)
 
   return NextResponse.json({ message: `Subscription ${newStatus}` })
+}
+
+// =============================================
+// NEW FLOW: Subscription completed (cycle ended)
+// =============================================
+//
+// Phase 5B (D2 — Downgrade end-of-period):
+// When a Razorpay subscription that was cancelled with
+// `cancel_at_cycle_end=true` reaches the end of its cycle, Razorpay fires
+// `subscription.completed`. Two outcomes:
+//
+//   A. `pending_downgrade_to` IS NULL  → normal completion. Mark the row
+//      `status='cancelled'`, `recurring_status='completed'`. Done.
+//
+//   B. `pending_downgrade_to` IS SET   → execute the downgrade:
+//        1. Look up locked price for the new tier at the current band.
+//        2. Create a fresh Razorpay subscription on the new tier's plan.
+//        3. UPDATE old subscriptions row → status='cancelled' (frees the
+//           partial unique index `idx_one_active_sub_per_user`).
+//        4. INSERT new subscriptions row → status='active' on new tier.
+//        5. recordTierChange audit row, change_type='downgrade'.
+//
+// Idempotency: if the row is already `status='cancelled'`, exit early —
+// Razorpay retries the same webhook on transient failures.
+
+async function handleSubscriptionCompleted(
+  event: Record<string, unknown>,
+  adminClient: ReturnType<typeof createAdminClient>,
+) {
+  const payload = event.payload as Record<string, unknown>
+  const subEntity = (payload?.subscription as Record<string, unknown>)
+    ?.entity as Record<string, unknown>
+
+  if (!subEntity) {
+    return NextResponse.json(
+      { error: "Missing subscription data" },
+      { status: 400 },
+    )
+  }
+
+  const rzpSubscriptionId = subEntity.id as string
+
+  // 1. Look up the old subscription row by razorpay_subscription_id.
+  const { data: oldSub, error: lookupErr } = await adminClient
+    .from("subscriptions")
+    .select(
+      "id, user_id, status, tier, pending_downgrade_to, pending_downgrade_effective_at",
+    )
+    .eq("razorpay_subscription_id", rzpSubscriptionId)
+    .maybeSingle()
+
+  if (lookupErr) {
+    console.error(
+      "[webhook:subscription.completed] subscription lookup error",
+      { rzpSubscriptionId, lookupErr },
+    )
+    // Do not fail the webhook — Razorpay will retry indefinitely and the
+    // retries will not help if the row simply does not exist yet.
+    return NextResponse.json({ message: "Lookup error, ignored" })
+  }
+
+  if (!oldSub) {
+    console.warn(
+      "[webhook:subscription.completed] no subscription row found for",
+      rzpSubscriptionId,
+    )
+    return NextResponse.json({ message: "Subscription not found, ignored" })
+  }
+
+  // 2. Idempotency: if we already processed this event, the old row is
+  //    `status='cancelled'`. Razorpay retries on network errors — skip.
+  if (oldSub.status === "cancelled") {
+    return NextResponse.json({
+      message: "Already processed, skipping",
+    })
+  }
+
+  const pendingDowngradeTo = oldSub.pending_downgrade_to as
+    | ProductTier
+    | null
+
+  // 3a. NO pending downgrade → normal completion. Mark the row done.
+  if (!pendingDowngradeTo) {
+    const { error: updateErr } = await adminClient
+      .from("subscriptions")
+      .update({ status: "cancelled", recurring_status: "completed" })
+      .eq("id", oldSub.id)
+
+    if (updateErr) {
+      console.error(
+        "[webhook:subscription.completed] failed to mark completed",
+        { id: oldSub.id, updateErr },
+      )
+    }
+    return NextResponse.json({ message: "Subscription completed" })
+  }
+
+  // 3b. PENDING DOWNGRADE → execute the tier switch.
+  const userId = oldSub.user_id as string
+  const oldTier = oldSub.tier as ProductTier
+
+  // 3b.i. Resolve user email — needed for createSubscription notes and
+  //       eventual mandate re-auth email. Email lives in auth.users, not
+  //       profiles; mirror the lookup pattern from handleSubscriptionCharged.
+  const { data: userData, error: emailErr } =
+    await adminClient.auth.admin.getUserById(userId)
+  const email = userData?.user?.email
+  if (emailErr || !email) {
+    console.error(
+      "[webhook:subscription.completed] could not resolve user email for downgrade",
+      { userId, emailErr },
+    )
+    // Mark the old row cancelled so we do not retry forever, but do NOT
+    // create a new subscription — surface for ops.
+    await adminClient
+      .from("subscriptions")
+      .update({
+        status: "cancelled",
+        recurring_status: "completed",
+        pending_downgrade_to: null,
+        pending_downgrade_effective_at: null,
+      })
+      .eq("id", oldSub.id)
+    return NextResponse.json({
+      message: "Downgrade aborted: email unresolved",
+    })
+  }
+
+  // 3b.ii. Compute locked price for the new tier from the currently
+  //        selling band (D4: founding lock is per-tier-of-record; a
+  //        downgrade does NOT carry the old tier's lock — the member
+  //        moves to whatever band is selling for the new tier RIGHT NOW).
+  const activeCount = await countActiveSubscriptions(adminClient)
+  const band = getTierBand(pendingDowngradeTo, activeCount)
+  const newLockedPricePaise = band.monthlyPaise
+  const newTierRank = getTierRank(pendingDowngradeTo)
+  const newTierLabel = getTierLabel(pendingDowngradeTo)
+  const newPlanLabel = `${newTierLabel} — Monthly`
+
+  // 3b.iii. STEP 1 of the two-step DB op: cancel the OLD row BEFORE we
+  //         insert the new one. The partial unique index
+  //         `idx_one_active_sub_per_user` on (user_id) WHERE status='active'
+  //         would otherwise reject the INSERT.
+  const { error: cancelOldErr } = await adminClient
+    .from("subscriptions")
+    .update({
+      status: "cancelled",
+      recurring_status: "completed",
+      pending_downgrade_to: null,
+      pending_downgrade_effective_at: null,
+    })
+    .eq("id", oldSub.id)
+
+  if (cancelOldErr) {
+    console.error(
+      "[webhook:subscription.completed] failed to cancel old row before downgrade insert",
+      { id: oldSub.id, cancelOldErr },
+    )
+    return NextResponse.json(
+      { error: "Failed to cancel old subscription" },
+      { status: 500 },
+    )
+  }
+
+  // 3b.iv. Create a NEW Razorpay subscription on the new tier's plan.
+  //
+  // TODO(Phase 6 — Razorpay mandate continuity): When the OLD subscription
+  // completed, Razorpay typically requires the member to re-authorize the
+  // mandate on the new subscription (the autopay token does not automatically
+  // carry over from one subscription to another). For Phase 5 MVP, if
+  // createSubscription succeeds we proceed; if it fails, we log loudly and
+  // leave the user without an active subscription so ops/support can email
+  // them a Razorpay payment-link or magic-link to complete reauthorization.
+  // Phase 6 should:
+  //   - Surface a clear "Re-authorize your downgrade" email to the member
+  //   - Optionally create the Razorpay subscription with a payment-link the
+  //     member can complete from their inbox
+  //   - Provide a /reauthorize/[token] page that completes the swap
+  let newRazorpaySubId: string
+  let newRazorpayPlanId: string
+  try {
+    const created = await createSubscription({
+      email,
+      sessionId: `tier_downgrade:${oldSub.id}`,
+      tier: pendingDowngradeTo,
+    })
+    newRazorpaySubId = created.subscription.id
+    newRazorpayPlanId = created.planId
+  } catch (err) {
+    // The cycle has ended on Razorpay's side. The old row is already
+    // cancelled. We CANNOT revive the old subscription — it is genuinely
+    // over on Razorpay. Surface the failure loudly for ops.
+    console.error(
+      "[webhook:subscription.completed] Razorpay createSubscription FAILED " +
+        "for pending downgrade — user is left without an active subscription. " +
+        "Likely cause: mandate did not carry over and member needs to " +
+        "re-authorize. Send them a payment-link via email.",
+      {
+        userId,
+        oldSubscriptionId: oldSub.id,
+        oldTier,
+        newTier: pendingDowngradeTo,
+        email,
+        err,
+      },
+    )
+    return NextResponse.json({
+      message:
+        "Downgrade partially processed — old subscription cancelled; new subscription creation failed (mandate reauthorization required)",
+    })
+  }
+
+  // 3b.v. STEP 2 of the two-step DB op: INSERT the new active row.
+  //
+  // Resolve the Razorpay plan id defensively: createSubscription already
+  // returns `planId`, but we double-check via the env-var resolver so that
+  // the row always carries a non-null value (matches handleSubscriptionActivated).
+  let resolvedPlanId: string
+  try {
+    resolvedPlanId = newRazorpayPlanId || getRazorpayPlanIdForTier(pendingDowngradeTo)
+  } catch {
+    resolvedPlanId = newRazorpayPlanId
+  }
+
+  const startsAt = new Date()
+  const expiresAt = new Date(startsAt)
+  expiresAt.setDate(expiresAt.getDate() + 30)
+
+  const { data: newSub, error: insertErr } = await adminClient
+    .from("subscriptions")
+    .insert({
+      user_id: userId,
+      razorpay_subscription_id: newRazorpaySubId,
+      razorpay_plan_id: resolvedPlanId,
+      plan_name: `${pendingDowngradeTo}_monthly`,
+      plan_label: newPlanLabel,
+      base_amount_paise: newLockedPricePaise,
+      amount_paid: newLockedPricePaise,
+      currency: "INR",
+      status: "active",
+      recurring_status: "active",
+      starts_at: startsAt.toISOString(),
+      expires_at: expiresAt.toISOString(),
+      tier: pendingDowngradeTo,
+      tier_rank: newTierRank,
+      locked_price_paise: newLockedPricePaise,
+      band_at_signup: band.band,
+    })
+    .select("id")
+    .single()
+
+  if (insertErr || !newSub) {
+    // The cycle has ENDED on Razorpay's side. Per the spec, do NOT try to
+    // revive the old row — it is genuinely terminated. Mark for ops.
+    console.error(
+      "[webhook:subscription.completed] new subscription INSERT failed AFTER " +
+        "old row was cancelled and new Razorpay sub was created. " +
+        "Old subscription is permanently terminated; new Razorpay subscription " +
+        "is orphaned. Manual intervention required.",
+      {
+        userId,
+        orphanedRazorpaySubscriptionId: newRazorpaySubId,
+        oldSubscriptionId: oldSub.id,
+        targetTier: pendingDowngradeTo,
+        insertErr,
+      },
+    )
+    return NextResponse.json({
+      message: "Downgrade partially processed — manual intervention required",
+    })
+  }
+
+  // 3b.vi. recordTierChange audit row. effective_at = now (downgrade
+  //        actually took effect this moment, not when it was requested).
+  try {
+    await recordTierChange(adminClient, {
+      userId,
+      subscriptionId: newSub.id as string,
+      fromTier: oldTier,
+      toTier: pendingDowngradeTo,
+      changeType: "downgrade",
+      effectiveAt: new Date(),
+      proRatedPaise: null,
+    })
+  } catch (err) {
+    // Audit failure does not undo the downgrade — log and continue. The
+    // downgrade is real (Razorpay confirmed) and the subscriptions table
+    // reflects it. The tier_changes row is purely for reporting.
+    console.error(
+      "[webhook:subscription.completed] recordTierChange failed (downgrade " +
+        "is still effective, audit row missing)",
+      { userId, oldSubscriptionId: oldSub.id, newSubscriptionId: newSub.id, err },
+    )
+  }
+
+  return NextResponse.json({
+    message: `Subscription downgraded from ${oldTier} to ${pendingDowngradeTo}`,
+  })
 }
