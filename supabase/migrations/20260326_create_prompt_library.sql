@@ -13,13 +13,14 @@ create table if not exists prompt_library (
 );
 
 -- Index for filtering
-create index idx_prompt_library_category on prompt_library (category);
-create index idx_prompt_library_linked on prompt_library (linked_content_id) where linked_content_id is not null;
+create index if not exists idx_prompt_library_category on prompt_library (category);
+create index if not exists idx_prompt_library_linked on prompt_library (linked_content_id) where linked_content_id is not null;
 
 -- RLS
 alter table prompt_library enable row level security;
 
 -- Authenticated users can read published prompts
+drop policy if exists "Authenticated users can read published prompts" on prompt_library;
 create policy "Authenticated users can read published prompts"
   on prompt_library for select
   to authenticated
@@ -34,6 +35,7 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists prompt_library_updated_at on prompt_library;
 create trigger prompt_library_updated_at
   before update on prompt_library
   for each row
