@@ -4,12 +4,21 @@ import crypto from "crypto"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { generateInvoice } from "@/lib/invoice"
+import {
+  getTierBand,
+  getTierRank,
+  type ProductTier,
+} from "@/lib/plans"
 
 const VerifySchema = z.object({
   razorpay_payment_id: z.string(),
   razorpay_order_id: z.string(),
   razorpay_signature: z.string(),
 })
+
+function isProductTier(value: unknown): value is ProductTier {
+  return value === "library" || value === "workshop" || value === "ai_lab"
+}
 
 export async function POST(request: Request) {
   try {
@@ -60,11 +69,25 @@ export async function POST(request: Request) {
     const planLabel = notes.plan_label ?? "Subscription"
     const baseAmount = parseInt(notes.base_amount ?? "0", 10)
     const durationDays = parseInt(notes.duration_days ?? "30", 10)
+    // Tier from order notes (set by create-order). Default 'library' for any
+    // legacy orders created before this field existed.
+    const tier: ProductTier = isProductTier(notes.tier) ? notes.tier : "library"
 
     // Calculate dates
     const startsAt = new Date()
     const expiresAt = new Date(startsAt)
     expiresAt.setDate(expiresAt.getDate() + durationDays)
+
+    // Tier-aware fields. Same band-derived fallback as the webhook so legacy
+    // one-time rows always carry sensible tier metadata.
+    const { count: activeCount } = await adminClient
+      .from("subscriptions")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "active")
+      .gte("expires_at", new Date().toISOString())
+
+    const band = getTierBand(tier, activeCount ?? 0)
+    const lockedPricePaise = baseAmount > 0 ? baseAmount : band.monthlyPaise
 
     // Get user profile
     const { data: profile } = await adminClient
@@ -86,6 +109,12 @@ export async function POST(request: Request) {
         status: "active",
         starts_at: startsAt.toISOString(),
         expires_at: expiresAt.toISOString(),
+        tier,
+        tier_rank: getTierRank(tier),
+        locked_price_paise: lockedPricePaise,
+        band_at_signup: band.band,
+        // One-time payments don't bind to a Razorpay plan.
+        razorpay_plan_id: null,
       })
       .select("id")
       .single()

@@ -4,6 +4,45 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { generateInvoice } from "@/lib/invoice"
 import { createMagicLoginToken } from "@/lib/magic-link"
 import { sendMagicLinkEmail, sendPaymentConfirmationEmail } from "@/lib/ses"
+import {
+  getTierBand,
+  getTierLabel,
+  getTierRank,
+  type ProductTier,
+} from "@/lib/plans"
+
+// =============================================================================
+// Tier helpers — shared by activation and one-time payment handlers.
+//
+// Phase 2A: replaces the hardcoded `49900` price fallback with a band-derived
+// price so subscription rows always carry a sensible `locked_price_paise`
+// even if Razorpay omits `plan_amount` from the webhook payload.
+// =============================================================================
+
+function isProductTier(value: unknown): value is ProductTier {
+  return value === "library" || value === "workshop" || value === "ai_lab"
+}
+
+/**
+ * Counts active, non-expired subscriptions. Used to determine which milestone
+ * band a new subscription falls into. Errors are swallowed and 0 is returned
+ * — better to put new signups in the founding band than to fail the webhook.
+ */
+async function countActiveSubscriptions(
+  adminClient: ReturnType<typeof createAdminClient>,
+): Promise<number> {
+  const { count, error } = await adminClient
+    .from("subscriptions")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "active")
+    .gte("expires_at", new Date().toISOString())
+
+  if (error) {
+    console.error("Failed to count active subscriptions:", error)
+    return 0
+  }
+  return count ?? 0
+}
 
 export async function POST(request: Request) {
   try {
@@ -102,6 +141,9 @@ async function handlePaymentCaptured(
   const planLabel = notes.plan_label ?? "Subscription"
   const baseAmount = parseInt(notes.base_amount ?? "0", 10)
   const durationDays = parseInt(notes.duration_days ?? "30", 10)
+  // Tier comes from order notes (set by create-order). Default 'library' for
+  // legacy one-time payments that pre-date the three-tier system.
+  const tier: ProductTier = isProductTier(notes.tier) ? notes.tier : "library"
 
   if (!userId) {
     console.error("Webhook payment.captured: missing user_id in notes")
@@ -123,6 +165,13 @@ async function handlePaymentCaptured(
   const expiresAt = new Date(startsAt)
   expiresAt.setDate(expiresAt.getDate() + durationDays)
 
+  // Tier-aware fields. baseAmount is the pre-GST base in paise, recorded by
+  // create-order from `getCurrentlySellingTiers`. If it's missing/zero we fall
+  // back to the band's monthly price (no more hardcoded ₹499 fallback).
+  const activeCount = await countActiveSubscriptions(adminClient)
+  const band = getTierBand(tier, activeCount)
+  const lockedPricePaise = baseAmount > 0 ? baseAmount : band.monthlyPaise
+
   const { data: subscription } = await adminClient
     .from("subscriptions")
     .insert({
@@ -137,6 +186,12 @@ async function handlePaymentCaptured(
       status: "active",
       starts_at: startsAt.toISOString(),
       expires_at: expiresAt.toISOString(),
+      tier,
+      tier_rank: getTierRank(tier),
+      locked_price_paise: lockedPricePaise,
+      band_at_signup: band.band,
+      // No razorpay_plan_id for one-time payments — they don't bind to a plan.
+      razorpay_plan_id: null,
     })
     .select("id")
     .single()
@@ -254,26 +309,56 @@ async function handleSubscriptionActivated(
     return NextResponse.json({ message: "User already has active subscription" })
   }
 
-  // Create subscription record
-  const planAmount = (subEntity.plan_amount as number) ?? 49900
+  // Tier resolution. The new `createSubscription()` writes `tier` into Razorpay
+  // notes; legacy subscriptions activating mid-deploy may omit it, in which
+  // case we default to 'library' so the legacy single-tier flow keeps working.
+  const tier: ProductTier = isProductTier(notes.tier) ? notes.tier : "library"
+  const tierRank = getTierRank(tier)
+  const tierLabel = getTierLabel(tier)
+
+  // Band derivation: the band the user is signing up in is determined by the
+  // currently-selling band for their tier (NOT the count of users already at
+  // that tier — bands are global, per the locked plan in plans.ts).
+  const activeCount = await countActiveSubscriptions(adminClient)
+  const band = getTierBand(tier, activeCount)
+
+  // Price lock: prefer Razorpay's `plan_amount` (paise, pre-GST). When absent
+  // (occasional Razorpay quirk on activation events), fall back to the band's
+  // monthly price — this replaces the old hardcoded `49900` fallback.
+  const planAmountFromRazorpay =
+    typeof subEntity.plan_amount === "number" ? subEntity.plan_amount : null
+  const lockedPricePaise = planAmountFromRazorpay ?? band.monthlyPaise
+
+  // Bind the subscription row to the Razorpay plan it was created against so
+  // tier changes can compare current plan vs requested plan in Phase 5.
+  const razorpayPlanId =
+    typeof subEntity.plan_id === "string" ? subEntity.plan_id : null
+
   const startsAt = new Date()
   const expiresAt = new Date(startsAt)
   expiresAt.setDate(expiresAt.getDate() + 30)
+
+  const planLabel = `${tierLabel} — Monthly`
 
   const { data: subscription } = await adminClient
     .from("subscriptions")
     .insert({
       user_id: user.id,
       razorpay_subscription_id: rzpSubscriptionId,
-      plan_name: "monthly",
-      plan_label: "Monthly Subscription",
-      base_amount_paise: planAmount,
-      amount_paid: planAmount,
+      plan_name: `${tier}_monthly`,
+      plan_label: planLabel,
+      base_amount_paise: lockedPricePaise,
+      amount_paid: lockedPricePaise,
       currency: "INR",
       status: "active",
       recurring_status: "active",
       starts_at: startsAt.toISOString(),
       expires_at: expiresAt.toISOString(),
+      tier,
+      tier_rank: tierRank,
+      locked_price_paise: lockedPricePaise,
+      band_at_signup: band.band,
+      razorpay_plan_id: razorpayPlanId,
     })
     .select("id")
     .single()
@@ -309,8 +394,8 @@ async function handleSubscriptionActivated(
     generateInvoice({
       userId: user.id,
       subscriptionId: subscription.id,
-      planLabel: "Monthly Subscription",
-      basePaise: planAmount,
+      planLabel,
+      basePaise: lockedPricePaise,
       customerName: profile?.full_name ?? email,
       customerEmail: email,
       customerGstin: profile?.gstin,
@@ -321,8 +406,8 @@ async function handleSubscriptionActivated(
   // Send payment confirmation email
   sendPaymentConfirmationEmail({
     to: email,
-    planLabel: "Monthly Subscription",
-    amount: `₹${(planAmount / 100).toFixed(2)} + 18% GST`,
+    planLabel,
+    amount: `₹${(lockedPricePaise / 100).toFixed(2)} + 18% GST`,
   }).catch((err) => console.error("Payment confirmation email error:", err))
 
   return NextResponse.json({ message: "Subscription activated, user created" })
@@ -346,10 +431,12 @@ async function handleSubscriptionCharged(
 
   const rzpSubscriptionId = subEntity.id as string
 
-  // Find existing subscription
+  // Find existing subscription. We pull tier metadata so we can fall back to
+  // the locked price when generating the renewal invoice — but we MUST NOT
+  // rewrite tier columns on renewal. Locked price stays locked (D4).
   const { data: subscription } = await adminClient
     .from("subscriptions")
-    .select("id, user_id, plan_label, base_amount_paise")
+    .select("id, user_id, plan_label, base_amount_paise, tier, locked_price_paise")
     .eq("razorpay_subscription_id", rzpSubscriptionId)
     .single()
 
@@ -358,7 +445,9 @@ async function handleSubscriptionCharged(
     return NextResponse.json({ error: "Subscription not found" }, { status: 404 })
   }
 
-  // Extend expiry by 30 days from now
+  // Extend expiry by 30 days from now. IMPORTANT: do NOT touch tier,
+  // tier_rank, locked_price_paise, band_at_signup, or razorpay_plan_id here —
+  // those are immutable across renewals. Only the billing window moves.
   const newExpiry = new Date()
   newExpiry.setDate(newExpiry.getDate() + 30)
 
@@ -370,6 +459,16 @@ async function handleSubscriptionCharged(
       recurring_status: "active",
     })
     .eq("id", subscription.id)
+
+  // Resolve the canonical price for invoicing: locked_price_paise (the
+  // founding price the member signed up at) takes precedence, then the older
+  // base_amount_paise column, then a defensive zero (better than misreporting).
+  const renewalPaise =
+    subscription.locked_price_paise ??
+    subscription.base_amount_paise ??
+    0
+
+  const renewalLabel = subscription.plan_label ?? "Monthly Subscription"
 
   // Generate invoice for this charge
   const { data: profile } = await adminClient
@@ -383,8 +482,8 @@ async function handleSubscriptionCharged(
   generateInvoice({
     userId: subscription.user_id,
     subscriptionId: subscription.id,
-    planLabel: subscription.plan_label ?? "Monthly Subscription",
-    basePaise: subscription.base_amount_paise ?? 49900,
+    planLabel: renewalLabel,
+    basePaise: renewalPaise,
     customerName: profile?.full_name ?? "Customer",
     customerEmail: userData?.user?.email ?? "",
     customerGstin: profile?.gstin,
@@ -396,8 +495,8 @@ async function handleSubscriptionCharged(
     sendPaymentConfirmationEmail({
       to: userData.user.email,
       name: profile?.full_name ?? undefined,
-      planLabel: subscription.plan_label ?? "Monthly Subscription",
-      amount: `₹${((subscription.base_amount_paise ?? 49900) / 100).toFixed(2)} + 18% GST`,
+      planLabel: renewalLabel,
+      amount: `₹${(renewalPaise / 100).toFixed(2)} + 18% GST`,
     }).catch((err) => console.error("Renewal email error:", err))
   }
 

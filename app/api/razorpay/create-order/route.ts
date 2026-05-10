@@ -4,8 +4,15 @@ import { createClient } from "@/lib/supabase/server"
 import { razorpay } from "@/lib/razorpay"
 import { getPlansForCurrentTier, calculateGST } from "@/lib/plans"
 
+// Phase 2A: accept tier in the body so the legacy one-time payment path can
+// be triggered for any of the three product tiers. The pricing math itself
+// still flows through `getPlansForCurrentTier` (legacy single-tier bands)
+// because the public plans page rewrite to the 3-tier × 5-band shape lives
+// in a separate Phase 2B task. Tier only affects what we stamp into order
+// notes so the verify-payment + webhook handlers persist the right metadata.
 const CreateOrderSchema = z.object({
   planId: z.enum(["monthly", "annual"]),
+  tier: z.enum(["library", "workshop", "ai_lab"]).optional(),
 })
 
 export async function POST(request: Request) {
@@ -22,6 +29,9 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
     }
+
+    // Default to 'library' for legacy callers that don't yet send tier.
+    const tier = parsed.data.tier ?? "library"
 
     // Get active subscriber count for tier pricing
     const { count } = await supabase
@@ -49,6 +59,7 @@ export async function POST(request: Request) {
         plan_label: plan.label,
         base_amount: plan.pricePaise.toString(),
         duration_days: plan.durationDays.toString(),
+        tier,
       },
     })
 

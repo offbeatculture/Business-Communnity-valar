@@ -2,9 +2,14 @@ import { NextResponse } from "next/server"
 import { z } from "zod/v4"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createSubscription } from "@/lib/razorpay-subscriptions"
+import type { ProductTier } from "@/lib/plans"
 
+// Phase 2A: accept tier in the request body. Default to 'library' only when
+// the field is absent (back-compat for any legacy clients still in flight
+// during the rollout). New clients should always pass `tier` explicitly.
 const createSubSchema = z.object({
   sessionId: z.string().uuid("Invalid session ID"),
+  tier: z.enum(["library", "workshop", "ai_lab"]).optional(),
 })
 
 export async function POST(request: Request) {
@@ -14,12 +19,13 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid session ID" },
+        { error: "Invalid request" },
         { status: 400 }
       )
     }
 
     const { sessionId } = parsed.data
+    const tier: ProductTier = parsed.data.tier ?? "library"
     const supabase = createAdminClient()
 
     // Fetch session
@@ -64,17 +70,23 @@ export async function POST(request: Request) {
       })
     }
 
-    // Create Razorpay subscription
-    const rzpSubscription = await createSubscription({
+    // Create Razorpay subscription on the tier-specific plan. Razorpay notes
+    // become the source of truth for tier — the webhook reads them back to
+    // populate the subscriptions row.
+    const { subscription: rzpSubscription } = await createSubscription({
       email: session.email,
       sessionId,
+      tier,
     })
 
-    // Update session with subscription ID
+    // Update session with subscription ID and a tier-aware plan_id label so
+    // operators reading onboarding_sessions can see at a glance which tier
+    // the user picked. Schema-compatible: the column is free-form text.
     await supabase
       .from("onboarding_sessions")
       .update({
         razorpay_subscription_id: rzpSubscription.id,
+        plan_id: `${tier}_monthly`,
         status: "payment_pending",
         updated_at: new Date().toISOString(),
       })
