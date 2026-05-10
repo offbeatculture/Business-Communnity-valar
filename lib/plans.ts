@@ -1,6 +1,25 @@
 // ============================================================
-// Superhuman Entrepreneur — Pricing Engine
-// Tiered pricing that increases as community grows
+// Community App — Pricing Engine
+//
+// This file holds TWO pricing systems during the Phase 1 → Phase 2
+// transition described in Three-tier-implementation-plan.md:
+//
+//   1. LEGACY: single-product `TIERS` (founding | early | growth | premium)
+//      with the `getCurrentTier`, `getPlansForCurrentTier`,
+//      `getSpotsRemaining`, `getNextTier`, `getAllTiers` helpers. Still
+//      consumed by `(public)/plans/` and `app/api/razorpay/create-order/`.
+//
+//   2. NEW: 3-tier × 5-band system (`TIER_BANDS`) covering Library,
+//      Workshop, and AI Lab products with founding | growth | scaled |
+//      mature | cap milestone bands.
+//
+// Phase 2 will migrate the legacy callers onto the new exports and the
+// legacy `TIERS` block will then be deleted. Until that migration lands,
+// both systems must coexist and the legacy exports must keep their
+// current signatures.
+//
+// GST helpers, currency formatting, and `SAC_CODE` are shared across
+// both systems and are unchanged.
 // ============================================================
 
 // ── GST Constants ──
@@ -9,6 +28,10 @@ export const GST_RATE = 0.18
 export const CGST_RATE = 0.09
 export const SGST_RATE = 0.09
 export const SAC_CODE = "998431"
+
+// ============================================================
+// LEGACY single-product pricing (Phase 1 — kept for back-compat)
+// ============================================================
 
 // ── Tier Definitions ──
 
@@ -146,4 +169,258 @@ export function formatINR(paise: number): string {
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(rupees)
+}
+
+// ============================================================
+// NEW 3-tier × 5-band pricing (per Three-tier-implementation-plan.md)
+// ============================================================
+
+// ── Tier + Band Types ──
+
+export type ProductTier = "library" | "workshop" | "ai_lab"
+export type TierBandName = "founding" | "growth" | "scaled" | "mature" | "cap"
+
+export type TierBand = {
+  tier: ProductTier
+  band: TierBandName
+  minMembers: number
+  maxMembers: number // Infinity for cap
+  monthlyPaise: number
+  annualPaise: number
+  tierLabel: string // "Library" | "Workshop" | "AI Lab"
+  tierRank: 1 | 2 | 3
+}
+
+export type TierPricingCard = {
+  tier: ProductTier
+  tierLabel: string
+  tierRank: 1 | 2 | 3
+  band: TierBandName
+  monthlyPaise: number
+  annualPaise: number
+  spotsRemainingInBand: number // Infinity for cap
+}
+
+// ── Tier Metadata (rank + label lookups) ──
+
+export const TIER_RANKS: Readonly<Record<ProductTier, 1 | 2 | 3>> = {
+  library: 1,
+  workshop: 2,
+  ai_lab: 3,
+}
+
+export const TIER_LABELS: Readonly<Record<ProductTier, string>> = {
+  library: "Library",
+  workshop: "Workshop",
+  ai_lab: "AI Lab",
+}
+
+// ── The 15-entry pricing matrix (3 tiers × 5 bands) ──
+// Annual = 10 × monthly (2 months free), mirroring the legacy TIERS pattern.
+
+export const TIER_BANDS: readonly TierBand[] = [
+  // Library (rank 1)
+  {
+    tier: "library",
+    band: "founding",
+    minMembers: 1,
+    maxMembers: 100,
+    monthlyPaise: 49900,
+    annualPaise: 499000,
+    tierLabel: "Library",
+    tierRank: 1,
+  },
+  {
+    tier: "library",
+    band: "growth",
+    minMembers: 101,
+    maxMembers: 500,
+    monthlyPaise: 69900,
+    annualPaise: 699000,
+    tierLabel: "Library",
+    tierRank: 1,
+  },
+  {
+    tier: "library",
+    band: "scaled",
+    minMembers: 501,
+    maxMembers: 1500,
+    monthlyPaise: 99900,
+    annualPaise: 999000,
+    tierLabel: "Library",
+    tierRank: 1,
+  },
+  {
+    tier: "library",
+    band: "mature",
+    minMembers: 1501,
+    maxMembers: 3000,
+    monthlyPaise: 149900,
+    annualPaise: 1499000,
+    tierLabel: "Library",
+    tierRank: 1,
+  },
+  {
+    tier: "library",
+    band: "cap",
+    minMembers: 3001,
+    maxMembers: Infinity,
+    monthlyPaise: 199900,
+    annualPaise: 1999000,
+    tierLabel: "Library",
+    tierRank: 1,
+  },
+  // Workshop (rank 2)
+  {
+    tier: "workshop",
+    band: "founding",
+    minMembers: 1,
+    maxMembers: 100,
+    monthlyPaise: 129900,
+    annualPaise: 1299000,
+    tierLabel: "Workshop",
+    tierRank: 2,
+  },
+  {
+    tier: "workshop",
+    band: "growth",
+    minMembers: 101,
+    maxMembers: 500,
+    monthlyPaise: 149900,
+    annualPaise: 1499000,
+    tierLabel: "Workshop",
+    tierRank: 2,
+  },
+  {
+    tier: "workshop",
+    band: "scaled",
+    minMembers: 501,
+    maxMembers: 1500,
+    monthlyPaise: 179900,
+    annualPaise: 1799000,
+    tierLabel: "Workshop",
+    tierRank: 2,
+  },
+  {
+    tier: "workshop",
+    band: "mature",
+    minMembers: 1501,
+    maxMembers: 3000,
+    monthlyPaise: 249900,
+    annualPaise: 2499000,
+    tierLabel: "Workshop",
+    tierRank: 2,
+  },
+  {
+    tier: "workshop",
+    band: "cap",
+    minMembers: 3001,
+    maxMembers: Infinity,
+    monthlyPaise: 299900,
+    annualPaise: 2999000,
+    tierLabel: "Workshop",
+    tierRank: 2,
+  },
+  // AI Lab (rank 3)
+  {
+    tier: "ai_lab",
+    band: "founding",
+    minMembers: 1,
+    maxMembers: 100,
+    monthlyPaise: 149900,
+    annualPaise: 1499000,
+    tierLabel: "AI Lab",
+    tierRank: 3,
+  },
+  {
+    tier: "ai_lab",
+    band: "growth",
+    minMembers: 101,
+    maxMembers: 500,
+    monthlyPaise: 179900,
+    annualPaise: 1799000,
+    tierLabel: "AI Lab",
+    tierRank: 3,
+  },
+  {
+    tier: "ai_lab",
+    band: "scaled",
+    minMembers: 501,
+    maxMembers: 1500,
+    monthlyPaise: 249900,
+    annualPaise: 2499000,
+    tierLabel: "AI Lab",
+    tierRank: 3,
+  },
+  {
+    tier: "ai_lab",
+    band: "mature",
+    minMembers: 1501,
+    maxMembers: 3000,
+    monthlyPaise: 349900,
+    annualPaise: 3499000,
+    tierLabel: "AI Lab",
+    tierRank: 3,
+  },
+  {
+    tier: "ai_lab",
+    band: "cap",
+    minMembers: 3001,
+    maxMembers: Infinity,
+    monthlyPaise: 499900,
+    annualPaise: 4999000,
+    tierLabel: "AI Lab",
+    tierRank: 3,
+  },
+]
+
+// ── New tier-aware helpers ──
+
+// Returns the band currently selling for the given tier at the current member count.
+// Falls back to the `cap` band if `activeCount` is past every defined band.
+export function getTierBand(tier: ProductTier, activeCount: number): TierBand {
+  const bandsForTier = TIER_BANDS.filter((b) => b.tier === tier)
+  const match = bandsForTier.find(
+    (b) => activeCount >= b.minMembers && activeCount <= b.maxMembers,
+  )
+  return match ?? bandsForTier[bandsForTier.length - 1]
+}
+
+// Returns three pricing cards (one per ProductTier) reflecting what a new joiner pays right now.
+export function getCurrentlySellingTiers(activeCount: number): TierPricingCard[] {
+  const productTiers: ProductTier[] = ["library", "workshop", "ai_lab"]
+  return productTiers.map((tier) => {
+    const band = getTierBand(tier, activeCount)
+    const spotsRemainingInBand =
+      band.maxMembers === Infinity
+        ? Infinity
+        : Math.max(0, band.maxMembers - activeCount)
+    return {
+      tier: band.tier,
+      tierLabel: band.tierLabel,
+      tierRank: band.tierRank,
+      band: band.band,
+      monthlyPaise: band.monthlyPaise,
+      annualPaise: band.annualPaise,
+      spotsRemainingInBand,
+    }
+  })
+}
+
+// Returns the numeric rank for a tier (Library=1, Workshop=2, AI Lab=3).
+export function getTierRank(tier: ProductTier): 1 | 2 | 3 {
+  return TIER_RANKS[tier]
+}
+
+// Returns true when `userTier` rank is at least as high as `requiredTier` rank.
+export function tierMeetsRequirement(
+  userTier: ProductTier,
+  requiredTier: ProductTier,
+): boolean {
+  return getTierRank(userTier) >= getTierRank(requiredTier)
+}
+
+// Returns the human-readable label for a tier ("Library" | "Workshop" | "AI Lab").
+export function getTierLabel(tier: ProductTier): string {
+  return TIER_LABELS[tier]
 }
