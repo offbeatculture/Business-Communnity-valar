@@ -15,6 +15,7 @@ import {
   Sparkles,
   ClipboardCheck,
   FileQuestion,
+  Calendar,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
@@ -23,6 +24,7 @@ const navItems = [
   { label: "Content Library", href: "/content", icon: BookOpen },
   { label: "Prompts", href: "/prompts", icon: Sparkles },
   { label: "Assessments", href: "/assessment", icon: FileQuestion },
+  { label: "Events", href: "/events", icon: Calendar },
   { label: "Community", href: "/community", icon: MessageSquare },
   { label: "My Profile", href: "/profile", icon: User },
   { label: "Subscription", href: "/subscription", icon: CreditCard },
@@ -30,6 +32,7 @@ const navItems = [
 
 const adminItems = [
   { label: "Admin Panel", href: "/admin", icon: Shield },
+  { label: "Events", href: "/admin/events", icon: Calendar },
   { label: "Daily Prompts", href: "/admin/prompts", icon: Lightbulb },
   { label: "Prompt Library", href: "/admin/prompts-library", icon: Sparkles },
   { label: "Assessment", href: "/admin/assessment", icon: ClipboardCheck },

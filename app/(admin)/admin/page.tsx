@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { BookOpen, Lightbulb, MessageSquare, Users } from "lucide-react"
+import { BookOpen, Calendar, Lightbulb, MessageSquare, Users } from "lucide-react"
 import { AdminStatsCards } from "@/components/admin/AdminStatsCards"
 import { fetchAdminStats } from "@/lib/profile"
 
@@ -67,6 +67,19 @@ export default async function AdminPage() {
               </CardTitle>
               <CardDescription>
                 Create and schedule daily prompts for member engagement.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
+        <Link href="/admin/events">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="size-5 text-primary" />
+                Live Events
+              </CardTitle>
+              <CardDescription>
+                Schedule workshops, AI Lab sessions, and manage replays.
               </CardDescription>
             </CardHeader>
           </Card>
