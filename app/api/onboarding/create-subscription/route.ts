@@ -5,6 +5,7 @@ import { createSubscription } from "@/lib/razorpay-subscriptions"
 
 const createSubSchema = z.object({
   sessionId: z.string().uuid("Invalid session ID"),
+  tier: z.enum(["library", "workshop", "ai_lab"]).default("library"),
 })
 
 export async function POST(request: Request) {
@@ -14,12 +15,12 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid session ID" },
+        { error: "Invalid subscription request" },
         { status: 400 }
       )
     }
 
-    const { sessionId } = parsed.data
+    const { sessionId, tier } = parsed.data
     const supabase = createAdminClient()
 
     // Fetch session
@@ -56,7 +57,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // If session already has a subscription, return it (idempotent)
+    // If session already has a subscription, return it idempotently.
+    // Important: this means the first selected tier wins for this session.
     if (session.razorpay_subscription_id) {
       return NextResponse.json({
         subscriptionId: session.razorpay_subscription_id,
@@ -64,17 +66,19 @@ export async function POST(request: Request) {
       })
     }
 
-    // Create Razorpay subscription
+    // Create Razorpay subscription for selected tier
     const rzpSubscription = await createSubscription({
       email: session.email,
       sessionId,
+      tier,
     })
 
-    // Update session with subscription ID
+    // Update session with subscription ID and selected tier
     await supabase
       .from("onboarding_sessions")
       .update({
         razorpay_subscription_id: rzpSubscription.id,
+        selected_tier: tier,
         status: "payment_pending",
         updated_at: new Date().toISOString(),
       })
@@ -86,6 +90,7 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error("POST /api/onboarding/create-subscription error:", error)
+
     return NextResponse.json(
       { error: "Failed to create subscription" },
       { status: 500 }
