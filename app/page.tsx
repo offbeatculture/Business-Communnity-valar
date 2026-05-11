@@ -8,7 +8,7 @@ export default function LandingPage() {
     <div id="top" className="min-h-screen flex flex-col">
       <Hero />
       <Features />
-      <PricingSection />
+      {/* <PricingSection /> */}
       <Footer />
     </div>
   )
