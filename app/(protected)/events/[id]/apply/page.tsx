@@ -2,9 +2,9 @@ import Link from "next/link"
 import { redirect } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
+import { getUserTier } from "@/lib/auth/tier"
 import {
   formatIstDateTime,
-  getActiveUserTier,
   userCanRsvp,
   type HotSeatApplicationRow,
   type LiveEventRow,
@@ -60,7 +60,10 @@ export default async function HotSeatApplyPage({ params }: Props) {
     new Date(eventRow.starts_at).getTime() < new Date().getTime()
   const isCancelled = eventRow.status === "cancelled"
 
-  const { tier } = await getActiveUserTier(user.id)
+  // getUserTier returns null when there is no active sub; userCanRsvp
+  // correctly returns false in that case.
+  const tierState = await getUserTier()
+  const tier = tierState?.tier ?? null
   const canApply = userCanRsvp(tier, eventRow)
 
   const { data: existing } = await supabase

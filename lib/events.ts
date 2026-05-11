@@ -10,7 +10,6 @@
 
 import type { ProductTier } from "@/lib/plans"
 import { getTierRank } from "@/lib/plans"
-import { createClient } from "@/lib/supabase/server"
 
 // ── Inline result types ──
 // We keep these inline (no Supabase type regen) per the Phase 4 brief.
@@ -74,28 +73,6 @@ export type HotSeatApplicationRow = {
   created_at: string
   reviewed_at: string | null
   reviewed_by: string | null
-}
-
-// ── Active tier resolution ──
-// TODO: replace with getUserTier when Phase 3 helpers land
-// (lib/auth/tier.ts is being authored by a parallel agent).
-export async function getActiveUserTier(
-  userId: string,
-): Promise<{ tier: ProductTier | null; rank: 0 | 1 | 2 | 3 }> {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from("subscriptions")
-    .select("tier, tier_rank")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .order("tier_rank", { ascending: false })
-    .limit(1)
-    .maybeSingle()
-
-  if (!data) return { tier: null, rank: 0 }
-  const tier = data.tier as ProductTier | null
-  const rank = (data.tier_rank ?? 0) as 0 | 1 | 2 | 3
-  return { tier, rank }
 }
 
 // ── IST formatters ──

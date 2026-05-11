@@ -115,9 +115,17 @@ export async function POST(request: Request) {
       )
     }
 
-    // 5. Read pro-rate from the order notes so the audit row reflects the
-    //    exact paise the user paid. We fetch the order from Razorpay to
-    //    keep the verify route self-contained.
+    // 5. Read pro-rate from the order notes for the audit row.
+    //
+    //    IMPORTANT distinction:
+    //    - `order.amount` is the GST-INCLUSIVE total Razorpay actually charged
+    //      (set in /api/subscription/upgrade as calculateGST(base).total).
+    //    - `notes.base_amount` is the PRE-GST base pro-rate paise.
+    //
+    //    We record the PRE-GST base in `tier_changes.pro_rated_paise` so the
+    //    analytics row reflects subscription revenue minus tax, matching how
+    //    we book base revenue elsewhere. Tax-inclusive figures live on the
+    //    Razorpay order itself if reconciliation is ever needed.
     const { razorpay: razorpayLib } = await import("@/lib/razorpay")
     const order = await razorpayLib.orders.fetch(razorpay_order_id)
     const orderNotes = (order.notes ?? {}) as Record<string, string>

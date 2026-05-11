@@ -27,7 +27,8 @@ import {
   Shield,
   Lightbulb,
   Sparkles,
-  FileQuestion
+  FileQuestion,
+  Calendar
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -44,6 +45,7 @@ const mobileNavItems = [
   { label: "Content Library", href: "/content", icon: BookOpen },
   { label: "Prompts", href: "/prompts", icon: Sparkles },
   { label: "Assessments", href: "/assessment", icon: FileQuestion },
+  { label: "Events", href: "/events", icon: Calendar },
   { label: "Community", href: "/community", icon: MessageSquare },
   { label: "My Profile", href: "/profile", icon: User },
   { label: "Subscription", href: "/subscription", icon: CreditCard },

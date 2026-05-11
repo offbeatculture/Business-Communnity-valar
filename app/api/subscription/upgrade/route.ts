@@ -27,6 +27,7 @@ import {
 import { createClient } from "@/lib/supabase/server"
 import { razorpay } from "@/lib/razorpay"
 import {
+  calculateGST,
   getTierBand,
   getTierRank,
   type ProductTier,
@@ -110,8 +111,10 @@ export async function POST(request: Request) {
     const newBand = getTierBand(toTier, activeCount ?? 0)
     const newMonthlyPaise = newBand.monthlyPaise
 
-    // 7. Pro-rate calculation.
-    const amountPaise = computeProratePaise({
+    // 7. Pro-rate calculation. `proRatePaise` is the BASE (pre-GST) amount —
+    //    the analytics-friendly value we record in the tier_changes audit row
+    //    via `base_amount` in order notes.
+    const proRatePaise = computeProratePaise({
       currentLockedPaise: currentSub.locked_price_paise,
       newMonthlyPaise,
       startsAt: currentSub.starts_at,
@@ -119,14 +122,16 @@ export async function POST(request: Request) {
       now: new Date(),
     })
 
-    // 8. Create Razorpay ORDER (one-time charge for the pro-rate amount).
-    //    Notes payload makes the order self-describing for the verify route
-    //    and for any forensic debugging.
-    //    NOTE: amountPaise is the pre-GST base — Razorpay handles tax
-    //    out-of-band. We keep parity with the existing /create-order route
-    //    which also sends a pre-GST `base_amount` in notes. If GST should
-    //    be charged on top, that is a separate decision and is intentionally
-    //    NOT applied here (spec didn't call it out for pro-rate orders).
+    // Apply 18% GST (CGST 9% + SGST 9%) on top of the base pro-rate, mirroring
+    // /api/razorpay/create-order. The user pays GST-inclusive paise; the verify
+    // route still records the pre-GST base in `pro_rated_paise` for analytics.
+    const gst = calculateGST(proRatePaise)
+    const amountPaise = gst.total
+
+    // 8. Create Razorpay ORDER (one-time charge for the GST-inclusive pro-rate).
+    //    `base_amount` in notes stays pre-GST (audit + analytics);
+    //    `gst_amount` records the tax portion so the webhook/verify route can
+    //    reconcile if needed.
     const order = await razorpay.orders.create({
       amount: amountPaise,
       currency: "INR",
@@ -137,7 +142,11 @@ export async function POST(request: Request) {
         to_tier: toTier,
         subscription_id: currentSub.id,
         user_id: user.id,
-        base_amount: amountPaise.toString(),
+        base_pro_rate_paise: proRatePaise.toString(),
+        gst_paise: (gst.cgst + gst.sgst).toString(),
+        // Legacy key kept for back-compat with any existing webhook/verify
+        // logic that reads `base_amount`. Same value as base_pro_rate_paise.
+        base_amount: proRatePaise.toString(),
       },
     })
 
