@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
-import { getActiveUserTier } from "@/lib/events"
+import { getUserTier } from "@/lib/auth/tier"
 import type {
   EventType,
   LiveEventRow,
@@ -12,6 +12,7 @@ import type {
 import { EventCard } from "@/components/events/EventCard"
 import { EventsFilter } from "@/components/events/EventsFilter"
 import { TierBanner } from "@/components/events/TierBanner"
+import { AiLabUpsellCard } from "@/components/events/AiLabUpsellCard"
 import { Button } from "@/components/ui/button"
 
 const PAST_PAGE_SIZE = 20
@@ -46,7 +47,10 @@ export default async function EventsPage({ searchParams }: Props) {
   const nowMs = now.getTime()
 
   // Tier (drives the banner — RLS still hides rows the user cannot see).
-  const { tier } = await getActiveUserTier(user.id)
+  // getUserTier returns null when there is no active subscription; the
+  // TierBanner accepts a null tier and renders the "no active sub" state.
+  const tierState = await getUserTier()
+  const tier = tierState?.tier ?? null
 
   // Build base queries; RLS filters them per the access matrix.
   let upcomingQuery = supabase
@@ -203,6 +207,13 @@ export default async function EventsPage({ searchParams }: Props) {
           </div>
         )}
       </section>
+
+      {/*
+        AI Lab upsell card. Renders only for active Library and Workshop
+        members; AI Lab members and unsubscribed users are skipped (the
+        latter are already nudged by the top-of-page TierBanner).
+      */}
+      <AiLabUpsellCard userTier={tier} />
     </div>
   )
 }

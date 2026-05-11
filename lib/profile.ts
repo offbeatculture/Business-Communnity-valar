@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import type { ProductTier } from "@/lib/plans"
 import type { Profile, ProfileWithSubscription, ProfileStats, AdminStats, PostWithAuthor } from "@/types"
 
 // ── Fetch own or any profile by user_id ──
@@ -68,6 +69,37 @@ export async function fetchProfileById(profileId: string): Promise<ProfileWithSu
   }
 
   return { ...profile, subscription_status, subscription_expires_at }
+}
+
+// ── Fetch another user's active tier (admin client, bypasses RLS) ──
+//
+// Why admin client: subscriptions RLS only allows `auth.uid() = user_id`,
+// so a regular client cannot read another user's tier. Member profile
+// pages need this to render the TierBadge next to the member's name.
+// We surface only the tier string — not pricing or audit data — so the
+// privacy cost is minimal (the badge is already conceptually public per
+// the access matrix in Three-tier-implementation-plan.md section 2).
+//
+// Returns null when the user has no active subscription or anything went
+// wrong with the lookup; the consuming TierBadge renders nothing on null.
+
+export async function fetchProfileTier(userId: string): Promise<ProductTier | null> {
+  const admin = createAdminClient()
+
+  const { data } = await admin
+    .from("subscriptions")
+    .select("tier")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("expires_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!data?.tier) return null
+
+  // CHECK constraint on subscriptions.tier guarantees this value is one of
+  // the three product tiers; the cast is a TS-only narrowing.
+  return data.tier as ProductTier
 }
 
 // ── Profile stats (post count, comment count, likes received) ──

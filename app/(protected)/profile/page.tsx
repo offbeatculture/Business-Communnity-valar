@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { fetchProfile, fetchProfileStats } from "@/lib/profile"
 import { fetchPosts } from "@/lib/community"
 import { fetchMemberLevel } from "@/lib/engagement"
+import { getUserTier } from "@/lib/auth/tier"
 import { ProfileHeader } from "@/components/profile/ProfileHeader"
 import { ProfileStats } from "@/components/profile/ProfileStats"
 import { ProfileActivityFeed } from "@/components/profile/ProfileActivityFeed"
@@ -16,7 +17,7 @@ export default async function ProfilePage() {
 
   if (!user) redirect("/login")
 
-  const [profile, stats, memberLevel, myPosts, savedPosts, { data: latestSub }] = await Promise.all([
+  const [profile, stats, memberLevel, myPosts, savedPosts, { data: latestSub }, userTier] = await Promise.all([
     fetchProfile(user.id),
     fetchProfileStats(user.id),
     fetchMemberLevel(user.id),
@@ -29,6 +30,10 @@ export default async function ProfilePage() {
       .order("expires_at", { ascending: false })
       .limit(1)
       .single(),
+    // Phase 6 polish. Resolved here so ProfileHeader can render the
+    // tier badge next to the name. Returns null for users without an
+    // active subscription — TierBadge handles that case gracefully.
+    getUserTier(),
   ])
 
   if (!profile) redirect("/login")
@@ -37,7 +42,12 @@ export default async function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <ProfileHeader profile={profile} isOwnProfile memberLevel={memberLevel} />
+      <ProfileHeader
+        profile={profile}
+        isOwnProfile
+        memberLevel={memberLevel}
+        tier={userTier?.tier ?? null}
+      />
       <ProfileStats stats={stats} />
 
       <Tabs defaultValue="posts">

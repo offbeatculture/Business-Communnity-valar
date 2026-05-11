@@ -6,15 +6,22 @@ import { Button } from "@/components/ui/button"
 import { Pencil, MapPin, Building2, Calendar } from "lucide-react"
 import { LevelBadge } from "@/components/engagement/LevelBadge"
 import { StreakIndicator } from "@/components/engagement/StreakIndicator"
+import { TierBadge } from "@/components/profile/TierBadge"
+import type { ProductTier } from "@/lib/plans"
 import type { ProfileWithSubscription, MemberLevel } from "@/types"
 
 type Props = {
   profile: ProfileWithSubscription
   isOwnProfile: boolean
   memberLevel?: MemberLevel | null
+  // Phase 6 polish. Resolved server-side at the call site (own profile via
+  // getUserTier, member profile via fetchProfileTier with the admin client).
+  // null when the user has no active subscription or the tier could not be
+  // fetched — TierBadge renders nothing in that case.
+  tier?: ProductTier | null
 }
 
-export function ProfileHeader({ profile, isOwnProfile, memberLevel }: Props) {
+export function ProfileHeader({ profile, isOwnProfile, memberLevel, tier }: Props) {
   const initials = (profile.full_name ?? "A")
     .split(" ")
     .map((n) => n[0])
@@ -34,6 +41,7 @@ export function ProfileHeader({ profile, isOwnProfile, memberLevel }: Props) {
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-3 mb-1">
           <h1 className="text-xl font-bold truncate">{profile.full_name}</h1>
+          {tier && <TierBadge tier={tier} size="sm" />}
           {memberLevel && (
             <>
               <LevelBadge level={memberLevel.current_level} size="sm" />

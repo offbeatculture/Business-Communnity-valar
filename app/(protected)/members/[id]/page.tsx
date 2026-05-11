@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { fetchProfileById, fetchProfileStats, fetchProfilePosts } from "@/lib/profile"
+import { fetchProfileById, fetchProfileStats, fetchProfilePosts, fetchProfileTier } from "@/lib/profile"
 import { fetchMemberLevel } from "@/lib/engagement"
 import { ProfileHeader } from "@/components/profile/ProfileHeader"
 import { ProfileStats } from "@/components/profile/ProfileStats"
@@ -34,15 +34,23 @@ export default async function MemberProfilePage({ params }: Props) {
 
   const userRole = (roleData?.role ?? "member") as "member" | "admin"
 
-  const [stats, { posts, hasMore }, memberLevel] = await Promise.all([
+  const [stats, { posts, hasMore }, memberLevel, memberTier] = await Promise.all([
     fetchProfileStats(profile.user_id),
     fetchProfilePosts(profile.user_id, 1, 5),
     fetchMemberLevel(profile.user_id),
+    // Phase 6 polish. Admin-client lookup so the tier badge renders on
+    // other members' profiles (subscriptions RLS would otherwise hide it).
+    fetchProfileTier(profile.user_id),
   ])
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <ProfileHeader profile={profile} isOwnProfile={false} memberLevel={memberLevel} />
+      <ProfileHeader
+        profile={profile}
+        isOwnProfile={false}
+        memberLevel={memberLevel}
+        tier={memberTier}
+      />
       <ProfileStats stats={stats} />
 
       <div>

@@ -75,6 +75,13 @@ export function PostCard({
               ) : (
                 <span className="text-sm font-medium">{authorName}</span>
               )}
+              {/*
+                TODO(phase6-followup): Render a small TierBadge next to the
+                author name once `tier` is joined into the posts query in
+                lib/community.ts. Skipped in the Phase 6 polish pass because
+                the join touches fetchPosts, the PostWithAuthor type, and the
+                saved/profile feed loaders — out of scope for an accent.
+              */}
               {post.is_pinned && <Pin size={14} className="text-primary" />}
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">

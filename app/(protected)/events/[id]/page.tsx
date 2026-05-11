@@ -10,11 +10,11 @@ import {
   Video,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
+import { getUserTier } from "@/lib/auth/tier"
 import {
   eventTypeConfig,
   eventStatusText,
   formatIstDateTime,
-  getActiveUserTier,
   requiredTierForEvent,
   userCanRsvp,
   type HotSeatApplicationRow,
@@ -42,6 +42,15 @@ export default async function EventDetailPage({ params }: Props) {
 
   if (!user) redirect("/login")
 
+  // Resolve tier first — we need it both for RSVP gating below AND to
+  // decide between the tier-locked soft denial and a real 404 when the
+  // event query returns null.
+  // getUserTier returns null for unauthenticated or no-active-subscription
+  // users; userCanRsvp accepts a null tier and correctly returns false.
+  const tierState = await getUserTier()
+  const tier = tierState?.tier ?? null
+  const userTierRank = tierState?.tierRank ?? 0
+
   // RLS will hide events the user has no tier access to → returns null.
   const { data: event, error } = await supabase
     .from("live_events")
@@ -50,20 +59,54 @@ export default async function EventDetailPage({ params }: Props) {
     .maybeSingle()
 
   if (error || !event) {
+    // Discriminate tier-locked from real-404:
+    //   - User has rank < 3 → most likely RLS hid an AI Lab event from
+    //     them. Render a soft denial that nudges to upgrade. Worst case
+    //     it is a genuine garbage URL and we mislabel it as tier-locked,
+    //     which is acceptable trade-off (no real harm; the upgrade link
+    //     still routes to /subscription).
+    //   - User has rank 3 (AI Lab) → they can see every event already,
+    //     so a null result is a genuine 404.
+    const isTierLocked = userTierRank < 3
+
+    if (isTierLocked) {
+      return (
+        <div className="max-w-2xl mx-auto py-12 text-center">
+          <Badge
+            variant="outline"
+            className="mb-4 bg-gradient-to-r from-[#E53935] to-[#FF6D00] text-white border-transparent"
+          >
+            AI Lab tier
+          </Badge>
+          <h1 className="text-xl font-semibold mb-2">
+            This event is on AI Lab tier.
+          </h1>
+          <p className="text-muted-foreground text-sm mb-6 max-w-md mx-auto">
+            AI Lab events are exclusive to AI Lab tier members and not
+            available to your current tier.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Button asChild variant="outline">
+              <Link href="/events">Back to events</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/subscription">Upgrade to AI Lab →</Link>
+            </Button>
+          </div>
+        </div>
+      )
+    }
+
+    // Real 404 — AI Lab member who navigated to a non-existent event id.
     return (
       <div className="max-w-2xl mx-auto py-12 text-center">
-        <h1 className="text-xl font-semibold mb-2">Event not available</h1>
+        <h1 className="text-xl font-semibold mb-2">Event not found</h1>
         <p className="text-muted-foreground text-sm mb-6">
-          This event is not available on your tier, or it does not exist.
+          We could not find this event. It may have been removed.
         </p>
-        <div className="flex items-center justify-center gap-3">
-          <Button asChild variant="outline">
-            <Link href="/events">Back to events</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/subscription">View tier upgrades</Link>
-          </Button>
-        </div>
+        <Button asChild variant="outline">
+          <Link href="/events">Back to events</Link>
+        </Button>
       </div>
     )
   }
@@ -77,7 +120,6 @@ export default async function EventDetailPage({ params }: Props) {
   const isCancelled = eventRow.status === "cancelled"
   const statusText = eventStatusText(eventRow, nowMs)
 
-  const { tier } = await getActiveUserTier(user.id)
   const canRsvpForTier = userCanRsvp(tier, eventRow)
 
   // Parallel queries for the rest of the page.
