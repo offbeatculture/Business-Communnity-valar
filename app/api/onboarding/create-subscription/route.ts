@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { z } from "zod/v4"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { createSubscription } from "@/lib/razorpay-subscriptions"
+import { createSubscription, fetchSubscription,fetchPlanDetails } from "@/lib/razorpay-subscriptions"
+import { log } from "console"
 
 const createSubSchema = z.object({
   sessionId: z.string().uuid("Invalid session ID"),
@@ -58,7 +59,6 @@ export async function POST(request: Request) {
     }
 
     // If session already has a subscription, return it idempotently.
-    // Important: this means the first selected tier wins for this session.
     if (session.razorpay_subscription_id) {
       return NextResponse.json({
         subscriptionId: session.razorpay_subscription_id,
@@ -73,14 +73,28 @@ export async function POST(request: Request) {
       tier,
     })
 
-    // Update session with subscription ID and selected tier
+    // Fetch the subscription details to get the actual amount
+    const subscriptionDetails = await fetchSubscription(rzpSubscription.id)
+
+    // Fetch the plan details using the plan_id from the subscription
+    const planDetails = await fetchPlanDetails(subscriptionDetails.plan_id)
+
+    console.log("paln",planDetails)
+
+    // Get the correct amount_paid from the plan details
+    const amountPaid = planDetails.item.amount; 
+    const tierPlan = planDetails.item.name // This should be the actual amount (in paise)
+
+    // Update session with subscription ID, selected tier, and the correct amount paid
     await supabase
       .from("onboarding_sessions")
       .update({
         razorpay_subscription_id: rzpSubscription.id,
         selected_tier: tier,
         status: "payment_pending",
+        amount_paid: amountPaid, // Store the correct amount here
         updated_at: new Date().toISOString(),
+        tier:tierPlan
       })
       .eq("id", sessionId)
 

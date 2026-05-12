@@ -120,15 +120,18 @@ export default function PlansClient() {
       }
 
       openRazorpaySubscriptionCheckout(
-        { subscriptionId: data.subscriptionId },
-        () => {
-          router.push(`/payment-success?session=${sessionId}`)
-        },
-        (err) => {
-          setError(err)
-          setLoadingTier(null)
-        }
-      )
+  { 
+    subscriptionId: data.subscriptionId,
+    sessionId: sessionId,  // ← add this line only
+  },
+  () => {
+    router.push(`/payment-success?session=${sessionId}`)
+  },
+  (err) => {
+    setError(err)
+    setLoadingTier(null)
+  }
+)
     } catch {
       setError("Something went wrong. Please try again.")
       setLoadingTier(null)

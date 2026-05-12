@@ -2,16 +2,13 @@ import { razorpay } from "@/lib/razorpay"
 
 export type SubscriptionTier = "library" | "workshop" | "ai_lab"
 
-const LEGACY_PLAN_ID_MONTHLY = process.env.RAZORPAY_PLAN_ID_MONTHLY ?? ""
+// const LEGACY_PLAN_ID_MONTHLY = process.env.RAZORPAY_PLAN_ID_MONTHLY ?? ""
 
 const PLAN_IDS: Record<SubscriptionTier, string> = {
-  library:
-    process.env.RAZORPAY_PLAN_ID_LIBRARY_MONTHLY ||
-    LEGACY_PLAN_ID_MONTHLY,
+  library:  process.env.RAZORPAY_PLAN_ID_LIBRARY_MONTHLY ?? "",
   workshop: process.env.RAZORPAY_PLAN_ID_WORKSHOP_MONTHLY ?? "",
-  ai_lab: process.env.RAZORPAY_PLAN_ID_AI_LAB_MONTHLY ?? "",
+  ai_lab:   process.env.RAZORPAY_PLAN_ID_AI_LAB_MONTHLY ?? "",
 }
-
 function getPlanIdForTier(tier: SubscriptionTier) {
   const planId = PLAN_IDS[tier]
 
@@ -56,4 +53,13 @@ export async function cancelSubscription(
   cancelAtCycleEnd = true
 ) {
   return razorpay.subscriptions.cancel(subscriptionId, cancelAtCycleEnd)
+}
+
+export async function fetchPlanDetails(planId: string) {
+  try {
+    const planDetails = await razorpay.plans.fetch(planId)
+    return planDetails
+  } catch (error) {
+    throw new Error("Failed to fetch plan details")
+  }
 }

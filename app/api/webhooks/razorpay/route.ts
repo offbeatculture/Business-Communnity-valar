@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { generateInvoice } from "@/lib/invoice"
 import { createMagicLoginToken } from "@/lib/magic-link"
 import { sendMagicLinkEmail, sendPaymentConfirmationEmail } from "@/lib/ses"
+import { createSubscription, fetchSubscription,fetchPlanDetails } from "@/lib/razorpay-subscriptions"
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +12,6 @@ export async function POST(request: Request) {
     const signature = request.headers.get("x-razorpay-signature") ?? ""
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET ?? ""
 
-    // Verify webhook signature
     const expectedSignature = crypto
       .createHmac("sha256", secret)
       .update(body)
@@ -26,15 +26,6 @@ export async function POST(request: Request) {
 
     const adminClient = createAdminClient()
 
-    // Idempotency check via webhook_events table
-    const razorpayEventId =
-      event.payload?.subscription?.entity?.id
-        ? `${eventType}:${event.payload.subscription.entity.id}:${Date.now()}`
-        : event.payload?.payment?.entity?.id
-          ? `${eventType}:${event.payload.payment.entity.id}`
-          : `${eventType}:${Date.now()}`
-
-    // For subscription events, use subscription_id + event for dedup
     const dedupeId =
       eventType === "payment.captured"
         ? `payment.captured:${event.payload?.payment?.entity?.id}`
@@ -49,11 +40,9 @@ export async function POST(request: Request) {
       })
 
     if (dedupeError?.code === "23505") {
-      // Unique constraint violation — already processed
       return NextResponse.json({ message: "Already processed" })
     }
 
-    // Route to appropriate handler
     switch (eventType) {
       case "payment.captured":
         return handlePaymentCaptured(event, adminClient)
@@ -103,12 +92,11 @@ async function handlePaymentCaptured(
   const baseAmount = parseInt(notes.base_amount ?? "0", 10)
   const durationDays = parseInt(notes.duration_days ?? "30", 10)
 
+  // Skip quietly for new subscription flow — user_id won't exist for new onboarding payments
   if (!userId) {
-    console.error("Webhook payment.captured: missing user_id in notes")
-    return NextResponse.json({ error: "Missing user_id" }, { status: 400 })
+    return NextResponse.json({ message: "Skipped — new subscription flow" })
   }
 
-  // Idempotency: check if subscription already exists for this payment
   const { data: existing } = await adminClient
     .from("subscriptions")
     .select("id")
@@ -141,7 +129,6 @@ async function handlePaymentCaptured(
     .select("id")
     .single()
 
-  // Generate invoice
   const { data: profile } = await adminClient
     .from("profiles")
     .select("full_name, gstin, business_name")
@@ -200,7 +187,6 @@ async function handleSubscriptionActivated(
   }
 
   if (!session) {
-    // Fallback: find by subscription ID
     const { data } = await adminClient
       .from("onboarding_sessions")
       .select("*")
@@ -209,6 +195,22 @@ async function handleSubscriptionActivated(
     session = data
   }
 
+  // ✅ Read plan details from session — saved by create-subscription using real Razorpay plan data
+  // session.amount_paid = actual amount in paise from Razorpay plan (e.g. 129900 for Workshop)
+  // session.tier = plan label from Razorpay plan name (e.g. "Workshop")
+  // session.selected_tier = tier key selected by user (e.g. "workshop")
+
+    // Fetch the subscription details to get the actual amount
+      const subscriptionDetails = await fetchSubscription(rzpSubscriptionId)
+  
+      // Fetch the plan details using the plan_id from the subscription
+      const planDetails = await fetchPlanDetails(subscriptionDetails.plan_id)
+
+
+  const planAmount = planDetails.item.amount
+  const planLabel = "monthly"
+  const tier = planDetails.item.name
+
   // Check if user already exists
   const { data: existingUsers } = await adminClient.auth.admin.listUsers()
   let user = existingUsers?.users?.find(
@@ -216,7 +218,6 @@ async function handleSubscriptionActivated(
   )
 
   if (!user) {
-    // Create new Supabase user
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       email_confirm: true,
@@ -244,32 +245,34 @@ async function handleSubscriptionActivated(
     .single()
 
   if (existingSub) {
-    // Update session and return — user already has an active sub
     if (session) {
       await adminClient
         .from("onboarding_sessions")
-        .update({ status: "completed", user_id: user.id, updated_at: new Date().toISOString() })
+        .update({
+          status: "completed",
+          user_id: user.id,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", session.id)
     }
     return NextResponse.json({ message: "User already has active subscription" })
   }
 
-  // Create subscription record
-  const planAmount = (subEntity.plan_amount as number) ?? 49900
   const startsAt = new Date()
   const expiresAt = new Date(startsAt)
   expiresAt.setDate(expiresAt.getDate() + 30)
 
+  // ✅ Insert with real plan details fetched from Razorpay — not hardcoded
   const { data: subscription } = await adminClient
     .from("subscriptions")
     .insert({
       user_id: user.id,
       razorpay_subscription_id: rzpSubscriptionId,
-      plan_name: "monthly",
-      plan_label: "Monthly Subscription",
+      plan_name: tier,
+      plan_label: planLabel,
       base_amount_paise: planAmount,
       amount_paid: planAmount,
-      currency: "INR",
+      currency: "DIR",
       status: "active",
       recurring_status: "active",
       starts_at: startsAt.toISOString(),
@@ -277,7 +280,8 @@ async function handleSubscriptionActivated(
     })
     .select("id")
     .single()
-
+    
+console.log("Inserted subscription data:", subscription);
   // Update onboarding session
   if (session) {
     await adminClient
@@ -298,34 +302,34 @@ async function handleSubscriptionActivated(
     console.error("Failed to send magic link email:", err)
   }
 
-  // Generate invoice
-  if (subscription) {
-    const { data: profile } = await adminClient
-      .from("profiles")
-      .select("full_name, gstin, business_name")
-      .eq("user_id", user.id)
-      .single()
+  // // Generate invoice
+  // if (subscription) {
+  //   const { data: profile } = await adminClient
+  //     .from("profiles")
+  //     .select("full_name, gstin, business_name")
+  //     .eq("user_id", user.id)
+  //     .single()
 
-    generateInvoice({
-      userId: user.id,
-      subscriptionId: subscription.id,
-      planLabel: "Monthly Subscription",
-      basePaise: planAmount,
-      customerName: profile?.full_name ?? email,
-      customerEmail: email,
-      customerGstin: profile?.gstin,
-      customerBusinessName: profile?.business_name,
-    }).catch((err) => console.error("Webhook invoice error:", err))
-  }
+  //   generateInvoice({
+  //     userId: user.id,
+  //     subscriptionId: subscription.id,
+  //     planLabel: planLabel,
+  //     basePaise: planAmount,
+  //     customerName: profile?.full_name ?? email,
+  //     customerEmail: email,
+  //     customerGstin: profile?.gstin,
+  //     customerBusinessName: profile?.business_name,
+  //   }).catch((err) => console.error("Webhook invoice error:", err))
+  // }
 
   // Send payment confirmation email
-  sendPaymentConfirmationEmail({
-    to: email,
-    planLabel: "Monthly Subscription",
-    amount: `₹${(planAmount / 100).toFixed(2)} + 18% GST`,
-  }).catch((err) => console.error("Payment confirmation email error:", err))
+  // sendPaymentConfirmationEmail({
+  //   to: email,
+  //   planLabel: planLabel,
+  //   amount: `₹${(planAmount / 100).toFixed(2)} + 18% GST`,
+  // }).catch((err) => console.error("Payment confirmation email error:", err))
 
-  return NextResponse.json({ message: "Subscription activated, user created" })
+  // return NextResponse.json({ message: "Subscription activated, user created" })
 }
 
 // =============================================
@@ -338,7 +342,6 @@ async function handleSubscriptionCharged(
 ) {
   const payload = event.payload as Record<string, unknown>
   const subEntity = (payload?.subscription as Record<string, unknown>)?.entity as Record<string, unknown>
-  const paymentEntity = (payload?.payment as Record<string, unknown>)?.entity as Record<string, unknown>
 
   if (!subEntity) {
     return NextResponse.json({ error: "Missing subscription data" }, { status: 400 })
@@ -346,7 +349,6 @@ async function handleSubscriptionCharged(
 
   const rzpSubscriptionId = subEntity.id as string
 
-  // Find existing subscription
   const { data: subscription } = await adminClient
     .from("subscriptions")
     .select("id, user_id, plan_label, base_amount_paise")
@@ -358,7 +360,6 @@ async function handleSubscriptionCharged(
     return NextResponse.json({ error: "Subscription not found" }, { status: 404 })
   }
 
-  // Extend expiry by 30 days from now
   const newExpiry = new Date()
   newExpiry.setDate(newExpiry.getDate() + 30)
 
@@ -371,7 +372,6 @@ async function handleSubscriptionCharged(
     })
     .eq("id", subscription.id)
 
-  // Generate invoice for this charge
   const { data: profile } = await adminClient
     .from("profiles")
     .select("full_name, gstin, business_name")
@@ -391,7 +391,6 @@ async function handleSubscriptionCharged(
     customerBusinessName: profile?.business_name,
   }).catch((err) => console.error("Webhook renewal invoice error:", err))
 
-  // Send payment confirmation
   if (userData?.user?.email) {
     sendPaymentConfirmationEmail({
       to: userData.user.email,
