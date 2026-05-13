@@ -74,7 +74,7 @@ export function Hero() {
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-12 text-base bg-[#1a1a1a] border-[#333] focus:border-[#E53935] sm:flex-1"
+            className="h-12 text-white bg-[#1a1a1a] border-[#333] focus:border-[#E53935] sm:flex-1"
             required
           />
           <Button
