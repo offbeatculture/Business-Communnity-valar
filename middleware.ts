@@ -64,6 +64,11 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // 7 Forces Business Audit — public funnel entry, no auth required
+  if (pathname === "/audit" || pathname.startsWith("/audit/") || pathname.startsWith("/api/audit/")) {
+    return supabaseResponse
+  }
+
   // No user — redirect to login
   if (!user) {
     const url = request.nextUrl.clone()
