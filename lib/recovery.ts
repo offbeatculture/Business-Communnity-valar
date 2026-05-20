@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createMagicLoginToken } from "@/lib/magic-link"
 import { sendMagicLinkEmail } from "@/lib/ses"
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL 
 
 // Statuses that indicate the user has paid or is eligible for recovery
 const RECOVERABLE_STATUSES = ["paid", "user_created", "completed"]

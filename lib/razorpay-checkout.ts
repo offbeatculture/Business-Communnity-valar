@@ -89,6 +89,7 @@ export async function openRazorpayCheckout(
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_order_id: response.razorpay_order_id,
             razorpay_signature: response.razorpay_signature,
+            
           }),
         })
         if (!res.ok) {
@@ -117,8 +118,9 @@ export async function openRazorpayCheckout(
 // Subscription checkout (recurring / autopay)
 // =============================================
 
-export type SubscriptionCheckoutParams = {
+type SubscriptionCheckoutParams = {
   subscriptionId: string
+  sessionId: string       // ← add this
   userEmail?: string
   userName?: string
 }
@@ -147,29 +149,30 @@ export async function openRazorpaySubscriptionCheckout(
     },
     theme: { color: "#E53935" },
     handler: async (response: RazorpayResponse) => {
-      try {
-        const res = await fetch("/api/onboarding/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_subscription_id: response.razorpay_subscription_id,
-            razorpay_signature: response.razorpay_signature,
-          }),
-        })
-        if (!res.ok) {
-          const data = await res.json()
-          onFailure(data.error ?? "Payment verification failed")
-          return
-        }
-        onSuccess({
-          paymentId: response.razorpay_payment_id,
-          subscriptionId: response.razorpay_subscription_id ?? params.subscriptionId,
-        })
-      } catch {
-        onFailure("Payment verification failed. Contact support.")
-      }
-    },
+  try {
+    const res = await fetch("/api/onboarding/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_subscription_id: response.razorpay_subscription_id,
+        razorpay_signature: response.razorpay_signature,
+        session_id: params.sessionId,
+      }),
+    })
+    if (!res.ok) {
+      const data = await res.json()
+      onFailure(data.error ?? "Payment verification failed")
+      return
+    }
+    onSuccess({
+      paymentId: response.razorpay_payment_id,
+      subscriptionId: response.razorpay_subscription_id ?? params.subscriptionId,
+    })
+  } catch {
+    onFailure("Payment verification failed. Contact support.")
+  }
+},
     modal: {
       ondismiss: () => onFailure("Payment cancelled"),
     },

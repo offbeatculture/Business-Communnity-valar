@@ -4,6 +4,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html, body {
+  overflow: auto !important;
+  height: auto !important;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -120,11 +125,10 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    touch-action: manipulation;
+    touch-action: auto;
   }
-  body {
-    @apply bg-background text-foreground overflow-x-hidden;
-    overscroll-behavior-y: none;
-    -webkit-tap-highlight-color: transparent;
-  }
+ body {
+  @apply bg-background text-foreground overflow-x-hidden;
+  -webkit-tap-highlight-color: transparent;  /* ✅ keep only this */
+}
 }

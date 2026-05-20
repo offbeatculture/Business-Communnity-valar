@@ -37,19 +37,35 @@ export async function POST(request: Request) {
     // Find the onboarding session by subscription ID
     const { data: session } = await supabase
       .from("onboarding_sessions")
-      .select("id, email, status")
+      .select("id, email, status , user_id")
       .eq("razorpay_subscription_id", razorpay_subscription_id)
       .single()
 
     if (session && session.status === "payment_pending") {
-      await supabase
-        .from("onboarding_sessions")
-        .update({
-          status: "paid",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", session.id)
-    }
+  await supabase
+    .from("onboarding_sessions")
+    .update({
+      status: "paid",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", session.id)
+
+  // Save payment ID to subscriptions table
+ const { data: sub } = await supabase
+  .from("subscriptions")
+  .select("id")
+  .eq("user_id", session.user_id)
+  .order("created_at", { ascending: false })
+  .limit(1)
+  .single()
+
+if (sub) {
+  await supabase
+    .from("subscriptions")
+    .update({ razorpay_payment_id })
+    .eq("id", sub.id)
+}
+}
 
     // Note: actual user creation happens in the webhook (subscription.activated)
     // This endpoint just confirms the payment was genuine to the frontend

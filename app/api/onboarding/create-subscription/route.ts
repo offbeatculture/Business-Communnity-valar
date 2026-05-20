@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server"
 import { z } from "zod/v4"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { createSubscription } from "@/lib/razorpay-subscriptions"
-import type { ProductTier } from "@/lib/plans"
+import { createSubscription, fetchSubscription,fetchPlanDetails } from "@/lib/razorpay-subscriptions"
+import { log } from "console"
 
-// Phase 2A: accept tier in the request body. Default to 'library' only when
-// the field is absent (back-compat for any legacy clients still in flight
-// during the rollout). New clients should always pass `tier` explicitly.
 const createSubSchema = z.object({
   sessionId: z.string().uuid("Invalid session ID"),
-  tier: z.enum(["library", "workshop", "ai_lab"]).optional(),
+  tier: z.enum(["library", "workshop", "ai_lab"]).default("library"),
 })
 
 export async function POST(request: Request) {
@@ -19,13 +16,12 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid request" },
+        { error: "Invalid subscription request" },
         { status: 400 }
       )
     }
 
-    const { sessionId } = parsed.data
-    const tier: ProductTier = parsed.data.tier ?? "library"
+    const { sessionId, tier } = parsed.data
     const supabase = createAdminClient()
 
     // Fetch session
@@ -62,7 +58,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // If session already has a subscription, return it (idempotent)
+    // If session already has a subscription, return it idempotently.
     if (session.razorpay_subscription_id) {
       return NextResponse.json({
         subscriptionId: session.razorpay_subscription_id,
@@ -70,25 +66,35 @@ export async function POST(request: Request) {
       })
     }
 
-    // Create Razorpay subscription on the tier-specific plan. Razorpay notes
-    // become the source of truth for tier — the webhook reads them back to
-    // populate the subscriptions row.
-    const { subscription: rzpSubscription } = await createSubscription({
+    // Create Razorpay subscription for selected tier
+    const rzpSubscription = await createSubscription({
       email: session.email,
       sessionId,
       tier,
     })
 
-    // Update session with subscription ID and a tier-aware plan_id label so
-    // operators reading onboarding_sessions can see at a glance which tier
-    // the user picked. Schema-compatible: the column is free-form text.
+    // Fetch the subscription details to get the actual amount
+    const subscriptionDetails = await fetchSubscription(rzpSubscription.id)
+
+    // Fetch the plan details using the plan_id from the subscription
+    const planDetails = await fetchPlanDetails(subscriptionDetails.plan_id)
+
+    console.log("paln",planDetails)
+
+    // Get the correct amount_paid from the plan details
+    const amountPaid = planDetails.item.amount; 
+    const tierPlan = planDetails.item.name // This should be the actual amount (in paise)
+
+    // Update session with subscription ID, selected tier, and the correct amount paid
     await supabase
       .from("onboarding_sessions")
       .update({
         razorpay_subscription_id: rzpSubscription.id,
-        plan_id: `${tier}_monthly`,
+        selected_tier: tier,
         status: "payment_pending",
+        amount_paid: amountPaid, // Store the correct amount here
         updated_at: new Date().toISOString(),
+        tier:tierPlan
       })
       .eq("id", sessionId)
 
@@ -98,6 +104,7 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error("POST /api/onboarding/create-subscription error:", error)
+
     return NextResponse.json(
       { error: "Failed to create subscription" },
       { status: 500 }
