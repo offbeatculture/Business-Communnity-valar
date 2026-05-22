@@ -48,6 +48,31 @@ export async function sendEmail({
   })
 }
 
+type SendEmailWithAttachmentParams = SendEmailParams & {
+  attachments: NonNullable<nodemailer.SendMailOptions["attachments"]>
+}
+
+export async function sendEmailWithAttachment({
+  to,
+  subject,
+  html,
+  text,
+  attachments,
+}: SendEmailWithAttachmentParams) {
+  if (!SMTP_USERNAME || !SMTP_PASSWORD) {
+    throw new Error("Missing SES SMTP credentials")
+  }
+
+  return transporter.sendMail({
+    from: FROM_EMAIL,
+    to,
+    subject,
+    html,
+    text,
+    attachments,
+  })
+}
+
 export async function sendMagicLinkEmail({
   to,
   token,

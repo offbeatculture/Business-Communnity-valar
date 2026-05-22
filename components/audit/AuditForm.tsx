@@ -48,7 +48,8 @@ export function AuditForm() {
   const [screen, setScreen] = useState(0)
   const [identity, setIdentity] = useState<IdentityBlock>(INITIAL_IDENTITY)
   const [answers, setAnswers] = useState<AuditAnswers>({})
-  const [submitting, setSubmitting] = useState(false)
+  const [submitPhase, setSubmitPhase] = useState<"idle" | "submitting" | "sending_email">("idle")
+  const submitting = submitPhase !== "idle"
   const [showErrors, setShowErrors] = useState(false)
 
   const isIdentityScreen = screen === 0
@@ -151,7 +152,8 @@ export function AuditForm() {
   }
 
   async function handleSubmit() {
-    setSubmitting(true)
+    setSubmitPhase("submitting")
+    let submissionId: string | undefined
     try {
       const res = await fetch("/api/audit/submit", {
         method: "POST",
@@ -163,11 +165,53 @@ export function AuditForm() {
         throw new Error(data.error || "Submission failed. Please try again.")
       }
       const { id } = await res.json()
-      router.push(id ? `/audit/results/${id}` : "/audit/thank-you")
+      submissionId = id
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Submission failed.")
-      setSubmitting(false)
+      setSubmitPhase("idle")
+      return
     }
+
+    // Submission succeeded. Fire the email send. Whether it works or not,
+    // we still redirect the user to their results — the audit is done.
+    setSubmitPhase("sending_email")
+    let emailOk = false
+    try {
+      const emailRes = await fetch("/api/audit/send-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: identity.full_name,
+          businessName: identity.business_name,
+          email: identity.email,
+          whatsapp: identity.phone,
+          city: identity.city,
+          businessType: identity.vertical,
+          answers,
+          submissionId,
+        }),
+      })
+      if (emailRes.ok) {
+        const data = (await emailRes.json().catch(() => ({}))) as {
+          success?: boolean
+        }
+        emailOk = data.success === true
+      }
+    } catch {
+      emailOk = false
+    }
+
+    if (emailOk) {
+      toast.success("Your PDF report has been sent to your email.")
+    } else {
+      toast.warning(
+        "Your audit was completed, but we could not send the email. Please contact support."
+      )
+    }
+
+    router.push(
+      submissionId ? `/audit/results/${submissionId}` : "/audit/thank-you"
+    )
   }
 
   const progress = ((screen + 1) / TOTAL_SCREENS) * 100
@@ -228,10 +272,15 @@ export function AuditForm() {
             disabled={submitting}
             className="min-w-[140px]"
           >
-            {submitting ? (
+            {submitPhase === "submitting" ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
                 Submitting…
+              </>
+            ) : submitPhase === "sending_email" ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Sending your report…
               </>
             ) : isLastScreen ? (
               <>
