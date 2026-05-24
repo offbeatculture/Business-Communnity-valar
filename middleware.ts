@@ -69,6 +69,17 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
+  // Long-form Assessment — invite-token IS the auth, no login required.
+  // Founders open the magic link; /api/invites/[token]/resolve gates access.
+  if (
+    pathname === "/assess" ||
+    pathname.startsWith("/assess/") ||
+    pathname.startsWith("/api/invites/") ||
+    pathname.startsWith("/api/diagnostic/")
+  ) {
+    return supabaseResponse
+  }
+
   // No user — redirect to login
   if (!user) {
     const url = request.nextUrl.clone()
