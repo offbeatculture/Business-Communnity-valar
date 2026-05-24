@@ -13,12 +13,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { getAssessmentQuestionById } from "@/lib/assessment/questions"
 import {
   SCREEN_GROUPS,
-  getQuestionById,
-  getScreenQuestionIds,
-} from "@/lib/audit/questions"
-import { resolveQuestion } from "@/lib/audit/question-overlays"
+  getAssessmentScreenQuestionIds,
+  TOTAL_ASSESSMENT_SCREENS,
+} from "@/lib/assessment/sections"
+import { resolveAssessmentQuestion } from "@/lib/assessment/question-overlays"
 import { VERTICALS } from "@/lib/audit/types"
 import type {
   AuditAnswer,
@@ -48,7 +49,9 @@ import type {
 // modifying that file — which the supervisor explicitly forbade.
 //
 // So this is a parallel orchestrator that reuses the shared logic
-// that LIVES IN lib/audit/* (questions, overlays, scoring). The
+// that LIVES IN lib/assessment/* (the long-form question bank,
+// sections, overlays, scoring) — which itself builds on top of
+// lib/audit/* primitives without modifying them. The
 // per-screen rendering primitives (Field, ChoiceInput, etc.) are
 // re-implemented here in a self-contained way so the two forms
 // can evolve independently without coupling. If/when AuditForm is
@@ -67,7 +70,7 @@ import type {
 //   - on every screen transition we fire-and-forget POST to
 //     /api/diagnostic/[submissionId]/save (no UI feedback)
 
-const TOTAL_SCREENS = 1 + SCREEN_GROUPS.length
+const TOTAL_SCREENS = TOTAL_ASSESSMENT_SCREENS
 
 type IdentityErrors = Partial<Record<keyof IdentityBlock, string>>
 
@@ -135,9 +138,9 @@ export function AssessmentFormWrapper({
   const questionErrors: Record<string, string> = (() => {
     if (isIdentityScreen) return {}
     const errs: Record<string, string> = {}
-    const qids = getScreenQuestionIds(screenIndex, identity.vertical || null)
+    const qids = getAssessmentScreenQuestionIds(screenIndex, identity.vertical || null)
     for (const qid of qids) {
-      const q = getQuestionById(qid)
+      const q = getAssessmentQuestionById(qid)
       if (!q) continue
       const ans = answers[qid]
       if (!ans) {
@@ -308,7 +311,7 @@ export function AssessmentFormWrapper({
         />
       ) : (
         <QuestionScreen
-          questionIds={getScreenQuestionIds(
+          questionIds={getAssessmentScreenQuestionIds(
             screenIndex,
             identity.vertical || null
           )}
@@ -569,9 +572,9 @@ function QuestionScreen({
   return (
     <div className="space-y-8">
       {questionIds.map((qid) => {
-        const base = getQuestionById(qid)
+        const base = getAssessmentQuestionById(qid)
         if (!base) return null
-        const q = resolveQuestion(base, vertical)
+        const q = resolveAssessmentQuestion(base, vertical)
         return (
           <QuestionRenderer
             key={qid}

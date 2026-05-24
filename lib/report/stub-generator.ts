@@ -1,9 +1,15 @@
-// Long-form founder assessment — Phase 1 STUB report generator
+// Long-form founder assessment — Phase 2 STUB report generator
 // ════════════════════════════════════════════════════════════
 // NO LLM. NO Claude. This is a deterministic, synchronous function
 // that returns a hardcoded-shape `StubReportPayload` so the rest of
 // the system (approval queue, PDF render, email) can be wired end-to-end
 // before Phase 3 swaps in real Claude-driven generation.
+//
+// Phase 2 upgrade: archetype + Lie are now picked by the deterministic
+// engines in `lib/assessment/*` (assignArchetype, assignLie) instead of
+// hardcoded heuristics. Force scores come from the long-form bank via
+// `scoreAllAssessmentForces`. The named_move lookup is still keyed by
+// the lowest-scoring force — good enough for Phase 2.
 //
 // Rules:
 //   - Pure function (no env vars, no network, no fs).
@@ -13,16 +19,29 @@
 //     runtime user error.
 
 import type { StubReportPayload } from "@/types/assessment"
-import { computeVerdict } from "@/lib/audit/verdict"
-import { FORCE_KEYS, VERTICALS, type AuditAnswers, type ForceKey } from "@/lib/audit/types"
+import {
+  FORCE_KEYS,
+  VERTICALS,
+  type AuditAnswers,
+  type ForceKey,
+} from "@/lib/audit/types"
+import {
+  scoreAllAssessmentForces,
+  type ForceScores,
+} from "@/lib/assessment/scoring"
+import { assignArchetype, ARCHETYPES } from "@/lib/assessment/archetype"
+import { assignLie, LIES } from "@/lib/assessment/lie"
 import { StubReportPayloadSchema } from "./schema"
 
 // ─── Inputs ──────────────────────────────────────────────────
 
 /**
  * Minimal subset of an `audit_submissions` row that the stub reads.
- * Loose typing on `answers` because Phase 1 may run before any are
+ * Loose typing on `answers` because Phase 1/2 may run before any are
  * captured. Real AuditAnswers shape is recognised when present.
+ *
+ * Note: `vertical_label` is derived from `vertical` via VERTICALS — the
+ * caller does not need to supply it.
  */
 export type SubmissionRow = {
   id: string
@@ -38,7 +57,7 @@ export type SubmissionRow = {
 // ─── Constants ───────────────────────────────────────────────
 
 const STUB_NOTE =
-  "Phase 1 stub. Real generation lands in Phase 3 — for now this validates plumbing only."
+  "Phase 2 stub. Real archetype and Lie picked deterministically from your answers. Full Claude-driven report content lands in Phase 3."
 
 const FORCE_LABELS: Record<ForceKey, string> = {
   identity: "Identity",
@@ -53,116 +72,6 @@ const FORCE_LABELS: Record<ForceKey, string> = {
 
 // Uniform fallback when the founder has no real answers yet.
 const FALLBACK_FORCE_SCORE = 2.5
-
-// ─── Archetype picker (Phase 1: 4 placeholders) ──────────────
-
-type ArchetypePick = { name: string; one_liner: string; secondary: string }
-
-const ARCHETYPES: Record<string, { one_liner: string }> = {
-  "The Grinder": {
-    one_liner:
-      "You out-work the problem instead of redesigning it — every win costs you a weekend you can't get back.",
-  },
-  "The Name": {
-    one_liner:
-      "The business is famous because you are. The day you stop showing up, the calendar empties.",
-  },
-  "The Institution": {
-    one_liner:
-      "Systems, not heroics. The machine produces revenue whether or not you walked in today.",
-  },
-  "The Rainmaker's Firm": {
-    one_liner:
-      "Revenue comes through one mouth — yours. Everyone else fulfills what you sold.",
-  },
-}
-
-function pickArchetype(scores: Record<ForceKey, number>): ArchetypePick {
-  const owner = scores.owner_energy
-  const scale = scores.scale
-  const xFactor = scores.x_factor
-  const optimisation = scores.optimisation
-
-  let primary: string
-  let secondary: string
-
-  if (owner < 2 && scale < 2) {
-    primary = "The Grinder"
-    secondary = "The Rainmaker's Firm"
-  } else if (xFactor >= 4 && scale <= 3) {
-    primary = "The Name"
-    secondary = "The Rainmaker's Firm"
-  } else if (scale >= 4 && optimisation >= 4) {
-    primary = "The Institution"
-    secondary = "The Rainmaker's Firm"
-  } else {
-    primary = "The Rainmaker's Firm"
-    secondary = "The Grinder"
-  }
-
-  return {
-    name: primary,
-    one_liner: ARCHETYPES[primary].one_liner,
-    secondary,
-  }
-}
-
-// ─── Lie picker (Phase 1: 4 placeholders) ────────────────────
-
-type LiePick = {
-  name: string
-  why_we_think_you_hold_this: string[]
-  contradiction: string
-}
-
-function pickLie(scores: Record<ForceKey, number>): LiePick {
-  if (scores.marketing < 2.5) {
-    return {
-      name: "The Marketing Lie",
-      why_we_think_you_hold_this: [
-        "Your Marketing force scores in the bottom band — position, message, and distribution are not stacked.",
-        "You likely believe more spend will fix what's actually broken at the layer below it.",
-        "Volume on an undecided position compounds the loss — not the wins.",
-      ],
-      contradiction:
-        "You say you need more leads. Your numbers say you don't yet own a single sentence your customer can repeat back.",
-    }
-  }
-  if (scores.financial < 2.5) {
-    return {
-      name: "The Profit Lie",
-      why_we_think_you_hold_this: [
-        "Your Financial force is in the bottom band — cash, margin, and runway are not clearly separated.",
-        "Revenue is the loudest number on your dashboard; profit is the quietest.",
-        "Money in one current account is hiding the salary, tax, and profit that should be in four.",
-      ],
-      contradiction:
-        "You say the business is growing. Your numbers say you're underpaid and the cushion is thinner than you've admitted.",
-    }
-  }
-  if (scores.owner_energy < 3) {
-    return {
-      name: "The Freedom Lie",
-      why_we_think_you_hold_this: [
-        "Your Owner Energy force scores below the comfort band — the calendar is collapsing first, the body will collapse second.",
-        "Most decisions in the business still funnel into one inbox: yours.",
-        "You're trying to fix exhaustion by adding (yoga, holidays, courses) instead of subtracting.",
-      ],
-      contradiction:
-        "You say you've built a business. Your hours say you've built a job that pays badly and pages you on weekends.",
-    }
-  }
-  return {
-    name: "The Identity Trap",
-    why_we_think_you_hold_this: [
-      "Your scores cluster mid-band — no force is screaming, but none is winning either.",
-      "Without a one-sentence answer to 'who is this business for?', everything downstream is a hedge.",
-      "Mid-band is the most dangerous place to live — it gives you permission to keep doing what you're already doing.",
-    ],
-    contradiction:
-      "You say you serve a specific customer. Your stop-doing list is blank — which means you've wished, not chosen.",
-  }
-}
 
 // ─── Named move lookup (keyed by focus force) ────────────────
 
@@ -236,22 +145,17 @@ function looksLikeAuditAnswers(answers: Record<string, unknown>): boolean {
   return false
 }
 
-function computeForceScores(answers: Record<string, unknown>): Record<ForceKey, number> {
-  if (looksLikeAuditAnswers(answers)) {
-    const verdict = computeVerdict(answers as AuditAnswers)
-    const out = {} as Record<ForceKey, number>
-    for (const force of FORCE_KEYS) {
-      out[force] = verdict.scores[force].score
-    }
-    return out
+// Build a uniform ForceScores fallback (every force at 2.5 / no questions
+// answered) so downstream consumers always get a real ForceScores shape.
+function fallbackForceScores(): ForceScores {
+  const out = {} as ForceScores
+  for (const force of FORCE_KEYS) {
+    out[force] = { score: FALLBACK_FORCE_SCORE, n: 0, untracked: 0 }
   }
-  // Fallback: uniform 2.5 across all forces.
-  const out = {} as Record<ForceKey, number>
-  for (const force of FORCE_KEYS) out[force] = FALLBACK_FORCE_SCORE
   return out
 }
 
-function pickFocusForce(scores: Record<ForceKey, number>): ForceKey {
+function pickFocusForce(flatScores: Record<ForceKey, number>): ForceKey {
   // Lowest-scoring force wins; on tie, foundation order.
   // Same priority as scoring.ts TIEBREAKER_PRIORITY.
   const order: readonly ForceKey[] = [
@@ -267,8 +171,8 @@ function pickFocusForce(scores: Record<ForceKey, number>): ForceKey {
   let pick: ForceKey = order[0]
   let lowest = Infinity
   for (const force of order) {
-    if (scores[force] < lowest) {
-      lowest = scores[force]
+    if (flatScores[force] < lowest) {
+      lowest = flatScores[force]
       pick = force
     }
   }
@@ -283,22 +187,66 @@ function verticalLabelFor(value: string): string {
 // ─── Public API ──────────────────────────────────────────────
 
 /**
- * Generate a Phase 1 stub report payload from a submission row.
+ * Generate a Phase 2 stub report payload from a submission row.
  *
  * Synchronous, deterministic, pure. Phase 3 will swap this for an
  * async Claude-driven generator — the call sites can stay the same
  * shape (this returns the payload; the wrapper persists/queues it).
  */
 export function generateStubReport(submission: SubmissionRow): StubReportPayload {
-  const scores = computeForceScores(submission.answers)
-  const focusForce = pickFocusForce(scores)
-  const archetype = pickArchetype(scores)
-  const lie = pickLie(scores)
+  // ─── Score forces (long-form bank) ─────────────────────────
+  // scoreAllAssessmentForces tolerates an empty answers object — every
+  // force will come back with score=0, n=0. To keep the Phase 1
+  // "feels neutral when nothing's been answered" behaviour, fall back
+  // to a uniform 2.5 if we can't see any audit-shaped answers at all.
+  const scores: ForceScores = looksLikeAuditAnswers(submission.answers)
+    ? scoreAllAssessmentForces(submission.answers as AuditAnswers)
+    : fallbackForceScores()
+
+  // Flat numbers for downstream consumers (focus-force picker + payload).
+  const flatScores: Record<ForceKey, number> = {} as Record<ForceKey, number>
+  for (const force of FORCE_KEYS) flatScores[force] = scores[force].score
+
+  // ─── Archetype + Lie (deterministic engines) ───────────────
+  const answersForEngines = (
+    looksLikeAuditAnswers(submission.answers)
+      ? (submission.answers as AuditAnswers)
+      : ({} as AuditAnswers)
+  )
+  const archetypeResult = assignArchetype(scores, answersForEngines)
+  const lieResult = assignLie(scores, answersForEngines)
+
+  const archetypeProfile = ARCHETYPES[archetypeResult.primary]
+  const archetype = {
+    name: archetypeProfile.label,
+    one_liner: archetypeProfile.one_liner,
+    secondary: archetypeResult.secondary
+      ? ARCHETYPES[archetypeResult.secondary].label
+      : "—",
+  }
+
+  const lieProfile = LIES[lieResult.primary]
+  // Schema requires ≥ 1 evidence string. If the engine returned none
+  // (e.g. blank answers + a fallback Lie), surface the short_diagnosis
+  // so the payload still validates.
+  const whyWeThink: string[] =
+    lieResult.evidence.length > 0
+      ? lieResult.evidence
+      : [lieProfile.short_diagnosis]
+
+  const lie = {
+    name: lieProfile.label,
+    why_we_think_you_hold_this: whyWeThink,
+    contradiction: lieResult.contradiction,
+  }
+
+  // ─── Focus force → named move ──────────────────────────────
+  const focusForce = pickFocusForce(flatScores)
   const namedMove = NAMED_MOVES[focusForce]
 
   // `scores` in the payload is Record<string, number> (keyed by ForceKey strings).
   const scoresOut: Record<string, number> = {}
-  for (const force of FORCE_KEYS) scoresOut[force] = scores[force]
+  for (const force of FORCE_KEYS) scoresOut[force] = flatScores[force]
 
   const payload: StubReportPayload = {
     version: "1-stub",
