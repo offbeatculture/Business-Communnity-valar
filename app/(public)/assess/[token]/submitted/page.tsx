@@ -1,44 +1,16 @@
-import { headers } from "next/headers"
 import { CheckCircle2 } from "lucide-react"
-import type { ResolveInviteResponse } from "@/types/assessment"
+import { resolveInviteByToken } from "@/lib/assessment/server/resolveInviteByToken"
 import { AssessmentShell } from "@/components/assessment/AssessmentShell"
 
 // ════════════════════════════════════════════════════════════
 // /assess/[token]/submitted — post-submit confirmation
 // ════════════════════════════════════════════════════════════
-// Server component. Resolves the invite to pull the founder's
-// first name + email so the thank-you reads personally. If the
-// invite is somehow invalid by the time we get here, we fall
-// back to a generic thank-you (the submission already exists,
-// no need to gate this page hard).
+// Server component. Resolves the invite via a direct DB call to
+// personalise the thank-you. If the invite somehow doesn't resolve
+// by the time we get here, we fall back to a generic thank-you —
+// the submission already exists, so this page doesn't need to gate.
 
 export const dynamic = "force-dynamic"
-
-async function resolveInvite(
-  token: string
-): Promise<ResolveInviteResponse | null> {
-  const h = await headers()
-  const host = h.get("host")
-  const protocol =
-    h.get("x-forwarded-proto") ??
-    (host?.includes("localhost") ? "http" : "https")
-  // Prefer the request's own host so preview deployments call their own
-  // API routes (not prod's, which may have stale middleware/code).
-  const base = host
-    ? `${protocol}://${host}`
-    : (process.env.NEXT_PUBLIC_APP_URL ?? "")
-
-  try {
-    const res = await fetch(
-      `${base}/api/invites/${encodeURIComponent(token)}/resolve`,
-      { cache: "no-store" }
-    )
-    if (!res.ok) return null
-    return (await res.json()) as ResolveInviteResponse
-  } catch {
-    return null
-  }
-}
 
 export default async function AssessmentSubmittedPage({
   params,
@@ -46,13 +18,13 @@ export default async function AssessmentSubmittedPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
-  const resolved = await resolveInvite(token)
+  const resolved = await resolveInviteByToken(token)
 
   const firstName =
-    resolved && resolved.ok
+    resolved.ok
       ? (resolved.full_name ?? "").trim().split(/\s+/)[0] || "there"
       : "there"
-  const email = resolved && resolved.ok ? resolved.email : null
+  const email = resolved.ok ? resolved.email : null
 
   return (
     <AssessmentShell>

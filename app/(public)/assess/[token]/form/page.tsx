@@ -1,79 +1,26 @@
-import { redirect } from "next/navigation"
-import { headers } from "next/headers"
-import type {
-  ConsumeInviteResponse,
-  ResolveInviteResponse,
-} from "@/types/assessment"
+import Link from "next/link"
+import { AlertCircle } from "lucide-react"
+import { resolveInviteByToken } from "@/lib/assessment/server/resolveInviteByToken"
+import { consumeInviteByToken } from "@/lib/assessment/server/consumeInviteByToken"
 import { AssessmentShell } from "@/components/assessment/AssessmentShell"
 import { AssessmentFormWrapper } from "@/components/assessment/AssessmentFormWrapper"
+import { Button } from "@/components/ui/button"
 
 // ════════════════════════════════════════════════════════════
 // /assess/[token]/form — the actual assessment form
 // ════════════════════════════════════════════════════════════
-// Server component. Resolves the invite defensively (status could
-// have changed since the founder saw the landing page), consumes
-// it to get a submission_id if needed, then hands off to a client
-// wrapper that renders the form pre-populated with invite identity.
+// Server component. Resolves the invite via a direct DB call,
+// consumes it to get a submission_id if needed, then hands off to
+// a client wrapper. No HTTP round-trip back to /api/invites/* —
+// that pattern is fragile on Vercel and was the root cause of the
+// "Invite unavailable" misdiagnosis (commit 21a2e80).
+//
+// Error handling: instead of redirecting back to the briefing page
+// (which would also fail and hide the real reason), we render an
+// inline error card with the actual message. The founder can choose
+// to head back to the briefing themselves.
 
 export const dynamic = "force-dynamic"
-
-function buildBase(h: Headers): string {
-  const host = h.get("host")
-  const protocol =
-    h.get("x-forwarded-proto") ??
-    (host?.includes("localhost") ? "http" : "https")
-  // Prefer the request's own host so preview deployments call their own
-  // API routes (not prod's, which may have stale middleware/code).
-  return host
-    ? `${protocol}://${host}`
-    : (process.env.NEXT_PUBLIC_APP_URL ?? "")
-}
-
-async function resolveInvite(
-  base: string,
-  token: string
-): Promise<ResolveInviteResponse> {
-  try {
-    const res = await fetch(
-      `${base}/api/invites/${encodeURIComponent(token)}/resolve`,
-      { cache: "no-store" }
-    )
-    if (!res.ok) {
-      return { ok: false, error: `Invite lookup failed (${res.status})` }
-    }
-    return (await res.json()) as ResolveInviteResponse
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "Network error",
-    }
-  }
-}
-
-async function consumeInvite(
-  base: string,
-  token: string
-): Promise<ConsumeInviteResponse> {
-  try {
-    const res = await fetch(
-      `${base}/api/invites/${encodeURIComponent(token)}/consume`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        cache: "no-store",
-      }
-    )
-    if (!res.ok) {
-      return { ok: false, error: `Consume failed (${res.status})` }
-    }
-    return (await res.json()) as ConsumeInviteResponse
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "Network error",
-    }
-  }
-}
 
 export default async function AssessmentFormPage({
   params,
@@ -81,31 +28,73 @@ export default async function AssessmentFormPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
-  const h = await headers()
-  const base = buildBase(h)
 
-  const resolved = await resolveInvite(base, token)
+  const resolved = await resolveInviteByToken(token)
   if (!resolved.ok) {
-    redirect(`/assess/${encodeURIComponent(token)}`)
+    return (
+      <AssessmentShell>
+        <FormErrorCard
+          title="Invite unavailable"
+          message={resolved.error || "This invite is no longer valid."}
+          token={token}
+        />
+      </AssessmentShell>
+    )
   }
 
-  // Defensive: if status is terminal or unexpected, bounce back to
-  // the landing page so the user sees the right messaging.
-  if (
-    resolved.status === "submitted" ||
-    resolved.status === "expired" ||
-    resolved.status === "revoked"
-  ) {
-    redirect(`/assess/${encodeURIComponent(token)}`)
+  if (resolved.status === "expired") {
+    return (
+      <AssessmentShell>
+        <FormErrorCard
+          title="Invite expired"
+          message="This invite has expired."
+          token={token}
+        />
+      </AssessmentShell>
+    )
+  }
+
+  if (resolved.status === "revoked") {
+    return (
+      <AssessmentShell>
+        <FormErrorCard
+          title="Invite revoked"
+          message="This invite has been revoked."
+          token={token}
+        />
+      </AssessmentShell>
+    )
+  }
+
+  if (resolved.status === "submitted") {
+    return (
+      <AssessmentShell>
+        <FormErrorCard
+          title="Already submitted"
+          message="You've already submitted this assessment. We'll email your report within 24–48 hours."
+          token={token}
+          backLabel="View confirmation"
+          backHref={`/assess/${token}/submitted`}
+        />
+      </AssessmentShell>
+    )
   }
 
   // If we already have a submission_id from a prior consume, reuse it.
   // Otherwise consume now to materialise the submission row.
   let submissionId = resolved.submission_id
   if (!submissionId) {
-    const consumed = await consumeInvite(base, token)
+    const consumed = await consumeInviteByToken(token)
     if (!consumed.ok) {
-      redirect(`/assess/${encodeURIComponent(token)}`)
+      return (
+        <AssessmentShell>
+          <FormErrorCard
+            title="Couldn't start the assessment"
+            message={consumed.error || "Something went wrong. Please try again."}
+            token={token}
+          />
+        </AssessmentShell>
+      )
     }
     submissionId = consumed.submission_id
   }
@@ -121,5 +110,43 @@ export default async function AssessmentFormPage({
         }}
       />
     </AssessmentShell>
+  )
+}
+
+function FormErrorCard({
+  title,
+  message,
+  token,
+  backLabel = "Back to briefing",
+  backHref,
+}: {
+  title: string
+  message: string
+  token: string
+  backLabel?: string
+  backHref?: string
+}) {
+  const href = backHref ?? `/assess/${token}`
+  return (
+    <div className="space-y-6">
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 space-y-3">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="size-5 text-destructive" />
+          <p className="text-sm font-semibold text-destructive">{title}</p>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+          {message}
+        </h1>
+        <p className="text-sm text-muted-foreground max-w-prose">
+          If you believe this is a mistake, please reply to the email that
+          invited you and we&apos;ll sort it out.
+        </p>
+      </div>
+      <Link href={href}>
+        <Button variant="outline" size="lg">
+          {backLabel}
+        </Button>
+      </Link>
+    </div>
   )
 }
