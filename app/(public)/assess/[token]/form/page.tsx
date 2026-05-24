@@ -22,9 +22,11 @@ function buildBase(h: Headers): string {
   const protocol =
     h.get("x-forwarded-proto") ??
     (host?.includes("localhost") ? "http" : "https")
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ?? (host ? `${protocol}://${host}` : "")
-  )
+  // Prefer the request's own host so preview deployments call their own
+  // API routes (not prod's, which may have stale middleware/code).
+  return host
+    ? `${protocol}://${host}`
+    : (process.env.NEXT_PUBLIC_APP_URL ?? "")
 }
 
 async function resolveInvite(
