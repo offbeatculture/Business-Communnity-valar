@@ -56,9 +56,16 @@ export async function consumeInviteByToken(
     return { ok: true, submission_id: invite.submission_id }
   }
 
-  // First-time consume must be in an open/in-progress state.
-  // (Bug #2 — Commit 2 will widen this to also accept 'issued'.)
-  if (invite.status !== "opened" && invite.status !== "in_progress") {
+  // First-time consume can happen in any non-terminal state. We accept
+  // 'issued' because resolveInviteByToken normally flips it to 'opened'
+  // first, but if the flip races against the user clicking Start the
+  // form page must still succeed -- otherwise the user sees a 409 and
+  // gets bounced back, even though their invite is perfectly valid.
+  if (
+    invite.status !== "issued" &&
+    invite.status !== "opened" &&
+    invite.status !== "in_progress"
+  ) {
     return {
       ok: false,
       error: "Invite cannot be consumed in current state",
