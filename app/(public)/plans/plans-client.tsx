@@ -172,7 +172,9 @@ export default function PlansClient({
         </div>
 
         <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
-          {tiers.map((tier) => {
+           {tiers
+    .filter((tier) => tier.tier !== "library")
+    .map((tier) => {
             const copy = TIER_COPY[tier.tier]
             const isFeatured = tier.tier === "workshop"
             const isLoading = loadingTier === tier.tier
