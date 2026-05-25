@@ -43,3 +43,8 @@ supabase/.temp/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# macOS Finder duplicates ("Foo 2.ts" / "Foo 3.tsx")
+*\ [0-9].ts
+*\ [0-9].tsx
+*\ [0-9].sql
