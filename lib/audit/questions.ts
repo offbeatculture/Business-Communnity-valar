@@ -79,6 +79,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
       { label: "Over ₹10,000", value: "gt_10000", score: 1 },
       { label: "I don't track this", value: "untracked", score: 0, untracked: true },
     ],
+    helper: "Cost to acquire one person who shows genuine interest — not every impression.",
   },
 
   // ─── Sales Force ─────────────────────────────────────────
@@ -254,6 +255,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
       { label: "Over 50%", value: "gt_50", score: 2 },
       { label: "I don't track this", value: "untracked", score: 0, untracked: true },
     ],
+    helper: "Paid channels only — ads, agencies, Google, Meta, influencers. Not salaries.",
   },
 
   // ─── Q18 candidates: vertical-conditional ──────────────────

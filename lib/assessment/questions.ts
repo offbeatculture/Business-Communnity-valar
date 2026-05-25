@@ -291,6 +291,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Three specific costs a competitor wouldn't pay that your customer directly feels.",
   },
   {
     id: "q29_disappearance_suffer",
@@ -639,6 +640,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "none_picked", label: "None picked", score: 0 },
     ],
+    helper: "A doorway is a lens to position — size, price, time, customer type, or channel. Pick one.",
   },
   {
     id: "q44_wom_diagnosis",
@@ -712,6 +714,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "Hormozi's 4 levers — dream outcome named, written guarantee, first-win, done-for-you.",
   },
   {
     id: "q47_xyz_guarantee",
@@ -732,6 +735,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "no_guarantee", label: "No guarantee", score: 0 },
     ],
+    helper: "Z must be real money out of your account — not a discount or a vague promise.",
   },
   {
     id: "q48_disqualification_practice",
@@ -762,6 +766,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "i_talk_70", label: "I talk ~70%", score: 1 },
       { value: "i_talk_90", label: "I talk ~90% — it's a pitch", score: 0 },
     ],
+    helper: "If you talk more than the prospect, you're pitching, not investigating.",
   },
   {
     id: "q50_implication_questions",
@@ -775,6 +780,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "unfamiliar", label: "I'm not really familiar with these", score: 1 },
       { value: "never", label: "Never", score: 0 },
     ],
+    helper: "Implication questions make them feel the cost of staying the same — their cost, not yours.",
   },
   {
     id: "q51_lost_deal_diagnosis",
@@ -893,6 +899,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     format_hint:
       "Type the rupee amount, no commas. If you don't pay yourself a salary, type 0.",
     confidence_required: true,
+    helper: "Honest number, not the wish number.",
   },
   {
     id: "q56_bus_test_wage",
@@ -1008,6 +1015,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "gut_inherited", label: "Gut feel / inherited", score: 1 },
       { value: "cost_plus", label: "Cost-plus markup", score: 1 },
     ],
+    helper: "Anchor to corrected margin math — revenue minus delivery cost minus what you'd pay to replace yourself.",
   },
   {
     id: "q62_avoidance_pattern",
@@ -1077,6 +1085,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "dont_know", label: "Don't know", score: 0 },
     ],
+    helper: "One specific constraint — a process step, asset, or policy. Not a category like 'team' or 'cash'.",
   },
   {
     id: "q65_effort_location",
@@ -1097,6 +1106,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Herbie = your named bottleneck. Of last ₹1L growth spend, what % went directly to it?",
   },
   {
     id: "q66_exploit_before_elevate",
@@ -1122,6 +1132,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "none_either", label: "Did neither systematically", score: 0 },
     ],
+    helper: "Exploit = squeeze free gains from current capacity. Only elevate (hire/buy) after exploit runs dry.",
   },
   {
     id: "q67_three_ways_pattern",
@@ -1144,6 +1155,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "none_systematic", label: "None systematically", score: 0 },
     ],
+    helper: "Way 1 = more clients. Way 2 = bigger sale per client. Way 3 = repeat sales to same client.",
   },
   {
     id: "q68_inertia_policy",
@@ -1169,6 +1181,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "no_all_current", label: "No — all rules are current", score: 4 },
     ],
+    helper: "A rule written 3+ years ago that now slows you down. Name it, then kill or defend it explicitly.",
   },
   {
     id: "q69_value_chain_mapped",
@@ -1182,6 +1195,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "in_head", label: "It's in my head, not written", score: 1 },
       { value: "never", label: "Never mapped", score: 0 },
     ],
+    helper: "Map every step: lead → onboard → deliver → invoice → cash. No hidden steps.",
   },
   {
     id: "q70_subordinate_discipline",
@@ -1207,6 +1221,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "concept_new", label: "This concept is new to me", score: 0 },
     ],
+    helper: "Keeping non-bottleneck resources busy just to look busy = burning cash without output.",
   },
   {
     id: "q71_throughput_metric",
@@ -1228,6 +1243,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "monthly_only", label: "Monthly only, not weekly", score: 1 },
       { value: "gut_feel", label: "Gut feel, no number", score: 0 },
     ],
+    helper: "One number, checked same day every week — deals closed, units shipped, customers onboarded.",
   },
   {
     id: "q72_self_rated_bottleneck_clarity",
@@ -1333,6 +1349,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Tasks below your buyback rate belong to someone else.",
   },
   {
     id: "q77_warrillow_three_criteria",
@@ -1444,6 +1461,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "1_5", label: "1 – 5 hours", score: 2 },
       { value: "zero", label: "Zero", score: 1 },
     ],
+    helper: "Deep work on the Vital Few is the numerator; distractions are the denominator.",
   },
   {
     id: "q83_vital_few_named",
@@ -1492,6 +1510,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "5_30", label: "5 – 30 minutes", score: 3 },
       { value: "lt_5", label: "Under 5 minutes — it's the first thing", score: 1 },
     ],
+    helper: "Phone first thing = the rest of your day is reactive, not intentional.",
   },
   {
     id: "q86_sleep_predictability",
@@ -1524,6 +1543,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "1_3", label: "1 – 3", score: 2 },
       { value: "zero", label: "Zero — said yes to all", score: 0 },
     ],
+    helper: "Every yes to a small ask is a no to your Vital Few.",
   },
   {
     id: "q88_protected_thinking_time",
@@ -1537,6 +1557,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "occasional", label: "Occasional, not on calendar", score: 1 },
       { value: "never", label: "Never", score: 0 },
     ],
+    helper: "Thinking time is the block founders skip most — and pay for most.",
   },
   {
     id: "q89_freedom_subtraction_admission",
@@ -1567,6 +1588,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "The Freedom Lie says you can have the outcome without the subtraction. You can't.",
   },
 
   // ════════════════════════════════════════════════════════════
@@ -1628,6 +1650,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Way 1 (more clients) is comfortable. Ways 2 & 3 build the moat.",
   },
   {
     id: "qx3_layer0_to_force5",
@@ -1653,6 +1676,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 3,
       },
     ],
+    helper: "If price pushback tightens your gut, your finances are the real bottleneck.",
   },
   {
     id: "qx4_three_identities_recap",
@@ -1666,6 +1690,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "fight", label: "They fight each other", score: 1 },
       { value: "cannot_tell", label: "Can't tell", score: 0 },
     ],
+    helper: "These three should tell one coherent story. If they fight, one of them isn't honest.",
   },
   {
     id: "qx5_xfactor_position_alignment",
@@ -1687,6 +1712,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "neither", label: "Neither is sharp enough to compare", score: 0 },
     ],
+    helper: "Your positioning language should broadcast the cost you're willing to pay.",
   },
   {
     id: "qx6_subtraction_consistency",
@@ -1704,6 +1730,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "one_of_three", label: "Only one of three", score: 2 },
       { value: "none", label: "None — no subtraction discipline", score: 0 },
     ],
+    helper: "Subtraction is a pattern, not a one-off.",
   },
 ]
 
