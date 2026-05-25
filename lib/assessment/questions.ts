@@ -477,30 +477,30 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "q37_two_word_position",
     force: "marketing",
     question_text:
-      "In 'In the category of ___, we are the ___ one' — can you fill the second blank with TWO WORDS that pass the opposite-test?",
+      "Can you describe your business in two sharp words a real competitor could credibly claim the opposite of?",
     input_type: "choice",
     options: [
       {
         value: "two_words_sharp",
         label:
-          "Yes — two specific words a competitor could meaningfully claim the opposite of (e.g. 'before-7AM', 'eggless-only', 'JEE-without-burnout')",
+          "Yes — two sharp words like 'before-7AM', 'eggless-only', or 'JEE-without-burnout'",
         score: 5,
       },
       {
         value: "phrase",
-        label: "I have a phrase but it's 3+ words / multiple ideas",
+        label: "I have a longer phrase or multiple ideas — not down to two words",
         score: 3,
       },
       {
         value: "slogan_mush",
         label:
-          "Something like 'quality', 'trusted', 'premium', 'authentic'",
+          "Vague words like 'quality', 'trusted', 'premium', 'authentic'",
         score: 1,
       },
       { value: "none", label: "Nothing — never written one", score: 0 },
     ],
     helper:
-      "Opposite-test: would a real competitor credibly claim the opposite? 'Fast' passes (someone is 'thoughtful'). 'Best' fails — no one is 'worst'.",
+      "'Fast' passes — a competitor can credibly be 'thoughtful'. 'Best' fails — no one is 'worst' on purpose.",
   },
   {
     id: "q38_customer_one_liner",
