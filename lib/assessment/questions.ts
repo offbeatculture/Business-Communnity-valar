@@ -112,6 +112,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "blank", label: "Honestly, I can't name one thing", score: 0 },
     ],
+    helper: "Narrow enough to be credible. 'Best service' fails. 'Best JEE coaching without burnout' works.",
   },
   {
     id: "q22_three_identities_rhyme",
@@ -180,6 +181,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "Outcome test: can they name ONE change in their life — or just list your features?",
   },
   {
     id: "q25_self_rated_identity_clarity",
@@ -305,6 +307,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "one", label: "One I can name", score: 2 },
       { value: "zero", label: "Honestly, zero", score: 0 },
     ],
+    helper: "Name them by first name. Vague 'customers would miss us' = you don't actually know who would.",
   },
   {
     id: "q30_competitor_refusal",
@@ -334,6 +337,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Real X-Factor shows in what you refuse. A non-negotiable that costs you deals.",
   },
   {
     id: "q31_imitable_in_30_days",
@@ -463,6 +467,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "When you lose a deal, do you blame the market — or own what you refused?",
   },
 
   // ─── Force 3: Marketing ──────────────────────────────────
@@ -517,6 +522,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "If your last 10 customers describe you 10 different ways, you don't have a message.",
   },
   {
     id: "q39_stack_layer_dominant",
@@ -542,6 +548,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "nothing_systematic", label: "Nothing systematic", score: 0 },
     ],
+    helper: "Layer 1 = position (what you refuse). Layer 2 = message (the sentence). Layer 3 = distribution (ads, channels).",
   },
   {
     id: "q40_three_sacrifices",
@@ -589,6 +596,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Burn rate, not spend rate. Rupees that produced zero traceable customers.",
   },
   {
     id: "q42_pattern_diagnosis",
@@ -617,6 +625,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Layer 3 Bleeder = ads without position. Layer 2 Mute = edge without sentence. Layer 1 Ghost = known for nothing.",
   },
   {
     id: "q43_doorway_picked",
@@ -672,6 +681,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Is WOM strong because customers repeat a sharp sentence — or because you never tested a channel?",
   },
   {
     id: "q45_self_rated_position_clarity",
@@ -751,6 +761,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "over_year", label: "Over a year ago", score: 1 },
       { value: "never", label: "Never", score: 0 },
     ],
+    helper: "Do you actively tell prospects 'this isn't for you'? Or take every lead?",
   },
   {
     id: "q49_investigation_ratio",
@@ -836,6 +847,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Order = clear yes. Advance = next step booked. Continuation = 'let me think about it' (the slow no).",
   },
   {
     id: "q53_trust_leak",
@@ -871,6 +883,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Layer 0 = the unspoken trust before any conversation. Stock photos, vague claims, hidden founder = leaks.",
   },
   {
     id: "q54_self_rated_close_skill",
@@ -939,6 +952,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Bus Test margin — revenue minus delivery cost minus what you'd pay to replace yourself.",
   },
   {
     id: "q58_account_separation",
@@ -956,6 +970,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "two", label: "Two", score: 3 },
       { value: "one", label: "Just one operating account", score: 1 },
     ],
+    helper: "Profit-First / Crabtree — separate accounts for Profit, Tax, Owner Pay, Opex. Not one bucket.",
   },
   {
     id: "q59_profit_allocation",
@@ -976,6 +991,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "zero", label: "Zero — no sweep at all", score: 0 },
     ],
+    helper: "Sweep-first: move profit % out BEFORE expenses, not after. The discipline that protects profit.",
   },
   {
     id: "q60_owner_drawing_predictability",
@@ -1000,6 +1016,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Do you take a fixed salary on a fixed date — or raid the account when you need it?",
   },
   {
     id: "q61_pricing_basis",
@@ -1036,6 +1053,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "Do you sit with your P&L 30+ minutes a week — or file-and-forget?",
   },
   {
     id: "q63_self_rated_financial_clarity",
@@ -1365,6 +1383,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "one_of_three", label: "Only one", score: 2 },
       { value: "none", label: "None — it's bespoke", score: 0 },
     ],
+    helper: "Teachable (a team can learn it) + Valuable (a buyer pays for it) + Repeatable (same outcome each time).",
   },
   {
     id: "q78_founder_as_asset_risk",
@@ -1382,6 +1401,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "mostly_my_name", label: "Mostly my name", score: 1 },
       { value: "only_my_name", label: "Only my name — I am the business", score: 0 },
     ],
+    helper: "Do top customers buy the firm — or buy you personally? Can you step out without collapse?",
   },
   {
     id: "q79_named_productized_offering",
@@ -1406,6 +1426,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Productized = named offering, fixed scope, repeatable delivery. Not custom-quoted each time.",
   },
   {
     id: "q80_sellable_in_90_days",
@@ -1431,6 +1452,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "Sellability test — if a buyer paid cash and you stepped out in 90 days, would the business survive?",
   },
 
   // ─── Force 8: Owner Energy ───────────────────────────────
@@ -1448,6 +1470,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "20_40", label: "20 – 40", score: 2 },
       { value: "gt_40", label: "More than 40", score: 1 },
     ],
+    helper: "Distraction denominator — every group pulling you into reactive mode is a tax on Vital Few time.",
   },
   {
     id: "q82_deep_work_hours",
@@ -1485,6 +1508,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "havent_thought", label: "Haven't thought about it", score: 0 },
     ],
+    helper: "Vital Few = the 2-3 activities that move the needle THIS quarter. Name them, or everything feels equally urgent.",
   },
   {
     id: "q84_last_subtraction",
@@ -1532,6 +1556,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Sleep tells the truth. 7+ uninterrupted hours = the business runs without your 2 AM brain.",
   },
   {
     id: "q87_say_no_practice",

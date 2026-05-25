@@ -20,6 +20,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
       { label: "I can name a customer type only (industry or demographic)", value: "type_only", score: 2 },
       { label: "Honestly, I sell to anyone who'll buy", value: "anyone", score: 0 },
     ],
+    helper: "ICP = Ideal Customer Profile. The specific firm or person you sell BEST to — not everyone who'll pay you.",
   },
 
   // ─── X-Factor Force ──────────────────────────────────────
@@ -35,6 +36,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
       { label: "I haven't asked, but I'm pretty sure it's price, service, or quality", value: "assumed_generic", score: 1 },
       { label: "I haven't asked. I don't really know.", value: "unknown", score: 0 },
     ],
+    helper: "X-Factor = the cost you'll pay that competitors won't. The reason customers pick you over cheaper.",
   },
   {
     id: "q3_top3_concentration",
