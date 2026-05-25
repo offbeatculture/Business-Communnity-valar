@@ -1017,20 +1017,19 @@ const NEW_QUESTIONS: AuditQuestion[] = [
   {
     id: "q61_pricing_basis",
     force: "financial",
-    question_text: "How was your top-selling price set?",
+    question_text: "How did you decide your top-selling price?",
     input_type: "choice",
     options: [
       {
         value: "corrected_margin",
-        label: "From corrected margin math (after Bus Test wage)",
+        label: "I worked back from what I need to draw + actual delivery cost",
         score: 5,
       },
-      { value: "gm_target", label: "From a gross-margin target", score: 3 },
+      { value: "gm_target", label: "From a target gross-margin %", score: 3 },
       { value: "competitor", label: "Based on what competitors charge", score: 2 },
-      { value: "gut_inherited", label: "Gut feel / inherited", score: 1 },
-      { value: "cost_plus", label: "Cost-plus markup", score: 1 },
+      { value: "gut_inherited", label: "Gut feel, or inherited from before", score: 1 },
+      { value: "cost_plus", label: "Cost + a markup", score: 1 },
     ],
-    helper: "Price should flow from: what you need to clear, minus delivery cost, minus what you'd pay to replace yourself.",
   },
   {
     id: "q62_avoidance_pattern",
@@ -1701,60 +1700,11 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     ],
     helper: "If price pushback tightens your gut, your finances are the real bottleneck.",
   },
-  {
-    id: "qx4_three_identities_recap",
-    force: "identity",
-    question_text:
-      "Look at your answers to Q19, Q20, and Q21. Do they agree?",
-    input_type: "choice",
-    options: [
-      { value: "agree_strongly", label: "Strongly agree — one story", score: 5 },
-      { value: "agree_loosely", label: "Loosely agree", score: 3 },
-      { value: "fight", label: "They fight each other", score: 1 },
-      { value: "cannot_tell", label: "Can't tell", score: 0 },
-    ],
-    helper: "These three should tell one coherent story. If they fight, one of them isn't honest.",
-  },
-  {
-    id: "qx5_xfactor_position_alignment",
-    force: "x_factor",
-    question_text:
-      "Look at Q28 (X-Factor cost) and Q37 (two-word position). Does position language communicate the cost?",
-    input_type: "choice",
-    options: [
-      {
-        value: "aligned",
-        label: "Aligned — the position language tells the customer about the cost",
-        score: 5,
-      },
-      { value: "partial", label: "Partially aligned", score: 3 },
-      {
-        value: "disconnected",
-        label: "Disconnected — position doesn't reflect the cost",
-        score: 1,
-      },
-      { value: "neither", label: "Neither is sharp enough to compare", score: 0 },
-    ],
-    helper: "Your positioning language should broadcast the cost you're willing to pay.",
-  },
-  {
-    id: "qx6_subtraction_consistency",
-    force: "owner_energy",
-    question_text:
-      "Looking at Q23, Q40, and Q84, is your subtraction discipline consistent?",
-    input_type: "choice",
-    options: [
-      {
-        value: "all_three",
-        label: "Yes — subtracting consistently across all three",
-        score: 5,
-      },
-      { value: "two_of_three", label: "Two of three", score: 3 },
-      { value: "one_of_three", label: "Only one of three", score: 2 },
-      { value: "none", label: "None — no subtraction discipline", score: 0 },
-    ],
-    helper: "Subtraction is a pattern, not a one-off.",
-  },
+  // QX4, QX5, QX6 were "looking back" cross-checks ("Look at Q19, Q20, Q21
+  // — do they agree?"). Removed in testing — founders couldn't realistically
+  // remember answers from 8 screens ago. The scoring engine's
+  // detectTensions() computes these cross-checks deterministically from the
+  // actual answers, so nothing is lost analytically.
 ]
 
 // ════════════════════════════════════════════════════════════
