@@ -12,7 +12,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
     id: "q1_icp_clarity",
     force: "identity",
     question_text:
-      "When you describe your business to a stranger, who is your one ideal customer in one sentence?",
+      "Who is your one ideal customer? (In one sentence.)",
     input_type: "choice",
     options: [
       { label: "I can name a specific customer type, problem, and trigger", value: "specific", score: 5 },
@@ -28,7 +28,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
     id: "q2_xfactor_source",
     force: "x_factor",
     question_text:
-      "In your customers' own words — not yours — why do they pick you over the alternatives?",
+      "In your customers' own words, why do they pick you over the alternatives?",
     input_type: "choice",
     options: [
       { label: "I've asked them and I can quote 3+ customers verbatim", value: "verbatim", score: 5 },
