@@ -10,7 +10,8 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { format } from "date-fns"
-import { Loader2, RefreshCw } from "lucide-react"
+import { toast } from "sonner"
+import { Loader2, Mail, RefreshCw } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +23,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { VERTICALS } from "@/lib/audit/types"
-import type { AssessmentInviteStatus } from "@/types/assessment"
+import type {
+  AssessmentInviteStatus,
+  ResendInviteResponse,
+} from "@/types/assessment"
 
 type InviteRow = {
   id: string
@@ -40,6 +44,7 @@ type InviteRow = {
 
 type Props = {
   refreshToken: number
+  onChanged?: () => void
 }
 
 const PAGE_SIZE = 50
@@ -67,7 +72,7 @@ const VERTICAL_LABELS: Record<string, string> = Object.fromEntries(
   VERTICALS.map((v) => [v.value, v.label]),
 )
 
-export function AssessmentInvitesList({ refreshToken }: Props) {
+export function AssessmentInvitesList({ refreshToken, onChanged }: Props) {
   const [statusFilter, setStatusFilter] = useState<"all" | AssessmentInviteStatus>(
     "all",
   )
@@ -75,6 +80,33 @@ export function AssessmentInvitesList({ refreshToken }: Props) {
   const [rows, setRows] = useState<InviteRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [resendingId, setResendingId] = useState<string | null>(null)
+
+  async function resend(id: string) {
+    setResendingId(id)
+    try {
+      const res = await fetch(`/api/admin/invites/${id}/resend`, {
+        method: "POST",
+      })
+      const data: ResendInviteResponse = await res.json()
+      if (!res.ok || data.ok === false) {
+        const msg = data.ok === false ? data.error : "Failed to resend"
+        throw new Error(msg)
+      }
+      if (data.email_sent) {
+        toast.success("New invite emailed (old link is now invalid)")
+      } else {
+        toast.error(
+          "Token rotated but email didn't send. Try resending again.",
+        )
+      }
+      onChanged?.()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to resend")
+    } finally {
+      setResendingId(null)
+    }
+  }
 
   const fetchPage = useCallback(async () => {
     setLoading(true)
@@ -214,8 +246,32 @@ export function AssessmentInvitesList({ refreshToken }: Props) {
                     <td className="py-3 hidden sm:table-cell text-muted-foreground tabular-nums">
                       {format(new Date(row.created_at), "d MMM yyyy, h:mm a")}
                     </td>
-                    <td className="py-3 text-right text-muted-foreground text-xs">
-                      {row.submission_id ? "Submitted" : "—"}
+                    <td className="py-3 text-right">
+                      {row.status === "issued" || row.status === "opened" ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void resend(row.id)}
+                          disabled={resendingId === row.id}
+                          title="Rotate the token and re-send the email. The old link becomes unusable."
+                        >
+                          {resendingId === row.id ? (
+                            <Loader2 className="size-3.5 animate-spin mr-1" />
+                          ) : (
+                            <Mail className="size-3.5 mr-1" />
+                          )}
+                          Resend
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">
+                          {row.status === "in_progress"
+                            ? "In progress"
+                            : row.status === "submitted"
+                              ? "Submitted"
+                              : "—"}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

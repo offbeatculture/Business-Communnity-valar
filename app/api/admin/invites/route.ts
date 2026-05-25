@@ -3,6 +3,7 @@ import { z } from "zod/v4"
 import { randomBytes, createHash } from "node:crypto"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { sendAssessmentInviteEmail } from "@/lib/email/send-assessment-invite"
 import { VERTICALS } from "@/lib/audit/types"
 import type {
   IssueInviteResponse,
@@ -113,10 +114,27 @@ export async function POST(request: Request) {
       "http://localhost:3000"
     const link = `${appUrl.replace(/\/+$/, "")}/assess/${token}`
 
+    // Best-effort auto-email. The plaintext link is still returned to
+    // the admin so they can copy + distribute manually if the send
+    // fails or they explicitly wanted the link for another channel
+    // (WhatsApp, etc.). Failure is logged, not propagated.
+    let email_sent = false
+    try {
+      await sendAssessmentInviteEmail({
+        to: email,
+        full_name,
+        magic_link: link,
+      })
+      email_sent = true
+    } catch (sendErr) {
+      console.error("POST /api/admin/invites email send error:", sendErr)
+    }
+
     const response: IssueInviteResponse = {
       invite_id: data.id,
       token,
       link,
+      email_sent,
     }
 
     return NextResponse.json(response, { status: 201 })

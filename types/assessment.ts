@@ -117,6 +117,10 @@ export type IssueInviteResponse = {
   invite_id: string
   token: string
   link: string // full magic link, e.g. https://app/assess/<token>
+  // Phase 2.5: present when the route attempted to auto-email the link.
+  // True = email handed to SES OK. False = create succeeded but send
+  // failed (admin can copy the link from the UI as fallback).
+  email_sent?: boolean
 }
 
 // GET /api/invites/[token]/resolve
