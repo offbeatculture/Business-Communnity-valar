@@ -22,8 +22,32 @@ import { generateAuditReportPdf } from "@/lib/audit/pdf"
 import type { AuditVerdict } from "@/lib/audit/verdict"
 import type { ForceScores, Signals } from "@/lib/audit/scoring"
 import { pickStubFocusForce, STUB_FORCE_LABELS } from "./stub-generator"
+import { renderLongFormReportPdf } from "./pdf/render-long-form-report"
+import { transformStubToLongForm } from "./transform-stub-to-long-form"
 
 const STUB_WATERMARK = "PHASE 1 STUB — DO NOT DISTRIBUTE"
+
+// ─── Phase 4: long-form 20-page renderer ─────────────────────
+//
+// New entry point. Takes the same StubReportPayload the approve route
+// already has, plus the founder's identity + answers blob, and produces
+// the 20-page Scale Code Diagnostic PDF (with §1-§4 fully rendered and
+// §5-§15 + appendices as scaffolded placeholders during the spike).
+//
+// Approve route should swap to this from `renderStubReportPdf`.
+
+export async function renderLongFormReportPdfFromStub(input: {
+  payload: StubReportPayload
+  identity: IdentityBlock
+  answers: Record<string, unknown>
+}): Promise<Buffer> {
+  const longForm = transformStubToLongForm({
+    stub: input.payload,
+    city: input.identity.city || null,
+    answers: input.answers,
+  })
+  return renderLongFormReportPdf(longForm)
+}
 
 /**
  * Build a synthetic AuditVerdict from a StubReportPayload so we can

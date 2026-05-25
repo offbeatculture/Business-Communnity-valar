@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import {
   ArrowLeft,
   Check,
+  Download,
   Loader2,
   ShieldAlert,
   Target,
@@ -246,6 +247,18 @@ export function AssessmentReportPreview({
               Submitted {format(new Date(createdAt), "d MMM yyyy, h:mm a")} ·
               Draft v{version}
             </p>
+            <div className="mt-2">
+              <Button asChild variant="outline" size="sm">
+                <a
+                  href={`/api/admin/report-drafts/${draftId}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download className="size-4 mr-1" />
+                  Download PDF (preview)
+                </a>
+              </Button>
+            </div>
             {readOnly && reviewedAt && (
               <p className="text-xs mt-1">
                 <Badge
@@ -426,6 +439,21 @@ export function AssessmentReportPreview({
                 <kbd className="px-1.5 py-0.5 rounded border bg-muted">r</kbd>{" "}
                 reject
               </span>
+              <Button
+                variant="outline"
+                asChild
+                disabled={approving}
+                title="Render the current draft as PDF — does not approve or email"
+              >
+                <a
+                  href={`/api/admin/report-drafts/${draftId}/pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download className="size-4 mr-1" />
+                  Download PDF
+                </a>
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => setRejectOpen(true)}
