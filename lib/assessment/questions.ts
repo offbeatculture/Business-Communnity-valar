@@ -477,7 +477,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "q37_two_word_position",
     force: "marketing",
     question_text:
-      "Can you describe your business in two sharp words a real competitor could credibly claim the opposite of?",
+      "Can you describe your business in two sharp, specific words?",
     input_type: "choice",
     options: [
       {
@@ -499,8 +499,6 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "none", label: "Nothing — never written one", score: 0 },
     ],
-    helper:
-      "'Fast' passes — a competitor can credibly be 'thoughtful'. 'Best' fails — no one is 'worst' on purpose.",
   },
   {
     id: "q38_customer_one_liner",
