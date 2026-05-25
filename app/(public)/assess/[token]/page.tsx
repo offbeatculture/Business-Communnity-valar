@@ -1,55 +1,26 @@
 import Link from "next/link"
-import { headers } from "next/headers"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react"
-import type { ResolveInviteResponse } from "@/types/assessment"
+import { resolveInviteByToken } from "@/lib/assessment/server/resolveInviteByToken"
 import { AssessmentShell } from "@/components/assessment/AssessmentShell"
 
 // ════════════════════════════════════════════════════════════
 // /assess/[token] — landing + briefing
 // ════════════════════════════════════════════════════════════
-// Server component. Resolves the invite token via the API once on
-// load so the page renders correctly the first time (no client
-// fetch / flicker). Branches on the invite status:
+// Server component. Resolves the invite token via a direct DB call
+// (no HTTP round-trip — server-to-self fetch on Vercel is fragile).
+// Branches on the invite status:
 //
-//   invalid  → "This invite is no longer valid"
-//   issued   → briefing + "Start the Assessment"
-//   opened   → briefing + "Start the Assessment"
-//   in_progress → "Resume where you left off"
-//   submitted   → "You've already submitted" + link to /submitted
-//   expired/revoked → same as invalid
+//   invalid       → "This invite is no longer valid"
+//   issued/opened → briefing + "Start the Assessment"
+//   in_progress   → "Resume where you left off"
+//   submitted     → "You've already submitted" + link to /submitted
+//   expired       → "This invite has expired"
+//   revoked       → "This invite has been revoked"
 //
-// The invite token IS the auth here — no middleware auth required.
+// The invite token IS the auth here — middleware whitelists /assess/*.
 
 export const dynamic = "force-dynamic"
-
-async function resolveInvite(
-  token: string
-): Promise<ResolveInviteResponse> {
-  const h = await headers()
-  const host = h.get("host")
-  const protocol =
-    h.get("x-forwarded-proto") ??
-    (host?.includes("localhost") ? "http" : "https")
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL ?? (host ? `${protocol}://${host}` : "")
-
-  try {
-    const res = await fetch(
-      `${base}/api/invites/${encodeURIComponent(token)}/resolve`,
-      { cache: "no-store" }
-    )
-    if (!res.ok) {
-      return { ok: false, error: `Invite lookup failed (${res.status})` }
-    }
-    return (await res.json()) as ResolveInviteResponse
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "Network error",
-    }
-  }
-}
 
 export default async function AssessmentLandingPage({
   params,
@@ -57,7 +28,7 @@ export default async function AssessmentLandingPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
-  const resolved = await resolveInvite(token)
+  const resolved = await resolveInviteByToken(token)
 
   if (!resolved.ok) {
     return (
@@ -99,7 +70,7 @@ export default async function AssessmentLandingPage({
               to you within 24–48 hours.
             </p>
           </div>
-          <Link href={`/assess/${encodeURIComponent(token)}/submitted`}>
+          <Link href={`/assess/${token}/submitted`}>
             <Button size="lg" className="w-full sm:w-auto">
               View confirmation
               <ArrowRight className="size-4" />
@@ -177,7 +148,7 @@ export default async function AssessmentLandingPage({
           </p>
         </div>
 
-        <Link href={`/assess/${encodeURIComponent(token)}/form`}>
+        <Link href={`/assess/${token}/form`}>
           <Button size="lg" className="w-full sm:w-auto">
             {isResume ? "Resume where you left off" : "Start the Assessment"}
             <ArrowRight className="size-4" />

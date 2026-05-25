@@ -1,21 +1,18 @@
 import { NextResponse } from "next/server"
 import { createHash } from "node:crypto"
-import { createAdminClient } from "@/lib/supabase/admin"
 import { rateLimit } from "@/lib/rate-limit"
-import type {
-  AssessmentInviteStatus,
-  ResolveInviteResponse,
-} from "@/types/assessment"
+import { resolveInviteByToken } from "@/lib/assessment/server/resolveInviteByToken"
+import type { ResolveInviteResponse } from "@/types/assessment"
 
 export const runtime = "nodejs"
 
 // ════════════════════════════════════════════════════════════
 // GET /api/invites/[token]/resolve — magic-link entry check
 // ════════════════════════════════════════════════════════════
-
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex")
-}
+//
+// Thin HTTP shim around `resolveInviteByToken`. RSC pages call the
+// shared function directly; this route exists for any future
+// client-side use (and to preserve the API surface from Phase 1).
 
 function jsonErr(error: string, status: number) {
   const body: ResolveInviteResponse = { ok: false, error }
@@ -29,12 +26,8 @@ export async function GET(
   try {
     const { token } = await params
 
-    if (!token || typeof token !== "string" || token.length < 20) {
-      return jsonErr("Invite not found", 404)
-    }
-
-    // Rate-limit by token hash to avoid leaking token-length oracle.
-    const tokenHash = hashToken(token)
+    // Rate-limit by token hash to avoid leaking a token-length oracle.
+    const tokenHash = createHash("sha256").update(token ?? "").digest("hex")
     const { allowed } = rateLimit({
       key: `invite:resolve:${tokenHash}`,
       limit: 10,
@@ -44,89 +37,15 @@ export async function GET(
       return jsonErr("Too many requests. Please wait a few minutes.", 429)
     }
 
-    const admin = createAdminClient()
+    const result = await resolveInviteByToken(token)
 
-    const { data: invite, error: lookupError } = await admin
-      .from("assessment_invites")
-      .select(
-        "id, email, full_name, status, opened_at, submission_id, expires_at",
-      )
-      .eq("token_hash", tokenHash)
-      .maybeSingle()
-
-    if (lookupError) {
-      console.error("GET /api/invites/[token]/resolve lookup error:", lookupError)
-      return jsonErr("Failed to resolve invite", 500)
+    if (!result.ok) {
+      // 404 for unknown / bad-format tokens; 500 for actual DB errors.
+      const status = result.error === "Failed to resolve invite" ? 500 : 404
+      return NextResponse.json(result, { status })
     }
 
-    if (!invite) {
-      return jsonErr("Invite not found", 404)
-    }
-
-    const now = new Date()
-    const expiresAt = invite.expires_at ? new Date(invite.expires_at) : null
-
-    // Expire if past expires_at AND still in 'issued' state.
-    if (
-      expiresAt &&
-      expiresAt.getTime() < now.getTime() &&
-      invite.status === "issued"
-    ) {
-      const { error: expireError } = await admin
-        .from("assessment_invites")
-        .update({ status: "expired" })
-        .eq("id", invite.id)
-
-      if (expireError) {
-        console.error(
-          "GET /api/invites/[token]/resolve failed to mark expired:",
-          expireError,
-        )
-      }
-
-      return jsonErr("This invite has expired", 410)
-    }
-
-    if (invite.status === "revoked") {
-      return jsonErr("Invite has been revoked", 410)
-    }
-
-    if (invite.status === "submitted") {
-      return jsonErr("This invite has already been used", 410)
-    }
-
-    if (invite.status === "expired") {
-      return jsonErr("This invite has expired", 410)
-    }
-
-    // First click: flip 'issued' → 'opened' and stamp opened_at.
-    let currentStatus = invite.status as AssessmentInviteStatus
-
-    if (invite.status === "issued" && !invite.opened_at) {
-      const { error: openError } = await admin
-        .from("assessment_invites")
-        .update({ status: "opened", opened_at: now.toISOString() })
-        .eq("id", invite.id)
-
-      if (openError) {
-        console.error(
-          "GET /api/invites/[token]/resolve failed to mark opened:",
-          openError,
-        )
-      } else {
-        currentStatus = "opened"
-      }
-    }
-
-    const body: ResolveInviteResponse = {
-      ok: true,
-      email: invite.email,
-      full_name: invite.full_name,
-      status: currentStatus,
-      submission_id: invite.submission_id ?? null,
-    }
-
-    return NextResponse.json(body, { status: 200 })
+    return NextResponse.json(result, { status: 200 })
   } catch (err) {
     console.error("GET /api/invites/[token]/resolve error:", err)
     return jsonErr("Failed to resolve invite", 500)

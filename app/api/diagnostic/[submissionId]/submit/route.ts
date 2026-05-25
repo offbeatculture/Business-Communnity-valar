@@ -267,6 +267,25 @@ export async function POST(
       // Non-fatal: draft is written, status will be reconciled by admin view.
     }
 
+    // Flip the linked invite to 'submitted' so it can't be reused. The
+    // resolve route uses invite.status to gate re-entry; without this
+    // flip, a founder reopening their magic link after submitting would
+    // see a fresh briefing instead of "Already submitted", and could
+    // create a duplicate in-progress submission. Non-fatal -- the
+    // submission itself is already safely written.
+    if (updatedSubmission.invite_id) {
+      const { error: inviteFlipError } = await admin
+        .from("assessment_invites")
+        .update({ status: "submitted" })
+        .eq("id", updatedSubmission.invite_id)
+      if (inviteFlipError) {
+        console.error(
+          "POST /api/diagnostic/[submissionId]/submit invite status flip error:",
+          inviteFlipError,
+        )
+      }
+    }
+
     const body: SubmitAssessmentResponse = {
       ok: true,
       submission_id: submissionId,

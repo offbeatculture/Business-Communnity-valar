@@ -77,13 +77,20 @@ export async function POST(
       (submission.answers as Record<string, unknown> | null) ?? {}
     const merged = { ...existing, ...incoming }
 
+    // Only write status when actually transitioning. A late auto-save
+    // arriving after submit() has run must NOT revert 'submitted' back
+    // to 'in_progress' -- that would orphan the report draft and make
+    // the submission look incomplete to the admin queue.
+    const updatePayload: Record<string, unknown> = {
+      answers: merged,
+    }
+    if (submission.status === "in_progress") {
+      updatePayload.status = "in_progress"
+    }
+
     const { error: updateError } = await admin
       .from("audit_submissions")
-      .update({
-        answers: merged,
-        status: "in_progress",
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", submissionId)
 
     if (updateError) {

@@ -102,7 +102,15 @@ export async function POST(request: Request) {
       )
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    // Prefer the request's own origin so preview deployments issue
+    // preview-domain links (instead of always pointing to prod via the
+    // NEXT_PUBLIC_APP_URL env var, which is identical across all Vercel
+    // environments). Falls back to the env var, then localhost.
+    const requestOrigin = request.headers.get("origin")
+    const appUrl =
+      requestOrigin ??
+      process.env.NEXT_PUBLIC_APP_URL ??
+      "http://localhost:3000"
     const link = `${appUrl.replace(/\/+$/, "")}/assess/${token}`
 
     const response: IssueInviteResponse = {
