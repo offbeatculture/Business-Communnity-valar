@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod/v4"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
-import { renderStubReportPdf } from "@/lib/report/render-pdf"
+import { renderLongFormReportPdfFromStub } from "@/lib/report/render-pdf"
 import { sendAuditReportEmail } from "@/lib/email/send-audit-report"
 import type {
   ApproveDraftResponse,
@@ -83,7 +83,7 @@ export async function POST(
     const { data: submission, error: submissionError } = await admin
       .from("audit_submissions")
       .select(
-        "id, full_name, business_name, email, phone, city, vertical",
+        "id, full_name, business_name, email, phone, city, vertical, answers",
       )
       .eq("id", draft.submission_id)
       .maybeSingle()
@@ -111,10 +111,12 @@ export async function POST(
 
     let pdfBuffer: Buffer
     try {
-      pdfBuffer = await renderStubReportPdf(
-        draft.payload as StubReportPayload,
+      pdfBuffer = await renderLongFormReportPdfFromStub({
+        payload: draft.payload as StubReportPayload,
         identity,
-      )
+        answers:
+          (submission.answers as Record<string, unknown> | null) ?? {},
+      })
     } catch (renderErr) {
       console.error(
         "POST /api/admin/report-drafts/[id]/approve render error:",
