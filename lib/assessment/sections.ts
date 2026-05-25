@@ -210,16 +210,16 @@ export const SCREEN_GROUPS: readonly SectionGroup[] = [
   },
 
   // ─── Section 9: Cross-checks ─────────────────────────────
+  // QX4/QX5/QX6 used to live here but asked founders to recall their
+  // answers from 8 screens ago — bad UX. Removed; the report's
+  // detectTensions() computes those cross-checks from the actual answers.
   {
     title: "Cross-checks — how the forces hang together",
-    subtitle: "Connecting the dots across what you just answered.",
+    subtitle: "Three final questions to pull it all together.",
     question_ids: [
       "qx1_first_fix_priority",
       "qx2_painful_money_lever",
       "qx3_layer0_to_force5",
-      "qx4_three_identities_recap",
-      "qx5_xfactor_position_alignment",
-      "qx6_subtraction_consistency",
     ],
   },
 ]

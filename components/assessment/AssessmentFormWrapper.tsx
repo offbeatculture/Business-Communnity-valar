@@ -77,31 +77,57 @@ type IdentityErrors = Partial<Record<keyof IdentityBlock, string>>
 export type AssessmentFormWrapperProps = {
   token: string
   submissionId: string
+  // Phase 2.5 fix: the form page hydrates these from the existing
+  // audit_submissions row so refresh / tab-reopen doesn't wipe progress.
+  // First-mount: invite name + email only; subsequent mounts: whatever
+  // the founder has typed and auto-saved so far.
   initialIdentity: {
     full_name: string
+    business_name?: string
+    phone?: string
     email: string
+    city?: string
+    vertical?: VerticalValue | ""
   }
+  initialAnswers?: AuditAnswers
 }
 
 export function AssessmentFormWrapper({
   token,
   submissionId,
   initialIdentity,
+  initialAnswers = {},
 }: AssessmentFormWrapperProps) {
   const router = useRouter()
-  const [screen, setScreen] = useState(0)
   const [identity, setIdentity] = useState<IdentityBlock>({
     full_name: initialIdentity.full_name ?? "",
-    business_name: "",
-    phone: "",
+    business_name: initialIdentity.business_name ?? "",
+    phone: initialIdentity.phone ?? "",
     email: initialIdentity.email ?? "",
-    city: "",
-    vertical: "" as VerticalValue,
+    city: initialIdentity.city ?? "",
+    vertical: (initialIdentity.vertical ?? "") as VerticalValue,
   })
-  const [answers, setAnswers] = useState<AuditAnswers>({})
+  const [answers, setAnswers] = useState<AuditAnswers>(initialAnswers)
+  // Resume on the first screen with an unanswered required question.
+  // Falls through to screen 0 if nothing has been answered yet.
+  const [screen, setScreen] = useState(() =>
+    computeResumeScreen(
+      initialAnswers,
+      (initialIdentity.vertical ?? "") as VerticalValue | "",
+      {
+        full_name: initialIdentity.full_name ?? "",
+        business_name: initialIdentity.business_name ?? "",
+        phone: initialIdentity.phone ?? "",
+        email: initialIdentity.email ?? "",
+        vertical: (initialIdentity.vertical ?? "") as VerticalValue | "",
+      },
+    ),
+  )
   const [submitting, setSubmitting] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
-  const lastSavedScreenRef = useRef<number | null>(null)
+  // Seed lastSavedScreenRef with the resume screen so we don't fire
+  // a redundant save on mount.
+  const lastSavedScreenRef = useRef<number | null>(screen)
 
   const isIdentityScreen = screen === 0
   const isLastScreen = screen === TOTAL_SCREENS - 1
@@ -785,4 +811,54 @@ function ConfidenceChips({
       </div>
     </div>
   )
+}
+
+// ════════════════════════════════════════════════════════════
+// computeResumeScreen — figure out which screen to land on
+// ════════════════════════════════════════════════════════════
+//
+// Called once on mount (with the rehydrated state from the DB).
+// Walks each screen in order — first one with an unanswered or
+// invalid required question wins. If identity is incomplete, we
+// stay on screen 0. If everything is filled, we land on the last
+// screen (so the founder can submit without re-clicking through).
+
+function computeResumeScreen(
+  answers: AuditAnswers,
+  vertical: VerticalValue | "",
+  identity: {
+    full_name: string
+    business_name: string
+    phone: string
+    email: string
+    vertical: VerticalValue | ""
+  },
+): number {
+  const identityComplete =
+    identity.full_name.trim().length >= 2 &&
+    identity.business_name.trim().length >= 2 &&
+    /^[6-9]\d{9}$/.test(identity.phone) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity.email) &&
+    !!identity.vertical
+
+  if (!identityComplete) return 0
+
+  for (let i = 0; i < TOTAL_SCREENS - 1; i++) {
+    const qids = getAssessmentScreenQuestionIds(i, vertical || null)
+    for (const qid of qids) {
+      const q = getAssessmentQuestionById(qid)
+      if (!q) continue
+      const ans = answers[qid]
+      if (!ans) return i + 1
+      if (q.input_type === "number") {
+        if (typeof ans.value !== "number" || !Number.isFinite(ans.value))
+          return i + 1
+      }
+      if (q.confidence_required && !ans.confidence) return i + 1
+    }
+  }
+
+  // Everything is answered — land on the last screen so the founder
+  // can re-check and submit.
+  return TOTAL_SCREENS - 1
 }

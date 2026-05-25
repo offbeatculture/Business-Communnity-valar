@@ -117,6 +117,10 @@ export type IssueInviteResponse = {
   invite_id: string
   token: string
   link: string // full magic link, e.g. https://app/assess/<token>
+  // Phase 2.5: present when the route attempted to auto-email the link.
+  // True = email handed to SES OK. False = create succeeded but send
+  // failed (admin can copy the link from the UI as fallback).
+  email_sent?: boolean
 }
 
 // GET /api/invites/[token]/resolve
@@ -184,4 +188,51 @@ export type RejectDraftRequest = {
 }
 export type RejectDraftResponse =
   | { ok: true }
+  | { ok: false; error: string }
+
+// ─── Phase 2.5: bulk CSV invite + auto-email ─────────────────
+
+// One row from the founder CSV upload.
+export type BulkInviteRow = {
+  email: string
+  full_name: string
+  phone?: string
+  vertical?: string
+}
+
+// Per-row outcome from the bulk endpoint. Granular so the UI can
+// show "23 created / 1 duplicate / 1 invalid email / 0 failed".
+export type BulkInviteResult = {
+  email: string
+  full_name: string
+  status: "created" | "duplicate" | "invalid" | "error"
+  invite_id?: string // present iff status === 'created'
+  link?: string // present iff status === 'created' and email_sent === false
+  email_sent?: boolean // present iff status === 'created'
+  reason?: string // human-readable when not created
+}
+
+// POST /api/admin/invites/bulk
+export type BulkInviteRequest = {
+  rows: BulkInviteRow[]
+  send_emails?: boolean // default true; if false, returns link in result
+}
+export type BulkInviteResponse =
+  | {
+      ok: true
+      results: BulkInviteResult[]
+      created: number
+      duplicates: number
+      invalid: number
+      errors: number
+    }
+  | { ok: false; error: string }
+
+// POST /api/admin/invites/[id]/resend — re-send the email for an
+// existing invite. The plaintext token was discarded at issue time
+// (only the sha256 hash is stored), so resend ROTATES the token:
+// hashes a fresh value, updates token_hash, and sends the new link.
+// Any old copy of the link becomes unusable immediately.
+export type ResendInviteResponse =
+  | { ok: true; email_sent: boolean }
   | { ok: false; error: string }

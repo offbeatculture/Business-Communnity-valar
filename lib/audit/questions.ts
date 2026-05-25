@@ -12,7 +12,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
     id: "q1_icp_clarity",
     force: "identity",
     question_text:
-      "When you describe your business to a stranger, who is your one ideal customer in one sentence?",
+      "Who is your one ideal customer? (In one sentence.)",
     input_type: "choice",
     options: [
       { label: "I can name a specific customer type, problem, and trigger", value: "specific", score: 5 },
@@ -20,6 +20,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
       { label: "I can name a customer type only (industry or demographic)", value: "type_only", score: 2 },
       { label: "Honestly, I sell to anyone who'll buy", value: "anyone", score: 0 },
     ],
+    helper: "ICP = Ideal Customer Profile. The specific firm or person you sell BEST to — not everyone who'll pay you.",
   },
 
   // ─── X-Factor Force ──────────────────────────────────────
@@ -27,7 +28,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
     id: "q2_xfactor_source",
     force: "x_factor",
     question_text:
-      "In your customers' own words — not yours — why do they pick you over the alternatives?",
+      "In your customers' own words, why do they pick you over the alternatives?",
     input_type: "choice",
     options: [
       { label: "I've asked them and I can quote 3+ customers verbatim", value: "verbatim", score: 5 },
@@ -35,6 +36,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
       { label: "I haven't asked, but I'm pretty sure it's price, service, or quality", value: "assumed_generic", score: 1 },
       { label: "I haven't asked. I don't really know.", value: "unknown", score: 0 },
     ],
+    helper: "X-Factor = the cost you'll pay that competitors won't. The reason customers pick you over cheaper.",
   },
   {
     id: "q3_top3_concentration",
@@ -79,6 +81,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
       { label: "Over ₹10,000", value: "gt_10000", score: 1 },
       { label: "I don't track this", value: "untracked", score: 0, untracked: true },
     ],
+    helper: "Cost to acquire one person who shows genuine interest — not every impression.",
   },
 
   // ─── Sales Force ─────────────────────────────────────────
@@ -254,6 +257,7 @@ export const AUDIT_QUESTIONS: AuditQuestion[] = [
       { label: "Over 50%", value: "gt_50", score: 2 },
       { label: "I don't track this", value: "untracked", score: 0, untracked: true },
     ],
+    helper: "Paid channels only — ads, agencies, Google, Meta, influencers. Not salaries.",
   },
 
   // ─── Q18 candidates: vertical-conditional ──────────────────

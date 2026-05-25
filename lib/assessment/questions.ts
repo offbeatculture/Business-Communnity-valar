@@ -67,13 +67,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
     ],
     helper:
-      "The bootcamp's Four Wrong Answers — pick the one closest to how you actually answer.",
+      "Pick the answer closest to how you actually describe it.",
   },
   {
     id: "q20_disappearance_days",
     force: "identity",
     question_text:
-      "If you vanished from your business tomorrow — hospital, holiday, no contact — how many days before revenue starts dropping?",
+      "If you vanished from your business tomorrow (hospital, holiday, no contact), how many days before revenue drops?",
     input_type: "band",
     options: [
       { value: "lt_3", label: "Under 3 days", score: 1 },
@@ -112,6 +112,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "blank", label: "Honestly, I can't name one thing", score: 0 },
     ],
+    helper: "Narrow enough to be credible. 'Best service' fails. 'Best JEE coaching without burnout' works.",
   },
   {
     id: "q22_three_identities_rhyme",
@@ -180,6 +181,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "Outcome test: can they name ONE change in their life — or just list your features?",
   },
   {
     id: "q25_self_rated_identity_clarity",
@@ -291,6 +293,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Three specific costs a competitor wouldn't pay that your customer directly feels.",
   },
   {
     id: "q29_disappearance_suffer",
@@ -304,6 +307,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "one", label: "One I can name", score: 2 },
       { value: "zero", label: "Honestly, zero", score: 0 },
     ],
+    helper: "Name them by first name. Vague 'customers would miss us' = you don't actually know who would.",
   },
   {
     id: "q30_competitor_refusal",
@@ -333,6 +337,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Real X-Factor shows in what you refuse. A non-negotiable that costs you deals.",
   },
   {
     id: "q31_imitable_in_30_days",
@@ -462,6 +467,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "When you lose a deal, do you blame the market — or own what you refused?",
   },
 
   // ─── Force 3: Marketing ──────────────────────────────────
@@ -471,24 +477,24 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "q37_two_word_position",
     force: "marketing",
     question_text:
-      "In 'In the category of ___, we are the ___ one' — can you fill the second blank with TWO WORDS that pass the opposite-test?",
+      "Can you describe your business in two sharp, specific words?",
     input_type: "choice",
     options: [
       {
         value: "two_words_sharp",
         label:
-          "Yes — two specific words a competitor could meaningfully claim the opposite of (e.g. 'before-7AM', 'eggless-only', 'JEE-without-burnout')",
+          "Yes — two sharp words like 'before-7AM', 'eggless-only', or 'JEE-without-burnout'",
         score: 5,
       },
       {
         value: "phrase",
-        label: "I have a phrase but it's 3+ words / multiple ideas",
+        label: "I have a longer phrase or multiple ideas — not down to two words",
         score: 3,
       },
       {
         value: "slogan_mush",
         label:
-          "Something like 'quality', 'trusted', 'premium', 'authentic'",
+          "Vague words like 'quality', 'trusted', 'premium', 'authentic'",
         score: 1,
       },
       { value: "none", label: "Nothing — never written one", score: 0 },
@@ -514,6 +520,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "If your last 10 customers describe you 10 different ways, you don't have a message.",
   },
   {
     id: "q39_stack_layer_dominant",
@@ -539,6 +546,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "nothing_systematic", label: "Nothing systematic", score: 0 },
     ],
+    helper: "Layer 1 = position (what you refuse). Layer 2 = message (the sentence). Layer 3 = distribution (ads, channels).",
   },
   {
     id: "q40_three_sacrifices",
@@ -586,11 +594,12 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Burn rate, not spend rate. Rupees that produced zero traceable customers.",
   },
   {
     id: "q42_pattern_diagnosis",
     force: "marketing",
-    question_text: "Which marketing pathology fits you best?",
+    question_text: "Which pattern fits you best?",
     input_type: "choice",
     options: [
       {
@@ -614,12 +623,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Do any of these fit how your marketing actually runs?",
   },
   {
     id: "q43_doorway_picked",
     force: "marketing",
     question_text:
-      "From the 8 positioning doorways (Size, Price, Gender, Age, Time-of-Day, Channel, Heavy-User, Against-the-Leader) — picked one?",
+      "Have you picked one positioning doorway and actively defended it?",
     input_type: "choice",
     options: [
       {
@@ -639,6 +649,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "none_picked", label: "None picked", score: 0 },
     ],
+    helper: "Pick ONE lens (e.g. 'morning dads only', 'restaurants under 10 staff') and stay disciplined.",
   },
   {
     id: "q44_wom_diagnosis",
@@ -668,6 +679,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Is WOM strong because customers repeat a sharp sentence — or because you never tested a channel?",
   },
   {
     id: "q45_self_rated_position_clarity",
@@ -694,7 +706,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
   {
     id: "q46_offer_strength",
     force: "sales",
-    question_text: "Score your offer using Hormozi's Value Equation.",
+    question_text: "Rate your offer on 4 levers: dream outcome named, real guarantee, first win in under 14 days, done-for-you.",
     input_type: "choice",
     options: [
       {
@@ -717,7 +729,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "q47_xyz_guarantee",
     force: "sales",
     question_text:
-      "Do you have a written X/Y/Z guarantee ('If you don't get X in Y, we Z') with a Z that costs you real rupees?",
+      "Do you have a written guarantee like 'If you don't get X within Y, we will Z' — and does Z cost you real rupees?",
     input_type: "choice",
     options: [
       {
@@ -732,12 +744,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "no_guarantee", label: "No guarantee", score: 0 },
     ],
+    helper: "Z must be real money out of your account — not a discount or a vague promise.",
   },
   {
     id: "q48_disqualification_practice",
     force: "sales",
     question_text:
-      "When did you last tell a prospect, out loud, 'this isn't for you'?",
+      "When did you last tell a prospect 'this isn't for you'?",
     input_type: "choice",
     options: [
       { value: "this_month", label: "This month", score: 5 },
@@ -745,6 +758,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "over_year", label: "Over a year ago", score: 1 },
       { value: "never", label: "Never", score: 0 },
     ],
+    helper: "Do you actively tell prospects 'this isn't for you'? Or take every lead?",
   },
   {
     id: "q49_investigation_ratio",
@@ -762,12 +776,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "i_talk_70", label: "I talk ~70%", score: 1 },
       { value: "i_talk_90", label: "I talk ~90% — it's a pitch", score: 0 },
     ],
+    helper: "If you talk more than the prospect, you're pitching, not investigating.",
   },
   {
     id: "q50_implication_questions",
     force: "sales",
     question_text:
-      "Use Implication Questions (stacking cost of inaction)?",
+      "Do you ask questions that make prospects feel the cost of staying the same?",
     input_type: "choice",
     options: [
       { value: "routine", label: "Routinely — it's part of my flow", score: 5 },
@@ -779,7 +794,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
   {
     id: "q51_lost_deal_diagnosis",
     force: "sales",
-    question_text: "Last deal you lost — which layer failed?",
+    question_text: "Last deal you lost — where did it break?",
     input_type: "choice",
     options: [
       {
@@ -807,7 +822,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "q52_continuation_count",
     force: "sales",
     question_text:
-      "Of last 10 sales conversations, how many ended in Order, Advance, or Continuation?",
+      "Of last 10 sales conversations, how many ended in a clear next step — either Order, Advance, or Continuation?",
     input_type: "choice",
     options: [
       {
@@ -828,12 +843,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Order = they said yes. Advance = next step is booked. Continuation = 'let me think about it' (the slow no).",
   },
   {
     id: "q53_trust_leak",
     force: "sales",
     question_text:
-      "Which of the 5 trust leaks is most YOUR business right now?",
+      "Which of these is MOST true about your business right now?",
     input_type: "choice",
     options: [
       { value: "none_clean", label: "None — Layer 0 is clean", score: 5 },
@@ -863,6 +879,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Layer 0 = what people feel about you BEFORE you say anything. What's leaking trust?",
   },
   {
     id: "q54_self_rated_close_skill",
@@ -893,12 +910,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     format_hint:
       "Type the rupee amount, no commas. If you don't pay yourself a salary, type 0.",
     confidence_required: true,
+    helper: "Honest number, not the wish number.",
   },
   {
     id: "q56_bus_test_wage",
     force: "financial",
     question_text:
-      "If hit by a bus tomorrow, monthly salary needed to hire your replacement?",
+      "Monthly salary you'd need to pay someone to do what you do, end-to-end?",
     input_type: "number",
     unit: "₹",
     min_value: 0,
@@ -906,7 +924,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     format_hint:
       "Type the market wage for someone who could do what you do, end-to-end. No commas.",
     confidence_required: true,
-    helper: "If this matches Q55, one of the numbers isn't honest.",
+    helper: "Not what you WANT to pay — what the market would demand. If this matches Q55, one of the numbers isn't honest.",
   },
   {
     id: "q57_corrected_pretax",
@@ -930,6 +948,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Bus Test margin — revenue minus delivery cost minus what you'd pay to replace yourself.",
   },
   {
     id: "q58_account_separation",
@@ -947,6 +966,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "two", label: "Two", score: 3 },
       { value: "one", label: "Just one operating account", score: 1 },
     ],
+    helper: "Separate accounts force discipline: Profit set-aside, Tax reserve, Owner salary, Operating expenses.",
   },
   {
     id: "q59_profit_allocation",
@@ -967,6 +987,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "zero", label: "Zero — no sweep at all", score: 0 },
     ],
+    helper: "Sweep-first: move profit % out BEFORE expenses, not after. The discipline that protects profit.",
   },
   {
     id: "q60_owner_drawing_predictability",
@@ -991,22 +1012,23 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Do you take a fixed salary on a fixed date — or raid the account when you need it?",
   },
   {
     id: "q61_pricing_basis",
     force: "financial",
-    question_text: "How was your top-selling price set?",
+    question_text: "How did you decide your top-selling price?",
     input_type: "choice",
     options: [
       {
         value: "corrected_margin",
-        label: "From corrected margin math (after Bus Test wage)",
+        label: "I worked back from what I need to draw + actual delivery cost",
         score: 5,
       },
-      { value: "gm_target", label: "From a gross-margin target", score: 3 },
+      { value: "gm_target", label: "From a target gross-margin %", score: 3 },
       { value: "competitor", label: "Based on what competitors charge", score: 2 },
-      { value: "gut_inherited", label: "Gut feel / inherited", score: 1 },
-      { value: "cost_plus", label: "Cost-plus markup", score: 1 },
+      { value: "gut_inherited", label: "Gut feel, or inherited from before", score: 1 },
+      { value: "cost_plus", label: "Cost + a markup", score: 1 },
     ],
   },
   {
@@ -1026,6 +1048,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "Do you sit with your P&L 30+ minutes a week — or file-and-forget?",
   },
   {
     id: "q63_self_rated_financial_clarity",
@@ -1056,7 +1079,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "q64_herbie_named",
     force: "optimisation",
     question_text:
-      "Name your business's Herbie — ONE specific bottleneck pacing everything.",
+      "Can you name ONE specific bottleneck that's pacing everything?",
     input_type: "choice",
     options: [
       {
@@ -1077,12 +1100,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "dont_know", label: "Don't know", score: 0 },
     ],
+    helper: "One specific constraint — a process step, asset, or policy. Not a category like 'team' or 'cash'.",
   },
   {
     id: "q65_effort_location",
     force: "optimisation",
     question_text:
-      "Of last ₹1L growth spend, what % landed AT your named Herbie?",
+      "Of last ₹1 lakh growth spend, what % went directly at your named bottleneck?",
     input_type: "band",
     unit: "%",
     options: [
@@ -1097,6 +1121,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Did your growth money go where the real constraint is? Or scattered elsewhere?",
   },
   {
     id: "q66_exploit_before_elevate",
@@ -1122,12 +1147,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "none_either", label: "Did neither systematically", score: 0 },
     ],
+    helper: "Exploit = squeeze free gains from current capacity. Only elevate (hire/buy) after exploit runs dry.",
   },
   {
     id: "q67_three_ways_pattern",
     force: "optimisation",
     question_text:
-      "Of Jay Abraham's 3 Ways, which have you actively worked in last 12 months?",
+      "Which growth levers have you actively worked in the last 12 months?",
     input_type: "choice",
     options: [
       {
@@ -1144,12 +1170,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "none_systematic", label: "None systematically", score: 0 },
     ],
+    helper: "Three levers: acquire more clients, raise deal size per client, deepen repeat sales per client.",
   },
   {
     id: "q68_inertia_policy",
     force: "optimisation",
     question_text:
-      "Is there a 3+ year old rule that now slows you down?",
+      "Is there a rule you wrote 3+ years ago that now slows you down?",
     input_type: "choice",
     options: [
       {
@@ -1169,6 +1196,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "no_all_current", label: "No — all rules are current", score: 4 },
     ],
+    helper: "A rule written 3+ years ago that now slows you down. Name it, then kill or defend it explicitly.",
   },
   {
     id: "q69_value_chain_mapped",
@@ -1182,6 +1210,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "in_head", label: "It's in my head, not written", score: 1 },
       { value: "never", label: "Never mapped", score: 0 },
     ],
+    helper: "Map every step: lead → onboard → deliver → invoice → cash. No hidden steps.",
   },
   {
     id: "q70_subordinate_discipline",
@@ -1207,12 +1236,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "concept_new", label: "This concept is new to me", score: 0 },
     ],
+    helper: "Keeping non-bottleneck resources busy just to look busy = burning cash without output.",
   },
   {
     id: "q71_throughput_metric",
     force: "optimisation",
     question_text:
-      "ONE weekly number telling whether system throughput moved?",
+      "Do you track ONE number weekly that tells you whether the business is moving?",
     input_type: "choice",
     options: [
       {
@@ -1228,12 +1258,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "monthly_only", label: "Monthly only, not weekly", score: 1 },
       { value: "gut_feel", label: "Gut feel, no number", score: 0 },
     ],
+    helper: "Examples: deals closed this week, units shipped, customers onboarded. Pick ONE and check it same day every week.",
   },
   {
     id: "q72_self_rated_bottleneck_clarity",
     force: "optimisation",
     question_text:
-      "On 1-5, sure that your Herbie is the REAL bottleneck?",
+      "On 1-5, how sure are you that this bottleneck is the REAL one?",
     input_type: "choice",
     options: [
       { value: "1", label: "1 — guessing", score: 1 },
@@ -1252,7 +1283,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "q73_vacation_test",
     force: "scale",
     question_text:
-      "Longest you could disappear (no phone, no email, no WhatsApp) before things break?",
+      "Longest you could disappear (no phone, no email, no WhatsApp) before the business breaks?",
     input_type: "choice",
     options: [
       { value: "60_plus", label: "60+ days", score: 5 },
@@ -1309,7 +1340,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "q76_buyback_rate_aware",
     force: "scale",
     question_text:
-      "Calculated Buyback Rate (annual personal cost ÷ 8000 ÷ 4), delegate tasks below it?",
+      "Have you calculated what an hour of your time is worth, and delegated tasks worth less than that?",
     input_type: "choice",
     options: [
       {
@@ -1333,12 +1364,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Buyback Rate = annual personal cost ÷ 2000 hours. Anything worth less than that per hour, delegate it.",
   },
   {
     id: "q77_warrillow_three_criteria",
     force: "scale",
     question_text:
-      "Apply to top offering: Teachable + Valuable + Repeatable?",
+      "Can your top offering pass these three tests: Teachable, Valuable, and Repeatable?",
     input_type: "choice",
     options: [
       { value: "all_three", label: "All three — yes", score: 5 },
@@ -1346,12 +1378,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "one_of_three", label: "Only one", score: 2 },
       { value: "none", label: "None — it's bespoke", score: 0 },
     ],
+    helper: "Teachable = your team can learn it. Valuable = a buyer pays for it. Repeatable = same outcome every time.",
   },
   {
     id: "q78_founder_as_asset_risk",
     force: "scale",
     question_text:
-      "Top 3 customers buying — firm name or your name?",
+      "Are your top 3 customers buying the firm name, or your personal name?",
     input_type: "choice",
     options: [
       {
@@ -1363,6 +1396,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "mostly_my_name", label: "Mostly my name", score: 1 },
       { value: "only_my_name", label: "Only my name — I am the business", score: 0 },
     ],
+    helper: "Do top customers buy the firm — or buy you personally? Can you step out without collapse?",
   },
   {
     id: "q79_named_productized_offering",
@@ -1387,6 +1421,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Productized = named offering, fixed scope, repeatable delivery. Not custom-quoted each time.",
   },
   {
     id: "q80_sellable_in_90_days",
@@ -1412,6 +1447,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "Sellability test — if a buyer paid cash and you stepped out in 90 days, would the business survive?",
   },
 
   // ─── Force 8: Owner Energy ───────────────────────────────
@@ -1420,7 +1456,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
   {
     id: "q81_whatsapp_denominator",
     force: "owner_energy",
-    question_text: "How many WhatsApp groups for work (not family)?",
+    question_text: "How many WhatsApp groups for work do you belong to?",
     input_type: "band",
     options: [
       { value: "lt_5", label: "Under 5", score: 5 },
@@ -1429,12 +1465,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "20_40", label: "20 – 40", score: 2 },
       { value: "gt_40", label: "More than 40", score: 1 },
     ],
+    helper: "Each group pulls you into reactive mode. That's a tax on time for your most important work.",
   },
   {
     id: "q82_deep_work_hours",
     force: "owner_energy",
     question_text:
-      "Hours/week of distraction-free deep work on Vital Few?",
+      "How many hours per week of distraction-free deep work on your most important activities?",
     input_type: "band",
     unit: "hours",
     options: [
@@ -1444,12 +1481,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "1_5", label: "1 – 5 hours", score: 2 },
       { value: "zero", label: "Zero", score: 1 },
     ],
+    helper: "Deep work on the Vital Few is the numerator; distractions are the denominator.",
   },
   {
     id: "q83_vital_few_named",
     force: "owner_energy",
     question_text:
-      "Name the 2 or 3 activities that actually move the needle this quarter?",
+      "Name the 2 or 3 activities that actually move the needle this quarter.",
     input_type: "choice",
     options: [
       {
@@ -1465,6 +1503,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "havent_thought", label: "Haven't thought about it", score: 0 },
     ],
+    helper: "Vital Few = the 2-3 activities that move the needle THIS quarter. Name them, or everything feels equally urgent.",
   },
   {
     id: "q84_last_subtraction",
@@ -1484,7 +1523,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "q85_phone_first_thing",
     force: "owner_energy",
     question_text:
-      "Within how many minutes of waking do you check WhatsApp/email/IG?",
+      "Within how many minutes of waking do you check WhatsApp, email, or Instagram?",
     input_type: "choice",
     options: [
       { value: "90_plus", label: "90+ minutes after waking", score: 5 },
@@ -1492,12 +1531,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "5_30", label: "5 – 30 minutes", score: 3 },
       { value: "lt_5", label: "Under 5 minutes — it's the first thing", score: 1 },
     ],
+    helper: "Phone first thing = the rest of your day is reactive, not intentional.",
   },
   {
     id: "q86_sleep_predictability",
     force: "owner_energy",
     question_text:
-      "Last 4 weeks, nights with 7+ hours uninterrupted sleep?",
+      "In the last 4 weeks, how many nights did you get 7+ hours of uninterrupted sleep?",
     input_type: "choice",
     options: [
       { value: "gt_20", label: "More than 20 nights", score: 5 },
@@ -1511,6 +1551,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         untracked: true,
       },
     ],
+    helper: "Sleep tells the truth. 7+ uninterrupted hours = the business runs without your 2 AM brain.",
   },
   {
     id: "q87_say_no_practice",
@@ -1524,6 +1565,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "1_3", label: "1 – 3", score: 2 },
       { value: "zero", label: "Zero — said yes to all", score: 0 },
     ],
+    helper: "Every yes to a small ask is a no to your Vital Few.",
   },
   {
     id: "q88_protected_thinking_time",
@@ -1537,6 +1579,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       { value: "occasional", label: "Occasional, not on calendar", score: 1 },
       { value: "never", label: "Never", score: 0 },
     ],
+    helper: "Thinking time is the block founders skip most — and pay for most.",
   },
   {
     id: "q89_freedom_subtraction_admission",
@@ -1567,6 +1610,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 0,
       },
     ],
+    helper: "The real truth: you can't have the outcome without the subtraction. No shortcuts.",
   },
 
   // ════════════════════════════════════════════════════════════
@@ -1580,7 +1624,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "qx1_first_fix_priority",
     force: "identity",
     question_text:
-      "If you could only fix ONE in next 90 days, which unlocks the most?",
+      "If you could only fix ONE in the next 90 days, which unlocks the most?",
     input_type: "choice",
     options: [
       { value: "identity", label: "Identity — what business I'm actually in", score: 0 },
@@ -1599,7 +1643,7 @@ const NEW_QUESTIONS: AuditQuestion[] = [
     id: "qx2_painful_money_lever",
     force: "optimisation",
     question_text:
-      "Of the 3 Ways to grow, which MOST uncomfortable to attack — and the highest-leverage one?",
+      "Of the 3 ways to grow, which is MOST uncomfortable to attack — and the highest-leverage?",
     input_type: "choice",
     options: [
       {
@@ -1628,12 +1672,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 1,
       },
     ],
+    helper: "Way 1 (more clients) is comfortable. Ways 2 & 3 build the moat.",
   },
   {
     id: "qx3_layer0_to_force5",
     force: "financial",
     question_text:
-      "Last buyer pushed back on price — did your gut tighten because of YOUR finances (not theirs)?",
+      "Last time a buyer pushed back on price, did your gut tighten because of YOUR finances (not theirs)?",
     input_type: "choice",
     options: [
       {
@@ -1653,58 +1698,13 @@ const NEW_QUESTIONS: AuditQuestion[] = [
         score: 3,
       },
     ],
+    helper: "If price pushback tightens your gut, your finances are the real bottleneck.",
   },
-  {
-    id: "qx4_three_identities_recap",
-    force: "identity",
-    question_text:
-      "Look at Q19, Q20, Q21 — do they AGREE?",
-    input_type: "choice",
-    options: [
-      { value: "agree_strongly", label: "Strongly agree — one story", score: 5 },
-      { value: "agree_loosely", label: "Loosely agree", score: 3 },
-      { value: "fight", label: "They fight each other", score: 1 },
-      { value: "cannot_tell", label: "Can't tell", score: 0 },
-    ],
-  },
-  {
-    id: "qx5_xfactor_position_alignment",
-    force: "x_factor",
-    question_text:
-      "Look at Q28 (X-Factor cost) and Q37 (two-word position). Does position language communicate the cost?",
-    input_type: "choice",
-    options: [
-      {
-        value: "aligned",
-        label: "Aligned — the position language tells the customer about the cost",
-        score: 5,
-      },
-      { value: "partial", label: "Partially aligned", score: 3 },
-      {
-        value: "disconnected",
-        label: "Disconnected — position doesn't reflect the cost",
-        score: 1,
-      },
-      { value: "neither", label: "Neither is sharp enough to compare", score: 0 },
-    ],
-  },
-  {
-    id: "qx6_subtraction_consistency",
-    force: "owner_energy",
-    question_text:
-      "Across Q23 (Identity), Q40 (Marketing), Q84 (Owner Energy) — consistent subtraction discipline?",
-    input_type: "choice",
-    options: [
-      {
-        value: "all_three",
-        label: "Yes — subtracting consistently across all three",
-        score: 5,
-      },
-      { value: "two_of_three", label: "Two of three", score: 3 },
-      { value: "one_of_three", label: "Only one of three", score: 2 },
-      { value: "none", label: "None — no subtraction discipline", score: 0 },
-    ],
-  },
+  // QX4, QX5, QX6 were "looking back" cross-checks ("Look at Q19, Q20, Q21
+  // — do they agree?"). Removed in testing — founders couldn't realistically
+  // remember answers from 8 screens ago. The scoring engine's
+  // detectTensions() computes these cross-checks deterministically from the
+  // actual answers, so nothing is lost analytically.
 ]
 
 // ════════════════════════════════════════════════════════════
