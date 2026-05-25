@@ -83,10 +83,10 @@ export async function generateAuditReportPdf(
     const doc = new PDFDocument({
       size: "A4",
       margins: {
-        top: 48,
-        bottom: 56,
-        left: 54,
-        right: 54,
+       top: 42,
+    bottom: 46,
+    left: 36,
+    right: 36,
       },
       font: regularFont,
       bufferPages: true,
