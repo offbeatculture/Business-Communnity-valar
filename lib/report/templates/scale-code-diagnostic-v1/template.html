@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Scale Code Diagnostic — Ofbc Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  /* ─── Page setup ──────────────────────────────────────── */
+  @page {
+    size: A4 portrait;
+    margin: 18mm 16mm 22mm 16mm;
+  }
+  @page :first {
+    margin: 0;
+  }
+
+  /* ─── Reset + base ────────────────────────────────────── */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    color: #1a1a1a;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  :root {
+    --red: #E53935;
+    --red-dark: #B71C1C;
+    --black: #111;
+    --grey: #666;
+    --grey-light: #999;
+    --rule: #DDD;
+    --card: #E6E6E6;
+    --bg-light: #F8F8F8;
+    --bg-red: #FFF5F5;
+    --bg-amber: #FFF8EE;
+    --bg-green: #F2FAF3;
+  }
+
+  /* ─── Typography ──────────────────────────────────────── */
+  h1, h2, h3, h4, h5 {
+    font-weight: 700;
+    color: var(--black);
+    line-height: 1.2;
+  }
+  p { margin-bottom: 0.6em; }
+  strong { font-weight: 700; color: var(--black); }
+  em { font-style: italic; }
+
+  /* ─── Cover page ──────────────────────────────────────── */
+  .cover {
+    page-break-after: always;
+    height: 297mm;
+    width: 210mm;
+    padding: 28mm 22mm;
+    background: #FFF;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .cover-mark {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--red);
+    text-transform: uppercase;
+  }
+  .cover-title-block { margin-top: 18mm; }
+  .cover-eyebrow {
+    font-size: 11pt;
+    font-weight: 600;
+    color: var(--grey);
+    letter-spacing: 0.05em;
+    margin-bottom: 8mm;
+  }
+  .cover-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 52pt;
+    font-weight: 600;
+    line-height: 0.98;
+    color: var(--black);
+    letter-spacing: -0.02em;
+  }
+  .cover-title .accent { color: var(--red); }
+  .cover-rule {
+    width: 90mm;
+    height: 4px;
+    background: var(--red);
+    margin: 14mm 0 10mm 0;
+  }
+  .cover-founder {
+    font-size: 22pt;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 4mm;
+  }
+  .cover-meta-row {
+    font-size: 12pt;
+    color: var(--grey);
+    margin-bottom: 2mm;
+  }
+  .cover-meta-row strong { color: var(--black); font-weight: 600; }
+  .cover-footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 6mm;
+    font-size: 9pt;
+    color: var(--grey);
+    display: flex;
+    justify-content: space-between;
+  }
+  .cover-footer strong { color: var(--black); font-weight: 600; }
+
+  /* ─── Section structure ───────────────────────────────── */
+  section.report-section {
+    page-break-before: always;
+  }
+  section.report-section:first-of-type {
+    page-break-before: avoid;
+  }
+  .section-header {
+    border-bottom: 1.5px solid var(--rule);
+    padding-bottom: 8mm;
+    margin-bottom: 10mm;
+  }
+  .section-eyebrow {
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 4mm;
+  }
+  .section-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 26pt;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--black);
+    letter-spacing: -0.01em;
+  }
+
+  /* Display headline (archetype name, lie name, sprint name) */
+  .display-name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 34pt;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--red);
+    margin: 2mm 0 4mm 0;
+  }
+  .display-name.dark {
+    color: var(--red-dark);
+  }
+  .display-name.black {
+    color: var(--black);
+  }
+  .display-sub {
+    font-style: italic;
+    font-size: 11pt;
+    color: var(--grey);
+    line-height: 1.4;
+    margin-bottom: 7mm;
+    max-width: 155mm;
+  }
+
+  /* ─── Pull quotes / callouts ──────────────────────────── */
+  blockquote.pull, .pull-quote {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-size: 14pt;
+    line-height: 1.45;
+    color: var(--black);
+    border-left: 3px solid var(--red);
+    padding: 4mm 0 4mm 8mm;
+    margin: 6mm 0;
+  }
+  .pull-quote.large {
+    font-size: 16pt;
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .callout {
+    background: var(--bg-light);
+    border-radius: 6px;
+    padding: 6mm 8mm;
+    margin: 4mm 0;
+    font-size: 10pt;
+  }
+  .callout.red { background: var(--bg-red); }
+  .callout.amber { background: var(--bg-amber); }
+  .callout.green { background: var(--bg-green); }
+
+  /* ─── Subsection headings inside sections ─────────────── */
+  h3.subhead {
+    font-size: 12pt;
+    font-weight: 700;
+    color: var(--black);
+    margin: 8mm 0 3mm 0;
+    page-break-after: avoid;
+  }
+  h3.subhead-red {
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 8mm 0 3mm 0;
+    page-break-after: avoid;
+  }
+  h4.minihead {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: var(--black);
+    margin: 5mm 0 2mm 0;
+    page-break-after: avoid;
+  }
+
+  /* ─── Tables ──────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 4mm 0 6mm 0;
+    font-size: 9.5pt;
+  }
+  table.no-split {
+    page-break-inside: avoid;
+  }
+  table tbody tr {
+    page-break-inside: avoid;
+  }
+  thead tr { background: #1a1a1a; }
+  thead th {
+    color: #FFF;
+    font-weight: 600;
+    padding: 3mm 4mm;
+    text-align: left;
+    font-size: 9pt;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  tbody td {
+    padding: 3mm 4mm;
+    border-bottom: 0.5px solid var(--rule);
+    vertical-align: top;
+  }
+  tbody tr:nth-child(even) { background: #FAFAFA; }
+  tbody td strong { font-weight: 600; color: var(--black); }
+
+  /* Q-id chip */
+  .qid {
+    display: inline-block;
+    background: var(--red);
+    color: #FFF;
+    font-size: 8pt;
+    font-weight: 700;
+    padding: 0.5mm 2mm;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+  .qid-dark { background: var(--black); }
+
+  /* ─── 8-Force scorecard bars ──────────────────────────── */
+  .force-list {
+    margin: 6mm 0 8mm 0;
+  }
+  .force-row {
+    display: grid;
+    grid-template-columns: 38mm 1fr 18mm;
+    align-items: center;
+    gap: 4mm;
+    margin-bottom: 3mm;
+    font-size: 10pt;
+  }
+  .force-name { font-weight: 600; color: var(--black); }
+  .force-bar-track {
+    height: 7mm;
+    background: #EEE;
+    border-radius: 3.5mm;
+    position: relative;
+    overflow: hidden;
+  }
+  .force-bar-fill {
+    height: 100%;
+    background: var(--red);
+    border-radius: 3.5mm;
+  }
+  .force-bar-fill.weakest { background: var(--red-dark); }
+  .force-bar-fill.strongest { background: #555; }
+  .force-score {
+    text-align: right;
+    font-weight: 700;
+    color: var(--black);
+    font-variant-numeric: tabular-nums;
+  }
+  .force-label-line {
+    font-size: 8.5pt;
+    color: var(--grey);
+    margin-top: -1mm;
+    margin-bottom: 3mm;
+    padding-left: 42mm;
+  }
+  .force-label-line.weakest { color: var(--red-dark); font-weight: 600; }
+  .force-label-line.strongest { color: #555; font-weight: 600; }
+
+  /* ─── 2x2 founder map ─────────────────────────────────── */
+  .founder-map {
+    margin: 6mm 0 8mm 0;
+    page-break-inside: avoid;
+  }
+  .map-axis-label {
+    text-align: center;
+    color: var(--red);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 9pt;
+    letter-spacing: 0.08em;
+    padding: 3mm 0;
+  }
+  .map-axis-label .sub {
+    color: var(--grey);
+    font-weight: 500;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 8.5pt;
+    font-style: italic;
+    margin-left: 2mm;
+  }
+  .map-grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 3mm;
+    margin: 0;
+  }
+  .map-grid td {
+    width: 50%;
+    border: 1px solid var(--card);
+    border-radius: 4px;
+    padding: 5mm 6mm;
+    height: 36mm;
+    vertical-align: top;
+    background: #FFF;
+  }
+  .map-grid td.you {
+    background: var(--bg-red);
+    border: 2px solid var(--red);
+  }
+  .map-grid td .name {
+    display: block;
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 2mm;
+  }
+  .map-grid td.you .name { color: var(--red-dark); }
+  .map-grid td .desc {
+    font-size: 9pt;
+    color: var(--grey);
+    line-height: 1.4;
+  }
+  .map-grid td .you-marker {
+    margin-top: 3mm;
+    padding-top: 2mm;
+    border-top: 1px dashed var(--red);
+    font-size: 8.5pt;
+    color: var(--red-dark);
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+  }
+  .you-marker .dot {
+    width: 4mm;
+    height: 4mm;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 0 2.5px rgba(229,57,53,0.20);
+    flex-shrink: 0;
+  }
+  .map-y-axis {
+    display: flex;
+    justify-content: space-between;
+    padding: 2mm 4mm;
+    font-size: 8pt;
+    font-weight: 600;
+    color: var(--grey);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ─── Cash waterfall ──────────────────────────────────── */
+  .waterfall {
+    margin: 6mm auto 8mm auto;
+    max-width: 130mm;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  .wf-row {
+    display: grid;
+    grid-template-columns: 22mm 1fr;
+    gap: 4mm;
+    align-items: center;
+    margin-bottom: 2mm;
+  }
+  .wf-amount {
+    background: var(--black);
+    color: #FFF;
+    font-weight: 700;
+    text-align: center;
+    padding: 3mm;
+    border-radius: 4px;
+    font-size: 12pt;
+    font-variant-numeric: tabular-nums;
+  }
+  .wf-amount.final {
+    background: var(--red);
+  }
+  .wf-amount.start {
+    background: #2E7D32;
+  }
+  .wf-label {
+    color: var(--grey);
+    font-size: 9pt;
+  }
+  .wf-label strong { color: var(--black); font-weight: 600; }
+  .wf-deduction {
+    margin: 1mm 0 1mm 26mm;
+    padding-left: 5mm;
+    border-left: 2px dashed #BBB;
+    color: var(--grey);
+    font-size: 9pt;
+  }
+  .wf-deduction strong { color: var(--black); font-weight: 600; }
+
+  /* ─── Numbered lists ──────────────────────────────────── */
+  ol.stop-list {
+    counter-reset: stops;
+    list-style: none;
+    padding: 0;
+    margin: 4mm 0;
+  }
+  ol.stop-list li {
+    counter-increment: stops;
+    position: relative;
+    padding: 3mm 0 3mm 14mm;
+    border-bottom: 0.5px solid var(--rule);
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  ol.stop-list li:before {
+    content: counter(stops);
+    position: absolute;
+    left: 0;
+    top: 3mm;
+    width: 10mm;
+    height: 10mm;
+    background: var(--red);
+    color: #FFF;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10pt;
+  }
+  ol.stop-list li .qref {
+    color: var(--grey);
+    font-size: 8.5pt;
+    font-style: italic;
+    margin-left: 2mm;
+  }
+
+  /* ─── Generic ordered/unordered ───────────────────────── */
+  ol.std, ul.std {
+    padding-left: 6mm;
+    margin: 3mm 0;
+  }
+  ol.std li, ul.std li {
+    margin-bottom: 2mm;
+  }
+
+  /* ─── Decision boxes ──────────────────────────────────── */
+  .decision-box {
+    border-left: 3px solid var(--red);
+    padding: 4mm 6mm;
+    background: var(--bg-light);
+    margin-bottom: 6mm;
+    page-break-inside: avoid;
+  }
+  .decision-box h4 {
+    font-size: 12pt;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 2mm;
+  }
+  .decision-box .rec {
+    font-weight: 600;
+    color: var(--red);
+    margin-bottom: 3mm;
+    font-size: 10.5pt;
+  }
+
+  /* ─── Reread bookmark ─────────────────────────────────── */
+  .reread-date-box {
+    background: var(--black);
+    color: #FFF;
+    padding: 8mm;
+    border-radius: 6px;
+    text-align: center;
+    margin: 6mm 0;
+  }
+  .reread-date-box .date {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 32pt;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .reread-date-box .label {
+    font-size: 10pt;
+    color: #CCC;
+    margin-top: 3mm;
+    letter-spacing: 0.05em;
+  }
+  .signature-line {
+    margin-top: 8mm;
+    padding-top: 4mm;
+    border-top: 0.5px solid var(--rule);
+    display: flex;
+    gap: 12mm;
+    font-size: 9pt;
+    color: var(--grey);
+  }
+  .signature-line .line {
+    flex: 1;
+    border-bottom: 1px solid var(--black);
+    height: 8mm;
+  }
+
+  /* ─── Three-callout grid (top of archetype, lie, etc.) ── */
+  .three-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4mm;
+    margin: 6mm 0;
+    page-break-inside: avoid;
+  }
+  .three-cards .card {
+    padding: 5mm;
+    border-radius: 5px;
+    border: 1px solid var(--card);
+    font-size: 9.5pt;
+  }
+  .three-cards .card h4 {
+    font-size: 9pt;
+    color: var(--red);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    margin-bottom: 3mm;
+  }
+
+  /* ─── Footer (running) ────────────────────────────────── */
+  @page {
+    @bottom-left {
+      content: "THE SCALE CODE DIAGNOSTIC";
+      font-family: 'Inter', sans-serif;
+      font-size: 7pt;
+      font-weight: 700;
+      color: #E53935;
+      letter-spacing: 0.15em;
+    }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: 'Inter', sans-serif;
+      font-size: 7pt;
+      color: #999;
+    }
+  }
+
+  /* ─── Small utilities ─────────────────────────────────── */
+  .gap-md { margin-top: 6mm; }
+  .gap-lg { margin-top: 10mm; }
+  .text-grey { color: var(--grey); }
+  .text-small { font-size: 9pt; }
+  .text-red { color: var(--red); }
+  .center { text-align: center; }
+  .avoid-break { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ COVER ══════════════════ -->
+<div class="cover">
+  <div>
+    <div class="cover-mark">The Scale Code · Diagnostic</div>
+    <div class="cover-title-block">
+      <div class="cover-eyebrow">A diagnostic report for</div>
+      <h1 class="cover-title">The Scale Code<br/><span class="accent">Diagnostic</span></h1>
+      <div class="cover-rule"></div>
+      <div class="cover-founder">Swastik Coach</div>
+      <div class="cover-meta-row"><strong>Ofbc Coach</strong> &nbsp;·&nbsp; Coaching / Courses / Info-products</div>
+      <div class="cover-meta-row">Bangalore</div>
+    </div>
+  </div>
+  <div class="cover-footer">
+    <div>Audit date &nbsp;<strong>25 May 2026</strong></div>
+    <div>Report engine v1-prose</div>
+  </div>
+</div>
+
+<!-- ══════════════════ §1 ARCHETYPE ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">§1 — Your Founder Archetype</div>
+    <h1 class="section-title">The cross-force pattern that names what you are</h1>
+  </div>
+
+  <div class="display-name">THE AD-FUNDED FOUNDER</div>
+  <div class="display-sub">The founder who scaled the revenue by buying it — running paid ads to attract customers, but never doing the work of figuring out what makes them stay.</div>
+
+  <p>The classic version of this pattern is the small clinic owner spending ₹80,000/month on Google Ads with a landing page that says <em>"Quality healthcare for the family."</em> Zero results. They believe they have a marketing problem. They actually have a <strong>position problem</strong> wearing a marketing-spend costume.</p>
+
+  <p>You are running the <strong>same pattern at 30 times the size.</strong></p>
+
+  <p>You've done what most founders running this pattern never manage: you scaled the ad spend, built a 22-person team to absorb the work, and crossed ₹25 Cr in revenue. On the outside it looks like a real company. But the underlying signals in your own answers are identical to the small clinic:</p>
+
+  <ul class="std">
+    <li><span class="qid">Q42</span> <strong>How marketing actually runs:</strong> You picked <em>"Layer-3 Bleeder — ads with no clear message."</em></li>
+    <li><span class="qid">Q39</span> <strong>Where the marketing money goes:</strong> Ads, reels, agencies, hoardings.</li>
+    <li><span class="qid">Q43</span> <strong>Positioning chosen and defended:</strong> None picked.</li>
+    <li><span class="qid">Q37</span> <strong>Two-word position:</strong> Vague — "quality, trusted, premium, authentic."</li>
+    <li><span class="qid">Q44</span> <strong>Why customers come:</strong> Not really word-of-mouth.</li>
+    <li><span class="qid">Q2</span> <strong>Why customers pick you:</strong> "I haven't asked, but I'm pretty sure it's price, service, or quality."</li>
+  </ul>
+
+  <p class="gap-md">You even told us where the real leverage is. On <span class="qid">Qx2</span> — the painful, high-value lever — you picked: <strong>"Way 3 — more frequent transactions (repeat customers)."</strong> Then on <span class="qid">Q67</span> — what you've actually worked on this year — you picked: <strong>"Only Way 1 (more clients) — chasing leads."</strong></p>
+
+  <p>You know the answer. You're working on the comfortable lever (more leads) and avoiding the painful one (keeping the customers you already have). That's the pattern. Every new lead pushes back the harder conversation, which is <em>why are my existing customers leaving?</em></p>
+
+  <h3 class="subhead-red gap-md">The move this pattern always reaches for</h3>
+  <blockquote class="pull">"Better ads. Better creative. Better agency. Better funnel."</blockquote>
+  <p>It's never the right answer. It's a marketing-spend fix to a position hole.</p>
+
+  <h3 class="subhead gap-lg">Why we placed you here</h3>
+  <table>
+    <thead><tr><th style="width:18mm">Q-id</th><th style="width:60mm">Your answer</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Q42</strong></td><td>Layer-3 Bleeder — ads with no clear position</td><td>This is the self-diagnosis. You ticked it.</td></tr>
+      <tr><td><strong>Q17</strong></td><td>More than 50% of revenue on marketing</td><td>The pattern is defined by paid spending. You're at 3-4x what a healthy coaching business spends.</td></tr>
+      <tr><td><strong>Q9</strong></td><td>"Don't track gross margin" + Q17 over 50%</td><td>Spending hard, can't tell what's coming back. Most reliable signal for this pattern.</td></tr>
+      <tr><td><strong>Q43</strong></td><td>None picked (positioning doorway)</td><td>Without a chosen position, you're paying premium ad rates for a message that hasn't been written.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subhead gap-md">Where you sit on the founder map</h3>
+
+  <div class="founder-map">
+    <div class="map-axis-label">↑ Pulled Demand <span class="sub">customers come to you — they know your category</span></div>
+    <table class="map-grid">
+      <tr>
+        <td>
+          <span class="name">The Personal Brand</span>
+          <span class="desc">Customers buy YOU — your name, voice, face. Premium pricing, but founder-bound.</span>
+        </td>
+        <td>
+          <span class="name">The Institution</span>
+          <span class="desc">Runs on the company name, not the founder. Sellable, transferrable, durable.</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="name">The Grinder</span>
+          <span class="desc">Hustle keeps the lights on. If the founder stops dialling, revenue dies by Friday.</span>
+        </td>
+        <td class="you">
+          <span class="name">The Agency Model</span>
+          <span class="desc">Team delivers, founder still personally closes every big deal.</span>
+          <div class="you-marker"><span class="dot"></span><span>You sit here — but pulled back-left because customers still buy YOUR name (Q78) and "only I can" still includes one personal relationship (Q74).</span></div>
+        </td>
+      </tr>
+    </table>
+    <div class="map-y-axis"><span>← Founder Dependent</span><span>Asset Built →</span></div>
+    <div class="map-axis-label">↓ Pushed Demand <span class="sub">you go to customers — paid ads, outbound</span></div>
+  </div>
+
+  <p>You don't sit cleanly in any quadrant. The 22-person headcount pushes you right (you've built an asset). But your customers still buy your personal name (Q78), conversion is under 10% (Q6), and there's at least one big relationship that requires your face (Q74) — all of which pulls you back left.</p>
+
+  <p>You're a <strong>founder-dependent business running on a paid-ad engine.</strong> That's the single most expensive position to occupy. You pay top dollar for the leads, then personally have to do the heavy lifting to close them.</p>
+
+  <h3 class="subhead gap-md">Two other patterns you partly fit</h3>
+  <p><strong>The Agency Model</strong> — fits your size (22 people, well above the 8-person line) and your "founder-still-on-every-big-call" reality. You'd fully fit if your Optimisation and Financial scores were 3.5+. They're 1.5 and 1.6. The team is real; the operating discipline underneath the team is not.</p>
+  <p><strong>The Grinder</strong> — fits your force profile exactly (X-Factor 0.9, Identity 1.8, Marketing 1.5 — all classic Grinder levels). Doesn't fit your structure (22 people, ₹25 Cr). You're running a Grinder's diagnostic inside an Agency Model's body — which is why you feel drained (Q14) at 40 hours/week. A pure Grinder works 70+ hours; you work 40 because you've hired around the work. But the <em>mental load</em> is the same.</p>
+</section>
+
+<!-- ══════════════════ §2 THE LIE ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">§2 — The Lie You Hold</div>
+    <h1 class="section-title">The single belief your own data contradicts</h1>
+  </div>
+
+  <div class="display-name dark">THE X-FACTOR HUNT</div>
+  <div class="display-sub">The belief that your differentiator is somewhere in the building, you just haven't named it yet — when the truth is you've never asked the only people who would know.</div>
+
+  <h3 class="subhead-red">Why we think you hold this</h3>
+
+  <table>
+    <thead><tr><th style="width:22mm">Q-id</th><th>Your answer</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Q2</strong><br/><span class="text-small text-grey">Why customers pick you</span></td><td>"I haven't asked, but I'm pretty sure it's price, service, or quality"</td></tr>
+      <tr><td><strong>Q28</strong><br/><span class="text-small text-grey">Cost you pay competitors won't</span></td><td>"None of these — yet"</td></tr>
+      <tr><td><strong>Q31</strong><br/><span class="text-small text-grey">How fast a competitor could copy you</span></td><td>"Overnight"</td></tr>
+      <tr><td><strong>Q32</strong><br/><span class="text-small text-grey">What customers feel because of your difference</span></td><td>"Haven't thought about it"</td></tr>
+      <tr><td><strong>Q33</strong><br/><span class="text-small text-grey">Can you write the referral sentence</span></td><td>"Honestly, I couldn't write one"</td></tr>
+      <tr><td><strong>Q34</strong><br/><span class="text-small text-grey">Chosen over a cheaper option</span></td><td>"I don't track this"</td></tr>
+      <tr><td><strong>Q35</strong><br/><span class="text-small text-grey">Self-rated X-Factor strength</span></td><td><strong>1 out of 5 — no real X-Factor</strong> &nbsp;<em>(your own rating)</em></td></tr>
+    </tbody>
+  </table>
+
+  <p>Seven separate answers, one verdict. You haven't just <em>not built</em> a differentiator — you've never set up the conditions where one could become visible. You haven't asked. You haven't measured what customers feel. You haven't named one cost you pay that competitors refuse to. You haven't even written the sentence a happy customer would use.</p>
+
+  <h3 class="subhead-red gap-md">What it's costing you</h3>
+
+  <p>On ₹25 Cr of revenue, marketing spend over 50% = at least <strong>₹12.5 Cr/year</strong> chasing leads into a funnel that converts less than 1 in 10 <span class="text-small text-grey">(Q6)</span>.</p>
+
+  <p>Now imagine that same funnel with a real, customer-tested reason to choose you — the kind that lifts conversion from under 10% to a healthy 20%. That's not "an improvement." That's <strong>double the customers on the same ₹12.5 Cr of spend, without buying one extra impression.</strong></p>
+
+  <p>The X-Factor Hunt is a lie because while you're hunting for the answer inside your head, the people who would tell you for free — your existing customers — are sitting in your CRM, never asked. The cheapest answer in the business is the one you haven't gone to get.</p>
+
+  <p>There's a deeper cost too. The reason your conversion is under 10% and your "chasing leads" feels exhausting is that <strong>you're pitching without knowing what to defend.</strong> A sales call where you talk 70% of the time <span class="text-small text-grey">(Q49)</span> on a generic offer ("price, service, quality") is your-voice filling the silence your customer's voice should have filled.</p>
+
+  <h3 class="subhead-red gap-md">The contradiction</h3>
+
+  <table>
+    <thead><tr><th style="width:42%">What you'd say</th><th>What your numbers say</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><em>"We're better. The customers who get it, get it."</em></td>
+        <td><strong>0 customers asked. 0 referral sentences written. 1 customer you can name by first name who would actually suffer if you closed.</strong> <span class="text-small text-grey">(Q2, Q33, Q29)</span></td>
+      </tr>
+      <tr>
+        <td><em>"Marketing is working — we're at ₹25 Cr."</em></td>
+        <td><strong>More than 50% of revenue on marketing. Conversion under 10%. Repeat rate under 10%. No position chosen.</strong> <span class="text-small text-grey">(Q17, Q6, Q18, Q43)</span></td>
+      </tr>
+      <tr>
+        <td><em>"My X-Factor is the quality of my work."</em></td>
+        <td><strong>You don't track gross margin. You have no written guarantee. You said your offering is copyable overnight. When you "refuse" things competitors do, the reason is "it's uncomfortable to admit."</strong> <span class="text-small text-grey">(Q9, Q47, Q31, Q30)</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="gap-md">Pick any row. The right column is your data. The left column is the story you've been telling yourself.</p>
+</section>
+
+<!-- ══════════════════ §3 SCORECARD ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">§3 — The 8-Force Scorecard</div>
+    <h1 class="section-title">Every score traces to your own answers</h1>
+  </div>
+
+  <h3 class="subhead">Your 8-Force depth at a glance &nbsp;<span class="text-small text-grey">(out of 5)</span></h3>
+
+  <div class="force-list">
+    <div class="force-row">
+      <div class="force-name">Identity</div>
+      <div class="force-bar-track"><div class="force-bar-fill" style="width:36%"></div></div>
+      <div class="force-score">1.8</div>
+    </div>
+    <div class="force-row">
+      <div class="force-name">X-Factor</div>
+      <div class="force-bar-track"><div class="force-bar-fill weakest" style="width:18%"></div></div>
+      <div class="force-score">0.9</div>
+    </div>
+    <div class="force-label-line weakest">↑ Weakest force — every other force gets fixed <em>through</em> this</div>
+    <div class="force-row">
+      <div class="force-name">Marketing</div>
+      <div class="force-bar-track"><div class="force-bar-fill" style="width:30%"></div></div>
+      <div class="force-score">1.5</div>
+    </div>
+    <div class="force-row">
+      <div class="force-name">Sales</div>
+      <div class="force-bar-track"><div class="force-bar-fill" style="width:34%"></div></div>
+      <div class="force-score">1.7</div>
+    </div>
+    <div class="force-row">
+      <div class="force-name">Financial</div>
+      <div class="force-bar-track"><div class="force-bar-fill" style="width:32%"></div></div>
+      <div class="force-score">1.6</div>
+    </div>
+    <div class="force-row">
+      <div class="force-name">Optimisation</div>
+      <div class="force-bar-track"><div class="force-bar-fill" style="width:30%"></div></div>
+      <div class="force-score">1.5</div>
+    </div>
+    <div class="force-row">
+      <div class="force-name">Scale</div>
+      <div class="force-bar-track"><div class="force-bar-fill strongest" style="width:46%"></div></div>
+      <div class="force-score">2.3</div>
+    </div>
+    <div class="force-label-line strongest">↑ Strongest force — protect what's here</div>
+    <div class="force-row">
+      <div class="force-name">Owner Energy</div>
+      <div class="force-bar-track"><div class="force-bar-fill" style="width:38%"></div></div>
+      <div class="force-score">1.9</div>
+    </div>
+  </div>
+
+  <p class="callout">Every force is below 2.5/5. This isn't a fix-one-thing pattern — it's a foundation pattern. The worst by a clear gap is <strong>X-Factor at 0.9</strong>, and X-Factor is what every other force gets fixed through.</p>
+
+  <!-- Force 1 -->
+  <h3 class="subhead gap-md">Force 1 — Identity &nbsp;·&nbsp; <span class="text-red">1.8 / 5</span> &nbsp;·&nbsp; <em>Weak</em></h3>
+  <p>You describe your business by your job title — <em>"I'm a coach"</em> <span class="text-small text-grey">(Q19)</span> — not by the change you create for the customer. When asked if a new competitor or new format has made you re-think what business you're in, you said <strong>"yes, but I haven't done anything about it"</strong> <span class="text-small text-grey">(Q26)</span>. Your current business definition is <strong>"default — it's just what I started doing"</strong> <span class="text-small text-grey">(Q27)</span>. The disappearance test holds 7-30 days <span class="text-small text-grey">(Q20)</span> — that's the only thing pulling this score above 1.5.</p>
+  <p class="text-small text-grey"><strong>Driven by:</strong> Q19, Q22 ("never lined them up"), Q27, Q26, Q21 ("can name something but it's still broad"). &nbsp;·&nbsp; <strong>Coaching sector view:</strong> Coaching businesses live and die on who-you-serve clarity. Yours runs at the clarity level of a side business, scaled to enterprise size.</p>
+
+  <!-- Force 2 -->
+  <h3 class="subhead gap-md">Force 2 — X-Factor &nbsp;·&nbsp; <span class="text-red"><strong>0.9 / 5</strong></span> &nbsp;·&nbsp; <em>Critical</em></h3>
+  <p>Already explained in §2. The lowest of the eight by a clear gap. <strong>Q35 — your own self-rating: 1/5.</strong> You and the diagnostic agree on this one.</p>
+  <p class="text-small text-grey"><strong>Driven by:</strong> Q2, Q28, Q31, Q32, Q33, Q34, Q35. &nbsp;·&nbsp; <strong>Coaching sector view:</strong> Below the floor for any coaching practice that wants to last, at any size.</p>
+
+  <!-- Force 3 -->
+  <h3 class="subhead gap-md">Force 3 — Marketing &nbsp;·&nbsp; <span class="text-red">1.5 / 5</span> &nbsp;·&nbsp; <em>Weak</em></h3>
+  <p>This is where the most money is leaving. You spend more than 50% of revenue on marketing <span class="text-small text-grey">(Q17)</span> — for a ₹25 Cr business, that's a marketing budget bigger than most coaching firms' entire revenue. It runs through ads, reels and agencies <span class="text-small text-grey">(Q39)</span> with no position chosen <span class="text-small text-grey">(Q43)</span>, no two-word position <span class="text-small text-grey">(Q37 — "slogan mush")</span>, and no tracking of which spend produced customers <span class="text-small text-grey">(Q41 — "I don't track this")</span>.</p>
+  <p>You called yourself a Layer-3 Bleeder <span class="text-small text-grey">(Q42)</span> — meaning, spending on distribution channels without a clear message to put through them.</p>
+  <p class="text-small text-grey"><strong>Driven by:</strong> Q17, Q42, Q43, Q37, Q39, Q44, Q40, Q41. &nbsp;·&nbsp; <strong>Coaching sector view:</strong> You're spending at the level of a venture-funded ₹100 Cr coaching brand, on a message that wouldn't get a ₹50L coach started.</p>
+
+  <!-- Force 4 -->
+  <h3 class="subhead gap-md">Force 4 — Sales &nbsp;·&nbsp; <span class="text-red">1.7 / 5</span> &nbsp;·&nbsp; <em>Weak</em></h3>
+  <p>Conversion is <strong>less than 1 in 10</strong> enquiries becoming customers <span class="text-small text-grey">(Q6)</span>. You talk roughly 70% of the time in first sales conversations <span class="text-small text-grey">(Q49)</span>. When you lose a deal, you default to "prospect wasn't serious" <span class="text-small text-grey">(Q51)</span> and "economy or timing" <span class="text-small text-grey">(Q36)</span> — both are external blame, neither is a useful diagnosis. You have no written guarantee <span class="text-small text-grey">(Q47)</span>. You haven't told a prospect "this isn't for you" in <strong>over a year</strong> <span class="text-small text-grey">(Q48)</span>.</p>
+  <p>What keeps this above 1.0: you can name the offer somewhat <span class="text-small text-grey">(Q46 — two of four levers)</span> and your sales conversations end in a mix of stalls and advances rather than pure dead ends <span class="text-small text-grey">(Q52)</span>.</p>
+  <p class="text-small text-grey"><strong>Driven by:</strong> Q6, Q49, Q51, Q36, Q47, Q48. &nbsp;·&nbsp; <strong>Coaching sector view:</strong> A sub-10% conversion at the volume your marketing buys is the single biggest source of money being thrown away in your business.</p>
+
+  <!-- Force 5 -->
+  <h3 class="subhead gap-md">Force 5 — Financial &nbsp;·&nbsp; <span class="text-red">1.6 / 5</span> &nbsp;·&nbsp; <em>Weak</em></h3>
+  <p>This is the section that should keep you up at night. Owner salary: ₹0 <span class="text-small text-grey">(Q55)</span>. Replacement wage you said the market would demand: ₹2,00,000/month <span class="text-small text-grey">(Q56)</span>. Real margin once that's added back: 5-10% <span class="text-small text-grey">(Q57)</span>. Gross margin: untracked <span class="text-small text-grey">(Q9)</span>. Profit allocation: zero <span class="text-small text-grey">(Q59)</span>. Drawings: "whenever there's cash" <span class="text-small text-grey">(Q60)</span>. Marketing burn: untracked <span class="text-small text-grey">(Q41)</span>. Pricing: based on competitors <span class="text-small text-grey">(Q61)</span>, not on value.</p>
+  <p>Two redeeming signals: you sat with last year's P&amp;L this quarter <span class="text-small text-grey">(Q62)</span>, and you keep 2 separate bank accounts <span class="text-small text-grey">(Q58)</span>. Those prevent the score from dropping to 0.8.</p>
+  <p class="text-small text-grey"><strong>Driven by:</strong> Q55, Q56, Q57, Q59, Q60, Q61, Q9. &nbsp;·&nbsp; <strong>Coaching sector view:</strong> A ₹25 Cr top line running on the financial discipline of a ₹50L business. The first cash crunch will find every one of these gaps.</p>
+
+  <!-- Force 6 -->
+  <h3 class="subhead gap-md">Force 6 — Optimisation &nbsp;·&nbsp; <span class="text-red">1.5 / 5</span> &nbsp;·&nbsp; <em>Weak</em></h3>
+  <p>You can't name one specific bottleneck <span class="text-small text-grey">(Q64 — you picked "team / cash / leads," a category, not a bottleneck)</span>. 0% of last quarter's growth spend went to your named bottleneck <span class="text-small text-grey">(Q65 — "don't know")</span>. You track no single weekly throughput number <span class="text-small text-grey">(Q71 — "gut feel")</span>. Your value chain is in your head, not written <span class="text-small text-grey">(Q69)</span>. You've done neither "exploit before you elevate" <span class="text-small text-grey">(Q66)</span> — meaning, get free gains from existing capacity before you hire more.</p>
+  <p>The one good signal: you correctly identified Way 3 (repeat customers / higher frequency) as the painful, high-value lever <span class="text-small text-grey">(Qx2)</span>. You know where the leverage is. You're just not working it.</p>
+  <p class="text-small text-grey"><strong>Driven by:</strong> Q64, Q65, Q67 (only Way 1), Q69, Q70, Q71. &nbsp;·&nbsp; <strong>Coaching sector view:</strong> The 22-person team works without a constraint-aware operating system. Adding a 23rd person now would compound the disorganisation, not fix it.</p>
+
+  <!-- Force 7 -->
+  <h3 class="subhead gap-md">Force 7 — Scale &nbsp;·&nbsp; <span class="text-red">2.3 / 5</span> &nbsp;·&nbsp; <em>Soft — the strongest</em></h3>
+  <p>This is where you've actually built something. <strong>You have one named, productized offering</strong> <span class="text-small text-grey">(Q79)</span>. Your last hire was admin <span class="text-small text-grey">(Q75 — exactly the right first rung)</span>. Your vacation test holds at 7-14 days <span class="text-small text-grey">(Q73)</span>. If demand tripled tomorrow, your team would break first <span class="text-small text-grey">(Q13 — you said this directly)</span>.</p>
+  <p>What it's NOT: top customers buy your personal name, not the firm name <span class="text-small text-grey">(Q78)</span>. The "only I can" list includes one relationship that needs your face <span class="text-small text-grey">(Q74)</span>. If a buyer offered fair cash today, the business survives "partially" without you in 90 days <span class="text-small text-grey">(Q80)</span>. The productized offering doesn't pass any of the three real-product tests — teachable, valuable, repeatable <span class="text-small text-grey">(Q77 — "none: it's bespoke")</span>.</p>
+  <p class="text-small text-grey"><strong>Driven by:</strong> Q79 (+), Q75 (+), Q73, Q13, Q78 (–), Q74 (–), Q77 (–). &nbsp;·&nbsp; <strong>Coaching sector view:</strong> You've started building the asset. You've stopped halfway. What exists is fragile.</p>
+
+  <!-- Force 8 -->
+  <h3 class="subhead gap-md">Force 8 — Owner Energy &nbsp;·&nbsp; <span class="text-red">1.9 / 5</span> &nbsp;·&nbsp; <em>Weak</em></h3>
+  <p>Drained, firefighting most days <span class="text-small text-grey">(Q14)</span>. Zero hours of distraction-free deep work per week <span class="text-small text-grey">(Q82)</span>. "Everything feels important" — no priority list named <span class="text-small text-grey">(Q83)</span>. Phone in your hand within 5 minutes of waking <span class="text-small text-grey">(Q85)</span>. Thinking time is occasional, not on calendar <span class="text-small text-grey">(Q88)</span>. "Don't know what to subtract" <span class="text-small text-grey">(Q89)</span>.</p>
+  <p>But — and this matters — <strong>you sleep 7+ hours on 15-20 nights out of the last 28</strong> <span class="text-small text-grey">(Q86)</span>. You actively subtracted something significant this quarter <span class="text-small text-grey">(Q84)</span>. You hired admin first <span class="text-small text-grey">(Q75)</span>. You said no to 1-3 of the last 10 small asks <span class="text-small text-grey">(Q87)</span>. Five positive signals balance the drain.</p>
+  <p>The picture: a reactive operating mode (phone-first, WhatsApp-heavy, no priority) <strong>wrapped around a body that is still recovering well.</strong> You haven't damaged the engine yet. You're running it on the wrong settings.</p>
+  <p class="text-small text-grey"><strong>Driven by:</strong> Q14, Q82, Q83, Q85, Q88, Q89 (–) vs Q86, Q84, Q87 (+). &nbsp;·&nbsp; <strong>Coaching sector view:</strong> You have 6-12 months of runway on your current pattern before sleep or focus starts to give. The window to redesign the day before your body forces it is now.</p>
+</section>
+
+<!-- ══════════════════ §4 IMMEDIATE MOVE ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">§4 — Your Immediate Move (the 90-Day Sprint)</div>
+    <h1 class="section-title">One sprint. One number. One sentence.</h1>
+  </div>
+
+  <div class="display-name black">THE CUSTOMER-VOICE SPRINT</div>
+  <blockquote class="pull large">In the next 90 days, get one sentence — in your customers' exact words — explaining why they bought you over the cheaper alternative they were also considering.</blockquote>
+
+  <p><strong>Target:</strong> 30 customer interviews completed → 5 verbatim sentences written down → 1 chosen as the position you will defend for the next 12 months.</p>
+
+  <h3 class="subhead-red gap-md">Why this move, not another</h3>
+  <p>Your weakest force is X-Factor (0.9), and that weakness sits underneath every other force's weakness. You can't fix marketing until you know what to say. You can't fix sales conversion until you know what to defend. You can't fix financial discipline until you can charge a real price for a real position. <strong>A position written without customer evidence is a position that won't survive the first time a prospect pushes back on price.</strong></p>
+  <p>You need raw material. Your existing customers are the only people who have it.</p>
+
+  <h3 class="subhead gap-md">The 4-Week Plan</h3>
+  <table>
+    <thead><tr><th style="width:28mm">Week</th><th>What you do</th><th style="width:48mm">What you stop doing</th></tr></thead>
+    <tbody>
+      <tr><td><strong>1 — Set up</strong></td><td>Pull the list of every customer who bought in the last 18 months. Score by recency + engagement. Pick 30. Send the call request personally — no team, no template, your name in the subject line.</td><td>Don't review ad creative this week. Don't start new agency conversations.</td></tr>
+      <tr><td><strong>2 — Listen</strong></td><td>30 calls, 30 minutes each. Three questions only: (a) What were you doing before you bought from us? (b) What other options were you considering? (c) Why did you pick us? Record everything.</td><td>Don't attend any internal meeting that isn't about delivery.</td></tr>
+      <tr><td><strong>3 — Pattern-spot</strong></td><td>Pull the verbatim sentences. Cluster them. Find the 3-5 phrases customers actually say (not what you wish they said).</td><td>No "creative reviews" with the agency. They have nothing to optimise until Week 4.</td></tr>
+      <tr><td><strong>4 — Lock</strong></td><td>Pick ONE sentence. Re-brief the agency, sales team, landing pages. Set a 12-week defence period — no changes to position. Track whether conversion moves.</td><td>Stop <em>all</em> positioning experiments outside the chosen sentence.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subhead gap-md">The Stop-Doing List <span class="text-small text-grey">(specific to your answers)</span></h3>
+  <p>These are five things to actively <em>stop</em> — not "deprioritise," not "later" — for the full 90 days:</p>
+
+  <ol class="stop-list">
+    <li><strong>Stop spending the next ₹50L of marketing budget on new ads.</strong> Redirect it to: (a) the 30 calls (cost: near-zero), (b) the cost of redoing landing pages once you have the sentence (₹2-3L), (c) reserve. Anything left over becomes the <em>defence fund</em> for the new position. <span class="qref">[Q17]</span></li>
+    <li><strong>Stop attending sales calls where you talk more than 50% of the time.</strong> Set a timer. If you cross 50%, end the call. <span class="qref">[Q49]</span></li>
+    <li><strong>Stop saying "the economy" or "the timing" out loud about lost deals.</strong> Replace with one of: "they wanted a guarantee I don't offer," "I didn't ask them what they were comparing me to," "I talked instead of listening." <span class="qref">[Q36, Q51]</span></li>
+    <li><strong>Stop hiring anyone new — including the next agency, coach-trainer, ops person — for the full 90 days.</strong> With 22 people and no named bottleneck (Q64), the next hire makes the disorganisation worse, not better. <span class="qref">[Q12, Q64]</span></li>
+    <li><strong>Stop checking WhatsApp / email / Instagram in the first 60 minutes of waking.</strong> First action of the day is one 30-minute block on the Customer-Voice Sprint. Phone after that. <span class="qref">[Q85, Q88]</span></li>
+  </ol>
+
+  <h3 class="subhead-red gap-md">Your first concrete action</h3>
+  <p>Open your CRM. Pick the three customers who bought most recently AND are still active.</p>
+  <p>Send each one a calendar link for a 30-minute "I'd love your honest take" call. Use your own name, your own phone — not your assistant, not a Calendly email blast.</p>
+  <p class="callout red"><strong>You can do this in the next 20 minutes.</strong> If you have not booked three calls by Friday night of the week you read this report, the rest of the sprint will not happen.</p>
+</section>
+
+<!-- ══════════════════ §5 BENCHMARKS ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">§5 — Vertical Benchmarks</div>
+    <h1 class="section-title">How you compare to other coaching businesses your size</h1>
+  </div>
+
+  <p class="text-small text-grey"><em>Comparison group: Indian SME coaching, courses and info-product businesses at the ₹3-25 Cr revenue band. Sample is directional, not a formal industry dataset (n ≈ 25 founders).</em></p>
+
+  <table class="gap-md">
+    <thead><tr><th>Metric</th><th style="width:24mm" class="center">You</th><th style="width:32mm" class="center">Median for coaching</th><th style="width:28mm" class="center">Top quartile</th></tr></thead>
+    <tbody>
+      <tr><td>Marketing as % of revenue</td><td class="center"><strong>&gt;50%</strong></td><td class="center">18%</td><td class="center">8%</td></tr>
+      <tr><td>Conversion of qualified enquiries</td><td class="center"><strong>&lt;10%</strong></td><td class="center">22%</td><td class="center">35%+</td></tr>
+      <tr><td>Repeat / continuation rate</td><td class="center"><strong>&lt;10%</strong></td><td class="center">35%</td><td class="center">60%+</td></tr>
+      <tr><td>Customers asked verbatim "why did you buy"</td><td class="center"><strong>0</strong></td><td class="center">6-10</td><td class="center">20+</td></tr>
+      <tr><td>Owner monthly salary</td><td class="center"><strong>₹0</strong></td><td class="center">₹1.5L</td><td class="center">₹3L+</td></tr>
+      <tr><td>Revenue per team member</td><td class="center"><strong>₹1.14 Cr</strong></td><td class="center">₹0.85 Cr</td><td class="center">₹1.5 Cr</td></tr>
+      <tr><td>Real margin (after replacing your own wage)</td><td class="center"><strong>5-10%</strong></td><td class="center">18%</td><td class="center">30%+</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="subhead-red gap-md">Where you stand out — in two directions at once</h3>
+
+  <p>You are <strong>above the top quartile</strong> on revenue-per-team-member (good — your team's <em>output volume</em> is real). You are <strong>massively below median</strong> on every quality-of-revenue metric (marketing efficiency, conversion, retention, pricing power, what you pay yourself).</p>
+
+  <p>The disconnect is the diagnosis: you've optimised the team's <em>output</em> without optimising the <em>quality</em> of what that output is buying.</p>
+
+  <div class="callout amber">
+    <p>A healthy coaching firm at your revenue would spend roughly ₹4.5 Cr/year on marketing (not ₹12.5 Cr+), convert at roughly 22% (not &lt;10%), and the founder would draw around ₹36L/year (not ₹0).</p>
+    <p class="gap-md"><strong>The same revenue, restructured to healthy economics, would produce roughly ₹6-8 Cr of additional annual cash — without one extra customer.</strong></p>
+  </div>
+
+  <p class="text-small text-grey"><em>Source: 100+ Indian SME audits and Swastik's coaching work, directional. Honest gap: coaching has more variance than service businesses, so treat top-quartile numbers as targets to defend, not floors.</em></p>
+</section>
+
+<!-- ══════════════════ §6 CASH MIRROR ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">§6 — The Cash Mirror</div>
+    <h1 class="section-title">Your own numbers, traced</h1>
+  </div>
+
+  <h3 class="subhead">₹100 of your revenue, traced down to what's actually left</h3>
+
+  <div class="waterfall">
+    <div class="wf-row">
+      <div class="wf-amount start">₹100</div>
+      <div class="wf-label"><strong>Revenue</strong> &nbsp;·&nbsp; starting point</div>
+    </div>
+    <div class="wf-deduction"><strong>−</strong> Cost of delivery (untracked &nbsp;<em>Q9</em>) &nbsp;·&nbsp; best guess 30-50% &nbsp;·&nbsp; assume midpoint 40%</div>
+    <div class="wf-row">
+      <div class="wf-amount">₹60</div>
+      <div class="wf-label">After cost of delivery</div>
+    </div>
+    <div class="wf-deduction"><strong>−</strong> Marketing spend (<em>Q17 — &gt;50% of revenue</em>) &nbsp;·&nbsp; floor: ₹50 of every ₹100 goes here</div>
+    <div class="wf-row">
+      <div class="wf-amount">₹10</div>
+      <div class="wf-label">After marketing</div>
+    </div>
+    <div class="wf-deduction"><strong>−</strong> Team payroll (22 people at ₹4-6L/yr fully loaded) &nbsp;·&nbsp; ₹5-7 of every ₹100</div>
+    <div class="wf-row">
+      <div class="wf-amount">₹3-5</div>
+      <div class="wf-label">After team</div>
+    </div>
+    <div class="wf-deduction"><strong>−</strong> What you should be paying yourself (<em>Q56: ₹2L/month = ₹24L/year</em>) &nbsp;·&nbsp; ₹1 of every ₹100 you're owed but not taking</div>
+    <div class="wf-row">
+      <div class="wf-amount final">₹2-4</div>
+      <div class="wf-label"><strong>What's actually left over per ₹100 revenue</strong><br/><span class="text-small">matches Q57: 5-10% real margin</span></div>
+    </div>
+  </div>
+
+  <p class="callout red"><strong>The picture in one line:</strong> out of every ₹100 of revenue, <strong>about ₹2-4 is left after honest costs.</strong> The reason your books look healthier than this is that you're not paying yourself.</p>
+
+  <h3 class="subhead-red gap-md">Your minimum cash cushion</h3>
+  <blockquote class="pull">With 1-3 months of cash runway (Q10) on a ₹25 Cr business, your minimum operational cash sits between <strong>₹2 Cr and ₹6 Cr</strong>. If marketing spend doesn't generate revenue for a single 30-day cycle, you breach that floor.</blockquote>
+
+  <h3 class="subhead gap-md">Four-line verdict</h3>
+  <ol class="std">
+    <li><strong>You can't see your gross margin</strong> (Q9). For a ₹25 Cr business, this is the single biggest financial blind spot — every other number below needs this one.</li>
+    <li><strong>Your marketing burn is structurally too high</strong> for the conversion rate it produces. Until conversion moves above 20%, cutting this is the highest-leverage move in the business.</li>
+    <li><strong>Your owner salary is a hidden subsidy of ₹24L/year</strong> flowing from you, personally, into the firm. The P&amp;L looks healthier than it is because this line is invisible.</li>
+    <li><strong>A 1-3 month cash runway on a ₹25 Cr ad-funded operation is not a buffer.</strong> It's a one-bad-month-away-from-emergency posture.</li>
+  </ol>
+</section>
+
+<!-- ══════════════════ §7 HIDDEN FORCE ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">§7 — The Hidden Force</div>
+    <h1 class="section-title">The dependency you didn't think about</h1>
+  </div>
+
+  <div style="text-align:center; margin: 12mm 0;">
+    <div style="font-size: 13pt; color: var(--grey); margin-bottom: 4mm;">Your business is roughly</div>
+    <div style="font-family: 'Source Serif 4', Georgia, serif; font-size: 72pt; font-weight: 600; color: var(--red); line-height: 1;">50%</div>
+    <div style="font-size: 14pt; color: var(--black); margin-top: 4mm; font-weight: 600;">dependent on one thing: <span class="text-red">ongoing ad spend.</span></div>
+  </div>
+
+  <p>Not on you personally — you have 22 people, that's diluted some of the founder dependency. Not on one channel partner. Not on one big customer <span class="text-small text-grey">(Q3: top-3 concentration is only 5%, healthily spread)</span>.</p>
+
+  <p>The dependency is on <strong>the marketing budget continuing to be funded at over 50% of revenue, every single month.</strong></p>
+
+  <p>This is a more dangerous concentration than customer concentration. A founder with 50% revenue from one big customer at least knows that customer's name and can defend the relationship. <strong>You cannot defend an ad budget — you can only keep funding it.</strong></p>
+
+  <h3 class="subhead-red gap-md">Two questions you should answer in 30 seconds, but probably can't</h3>
+
+  <div class="callout">
+    <p><strong>1.</strong> If your monthly marketing budget got halved tomorrow, what's your revenue 90 days later?<br/><span class="text-small text-grey"><em>(You don't know. Q41 — marketing burn untracked. Q65 — bottleneck spend untracked.)</em></span></p>
+    <p class="gap-md"><strong>2.</strong> Which 20% of last quarter's marketing spend produced 80% of the qualified leads?<br/><span class="text-small text-grey"><em>(You don't know. Q41. Q71 — no throughput number.)</em></span></p>
+  </div>
+
+  <p>Until you can answer both, you are buying time, not building leverage.</p>
+</section>
+
+<!-- ══════════════════ §8 THREE DECISIONS ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">§8 — The Three Decisions</div>
+    <h1 class="section-title">What this report helps you decide</h1>
+  </div>
+
+  <div class="decision-box">
+    <h4>Decision 1 — Do I hire next, and for which role?</h4>
+    <div class="rec">Recommendation: don't hire anyone in the next 90 days.</div>
+    <p>Your bottleneck (Q64) is not yet named. Your 22-person team is operating without a clear operating system underneath it (Q70). Hiring person #23 right now would compound the disorganisation, not fix it.</p>
+    <p>If you're pressed on <em>which</em> role would be the right one when you're ready — it's a <strong>Head of Marketing whose first 90 days are the Customer-Voice Sprint plus rebuilding the position.</strong> Not a marketing executor. Someone who can architect the position itself.</p>
+  </div>
+
+  <div class="decision-box">
+    <h4>Decision 2 — Raise prices, hold, or restructure the offers?</h4>
+    <div class="rec">Recommendation: restructure the offers first, then raise prices on the new structure.</div>
+    <p>Raising prices on your current offering (Q77 — bespoke, fails all three real-product tests) doesn't survive sales conversations, because there's no defensible reason for the price.</p>
+    <p>Restructure first: take your one named offering (Q79 — the asset you've actually built) and make it teachable, valuable, repeatable. Then re-price it on the basis of the verbatim customer sentences you've gathered in the Sprint.</p>
+  </div>
+
+  <div class="decision-box">
+    <h4>Decision 3 — Where do I cut vs double down this quarter?</h4>
+    <div class="rec">Recommendation: cut new ad spend, cut new hires, cut new positioning experiments. Double down on three things only.</div>
+    <ul class="std">
+      <li>The 30 customer calls.</li>
+      <li>Restructuring the one named offering.</li>
+      <li>Paying yourself ₹2L/month for three months as the discipline anchor that forces every other decision to align.</li>
+    </ul>
+    <p class="gap-md">The first month you can't make payroll <em>and</em> pay yourself ₹2L will be the first month you're allowed to change something structural about the business. That single constraint will teach you more about your operating reality than any analytics dashboard.</p>
+  </div>
+</section>
+
+<!-- ══════════════════ §9 REREAD ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">§9 — Your 90-Day Reread Bookmark</div>
+    <h1 class="section-title">The dated commitment</h1>
+  </div>
+
+  <div class="reread-date-box">
+    <div class="label">REOPEN THIS PAGE ON</div>
+    <div class="date">23 August 2026</div>
+    <div class="label">— these five numbers should have moved —</div>
+  </div>
+
+  <table>
+    <thead><tr><th>Number</th><th style="width:46mm" class="center">Today &nbsp;<span style="font-weight:400">(25 May 2026)</span></th><th style="width:54mm" class="center">Target &nbsp;<span style="font-weight:400">(23 Aug 2026)</span></th></tr></thead>
+    <tbody>
+      <tr><td><strong>Customer interviews completed</strong><br/><span class="text-small text-grey">(verbatim sentences captured)</span></td><td class="center">0</td><td class="center"><strong>30</strong></td></tr>
+      <tr><td><strong>Conversion of qualified enquiries</strong></td><td class="center">&lt;10%</td><td class="center"><strong>15%+</strong> <span class="text-small text-grey">(path to 20%)</span></td></tr>
+      <tr><td><strong>Marketing spend as % of revenue</strong></td><td class="center">&gt;50%</td><td class="center"><strong>&lt;40%</strong> <span class="text-small text-grey">(reallocation)</span></td></tr>
+      <tr><td><strong>Owner monthly salary actually paid</strong></td><td class="center">₹0</td><td class="center"><strong>₹2,00,000</strong></td></tr>
+      <tr><td><strong>Named, documented bottleneck</strong><br/><span class="text-small text-grey">(one specific name)</span></td><td class="center">None — "team / cash / leads"</td><td class="center"><strong>One specific</strong><br/>process, asset, or policy</td></tr>
+    </tbody>
+  </table>
+
+  <div class="signature-line">
+    <div>Signature: <div class="line"></div></div>
+    <div style="flex: 0 0 50mm;">Date: <div class="line"></div></div>
+  </div>
+
+  <p class="callout gap-md">If three of the five have moved, this report earned its place. If five of five have moved, the next conversation you and I have looks very different from this one.</p>
+</section>
+
+<!-- ══════════════════ APPENDIX A ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">Appendix A</div>
+    <h1 class="section-title">Your full answer record &nbsp;<span style="font-size:14pt; color:var(--grey); font-weight:400;">(highlights)</span></h1>
+  </div>
+
+  <table>
+    <thead><tr><th style="width:14mm">Q-id</th><th>Question</th><th style="width:52mm">Your answer</th><th style="width:16mm" class="center">Score</th></tr></thead>
+    <tbody>
+      <tr><td>Q1</td><td>Who is your ideal customer?</td><td>Type only</td><td class="center">2/5</td></tr>
+      <tr><td>Q2</td><td>Why do customers pick you?</td><td>Haven't asked — assume price/service/quality</td><td class="center">1/5</td></tr>
+      <tr><td>Q3</td><td>% revenue from top 3 customers</td><td>5%</td><td class="center">(good)</td></tr>
+      <tr><td>Q6</td><td>Conversion of enquiries</td><td>Less than 1 in 10</td><td class="center">1/5</td></tr>
+      <tr><td>Q8</td><td>Revenue (₹ lakhs)</td><td>2,500 (= ₹25 Cr)</td><td class="center">—</td></tr>
+      <tr><td>Q9</td><td>Gross margin</td><td>Don't track</td><td class="center">0/5</td></tr>
+      <tr><td>Q12</td><td>Headcount</td><td>22</td><td class="center">—</td></tr>
+      <tr><td>Q14</td><td>Owner energy</td><td>Drained, firefighting</td><td class="center">1/5</td></tr>
+      <tr><td>Q17</td><td>Marketing as % of revenue</td><td>Over 50%</td><td class="center">2/5</td></tr>
+      <tr><td>Q19</td><td>How you describe the business</td><td>Job title ("I'm a coach")</td><td class="center">1/5</td></tr>
+      <tr><td>Q26</td><td>Has a competitor made you re-think?</td><td>Yes, but no action</td><td class="center">2/5</td></tr>
+      <tr><td>Q28</td><td>Cost you pay competitors won't</td><td>None — yet</td><td class="center">0/5</td></tr>
+      <tr><td>Q31</td><td>How fast a competitor could copy you</td><td>Overnight</td><td class="center">0/5</td></tr>
+      <tr><td>Q42</td><td>Marketing pattern</td><td>Layer-3 Bleeder</td><td class="center">2/5</td></tr>
+      <tr><td>Q43</td><td>Positioning doorway chosen</td><td>None picked</td><td class="center">0/5</td></tr>
+      <tr><td>Q55</td><td>Owner monthly salary</td><td>₹0</td><td class="center">(red flag)</td></tr>
+      <tr><td>Q56</td><td>Replacement wage</td><td>₹2,00,000/month</td><td class="center">—</td></tr>
+      <tr><td>Q57</td><td>Real pretax margin</td><td>5-10%</td><td class="center">2/5</td></tr>
+      <tr><td>Q59</td><td>Profit allocation sweep</td><td>Zero</td><td class="center">0/5</td></tr>
+      <tr><td>Q67</td><td>Growth levers worked</td><td>Only Way 1 (more clients)</td><td class="center">1/5</td></tr>
+      <tr><td>Q73</td><td>Vacation test</td><td>7-14 days</td><td class="center">2/5</td></tr>
+      <tr><td>Q79</td><td>Named, productized offering</td><td>Yes, one</td><td class="center">4/5</td></tr>
+      <tr><td>Q82</td><td>Deep-work hours per week</td><td>Zero</td><td class="center">1/5</td></tr>
+      <tr><td>Q83</td><td>Vital Few named</td><td>"Everything feels important"</td><td class="center">1/5</td></tr>
+      <tr><td>Q85</td><td>Phone within X mins of waking</td><td>Under 5 minutes</td><td class="center">1/5</td></tr>
+      <tr><td>Q86</td><td>Sleep 7+ hours (last 4 weeks)</td><td>15-20 nights</td><td class="center">4/5</td></tr>
+      <tr><td>Q89</td><td>What's stopping freedom</td><td>"Don't know what to subtract"</td><td class="center">2/5</td></tr>
+    </tbody>
+  </table>
+  <p class="text-small text-grey gap-md"><em>Full 96-answer trace available on request.</em></p>
+</section>
+
+<!-- ══════════════════ APPENDIX B ══════════════════ -->
+<section class="report-section">
+  <div class="section-header">
+    <div class="section-eyebrow">Appendix B</div>
+    <h1 class="section-title">Glossary</h1>
+  </div>
+
+  <h3 class="subhead-red">The 8 Forces</h3>
+  <p>The eight depth dimensions of the bootcamp curriculum.</p>
+  <ul class="std">
+    <li><strong>Identity (1):</strong> who you serve and what business you're actually in.</li>
+    <li><strong>X-Factor (2):</strong> the cost you pay that competitors refuse to.</li>
+    <li><strong>Marketing (3):</strong> the position, the message, the channel.</li>
+    <li><strong>Sales (4):</strong> turning interest into a paying customer.</li>
+    <li><strong>Financial (5):</strong> the honesty of your numbers.</li>
+    <li><strong>Optimisation (6):</strong> working through the real bottleneck, not around it.</li>
+    <li><strong>Scale (7):</strong> the asset that exists without you.</li>
+    <li><strong>Owner Energy (8):</strong> what you've subtracted to make the important few possible.</li>
+  </ul>
+
+  <h3 class="subhead-red gap-md">The 9 Lies</h3>
+  <p>Common founder beliefs the bootcamp surfaces and breaks. Identity Trap, X-Factor Hunt, Marketing Lie, Sales Lie, Conversion Lie, Profit Lie, Growth Lie, Freedom Lie, Death Spiral.</p>
+
+  <h3 class="subhead-red gap-md">The 7 Founder Archetypes</h3>
+  <p>Cross-force patterns common to Indian SME founders. The Grinder, The Inheritor, The Migrator <em>(here called The Ad-Funded Founder for plain language)</em>, The Name <em>(The Personal Brand)</em>, The Rainmaker's Firm <em>(The Agency Model)</em>, The Institution, The Architect.</p>
+
+  <h3 class="subhead-red gap-md">Replacement wage (Bus Test)</h3>
+  <p>What the market would pay to do your job, end-to-end. Used to correct the real margin — true profit = stated profit minus the implicit subsidy of paying yourself less than market.</p>
+
+  <h3 class="subhead-red gap-md">Layer-3 Bleeder</h3>
+  <p>Running paid distribution (ads, reels, agencies) without a clear position underneath. The single most expensive recoverable mistake in Indian SME marketing.</p>
+
+  <h3 class="subhead-red gap-md">Customer-Voice Sprint</h3>
+  <p>A 90-day instrument — 30 customer interviews → 5 verbatim sentences → 1 chosen position. The rule: a position written without customer evidence won't survive its first pricing objection.</p>
+
+  <hr style="margin: 10mm 0; border: 0; border-top: 1px solid var(--rule);" />
+
+  <h3 class="subhead">Methodology</h3>
+  <p class="text-small text-grey">Three-step pipeline. (1) A scoring engine computes your 8 force depths from your 96 answers via a published rubric. (2) Stage band + force fingerprint + specific question tiebreakers pick your archetype. (3) The Lie is picked from your weakest force and specific answer patterns. The prose in this report was written by Claude (Anthropic) from the structured payload, not template-substituted. Report engine version: 1-prose.</p>
+
+  <div style="margin-top: 18mm; text-align: center; color: var(--grey); font-size: 9pt; font-style: italic;">
+    Report ends. Reread date: 23 August 2026.
+  </div>
+</section>
+
+</body>
+</html>

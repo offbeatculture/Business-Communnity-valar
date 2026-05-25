@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { FORCE_KEYS, VERTICALS, type ForceKey } from "@/lib/audit/types"
+import { REPORT_AUTO_APPROVE_DISABLED } from "@/lib/report/feature-flags"
 import type {
   ApproveDraftResponse,
   RejectDraftResponse,
@@ -194,6 +195,12 @@ export function AssessmentReportPreview({
 
       if (e.key === "a" || e.key === "A") {
         e.preventDefault()
+        if (REPORT_AUTO_APPROVE_DISABLED) {
+          toast("Auto-approve is paused — see banner above for details.", {
+            duration: 2500,
+          })
+          return
+        }
         armApprove()
       } else if (e.key === "r" || e.key === "R") {
         e.preventDefault()
@@ -370,6 +377,23 @@ export function AssessmentReportPreview({
         </CardContent>
       </Card>
 
+      {/* Pipeline-paused banner — shown while auto-approve is disabled. */}
+      {!readOnly && REPORT_AUTO_APPROVE_DISABLED && (
+        <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold mb-1">Auto-approve is paused</p>
+          <p className="text-amber-800">
+            The previous PDF renderer produced a broken document and has been
+            retired. The new v1 template lives in the repo at{" "}
+            <code className="text-xs bg-amber-100 px-1 py-0.5 rounded">
+              lib/report/templates/scale-code-diagnostic-v1/
+            </code>
+            . For now, generate the report by hand using the template and
+            upload the approved PDF via the manual flow (coming next). The
+            Approve button is disabled until the new pipeline ships.
+          </p>
+        </div>
+      )}
+
       {/* Sticky bottom action bar */}
       {!readOnly && (
         <div className="fixed bottom-0 inset-x-0 md:left-64 border-t bg-background/95 backdrop-blur z-40">
@@ -384,8 +408,21 @@ export function AssessmentReportPreview({
             </Button>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground hidden sm:inline mr-2">
-                <kbd className="px-1.5 py-0.5 rounded border bg-muted">a</kbd>{" "}
-                approve ·{" "}
+                {REPORT_AUTO_APPROVE_DISABLED ? (
+                  <>
+                    <kbd className="px-1.5 py-0.5 rounded border bg-muted opacity-50">
+                      a
+                    </kbd>{" "}
+                    <span className="opacity-50">approve (paused)</span> ·{" "}
+                  </>
+                ) : (
+                  <>
+                    <kbd className="px-1.5 py-0.5 rounded border bg-muted">
+                      a
+                    </kbd>{" "}
+                    approve ·{" "}
+                  </>
+                )}
                 <kbd className="px-1.5 py-0.5 rounded border bg-muted">r</kbd>{" "}
                 reject
               </span>
@@ -399,15 +436,24 @@ export function AssessmentReportPreview({
               </Button>
               <Button
                 onClick={armApprove}
-                disabled={approving}
-                className="bg-[#E53935] hover:bg-[#E53935]/90 text-white"
+                disabled={approving || REPORT_AUTO_APPROVE_DISABLED}
+                title={
+                  REPORT_AUTO_APPROVE_DISABLED
+                    ? "Auto-approve is paused while the new report pipeline is built."
+                    : undefined
+                }
+                className="bg-[#E53935] hover:bg-[#E53935]/90 text-white disabled:opacity-50"
               >
                 {approving ? (
                   <Loader2 className="size-4 animate-spin mr-2" />
                 ) : (
                   <Check className="size-4 mr-1" />
                 )}
-                {approveArmed ? "Press again to confirm" : "Approve"}
+                {REPORT_AUTO_APPROVE_DISABLED
+                  ? "Approve (paused)"
+                  : approveArmed
+                    ? "Press again to confirm"
+                    : "Approve"}
               </Button>
             </div>
           </div>

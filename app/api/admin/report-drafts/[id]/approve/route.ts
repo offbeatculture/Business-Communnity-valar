@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { renderStubReportPdf } from "@/lib/report/render-pdf"
 import { sendAuditReportEmail } from "@/lib/email/send-audit-report"
+import {
+  REPORT_AUTO_APPROVE_DISABLED,
+  REPORT_AUTO_APPROVE_DISABLED_MESSAGE,
+} from "@/lib/report/feature-flags"
 import type {
   ApproveDraftResponse,
   StubReportPayload,
@@ -48,6 +52,15 @@ export async function POST(
     const user = await verifyAdmin(supabase)
     if (!user) {
       return jsonErr("Unauthorized", 401)
+    }
+
+    // Auto-approve is paused while the report pipeline is rebuilt.
+    // The previous pdfkit-based renderer produced a broken 96-page
+    // PDF; the new v1 HTML template lives at
+    // lib/report/templates/scale-code-diagnostic-v1/ and will be
+    // wired into a fresh renderer in the next build phase.
+    if (REPORT_AUTO_APPROVE_DISABLED) {
+      return jsonErr(REPORT_AUTO_APPROVE_DISABLED_MESSAGE, 503)
     }
 
     const { id } = await params

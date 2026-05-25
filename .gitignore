@@ -24,6 +24,16 @@
 .DS_Store
 *.pem
 
+# macOS Finder duplicates (e.g. "file 2.tsx", "file 3.sql") — these get
+# created silently when Finder copies files and have repeatedly slipped
+# into commits. Block them at the gitignore layer.
+* [0-9].ts
+* [0-9].tsx
+* [0-9].sql
+* [0-9].js
+* [0-9].mjs
+* [0-9].md
+
 # debug
 npm-debug.log*
 yarn-debug.log*
