@@ -50,30 +50,32 @@ export type FontSet = {
   italic: string
 }
 
-function pickFont(candidates: string[]): string {
+function pickFont(candidates: string[]): string | null {
   for (const candidate of candidates) {
     const full = path.join(process.cwd(), candidate)
     if (fs.existsSync(full)) return full
   }
-  // Fallback to pdfkit's default Helvetica (always available).
-  return "Helvetica"
+  return null
 }
 
 export function loadFonts(): FontSet {
-  return {
-    regular: pickFont([
-      "public/fonts/Inter-Regular.ttf",
-      "public/fonts/Inter.ttf",
-    ]),
-    bold: pickFont([
-      "public/fonts/Inter-Bold.ttf",
-      "public/fonts/Inter-SemiBold.ttf",
-    ]),
-    italic: pickFont([
-      "public/fonts/Inter-Italic.ttf",
-      "public/fonts/Inter-Regular.ttf",
-    ]),
-  }
+  // Mirror the fallback chain in lib/audit/pdf.ts: prefer Inter, fall
+  // back to Oswald (which IS shipped in public/fonts/), then to the
+  // pdfkit built-in Helvetica as a last resort. registerFont accepts
+  // both file paths AND built-in font names as src.
+  const regular =
+    pickFont(["public/fonts/Inter-Regular.ttf", "public/fonts/Inter.ttf"]) ??
+    pickFont(["public/fonts/Oswald.ttf"]) ??
+    "Helvetica"
+  const bold =
+    pickFont(["public/fonts/Inter-Bold.ttf", "public/fonts/Inter-SemiBold.ttf"]) ??
+    pickFont(["public/fonts/Oswald.ttf"]) ??
+    "Helvetica-Bold"
+  const italic =
+    pickFont(["public/fonts/Inter-Italic.ttf", "public/fonts/Inter-Regular.ttf"]) ??
+    pickFont(["public/fonts/Oswald.ttf"]) ??
+    "Helvetica-Oblique"
+  return { regular, bold, italic }
 }
 
 // ─── Page master ─────────────────────────────────────────────
