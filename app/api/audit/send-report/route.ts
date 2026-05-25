@@ -144,23 +144,24 @@ export async function POST(request: Request) {
   }
 
   // 5) Build the same extra report data used on the results page
-  const overlay = getOverlay(vertical, verdict.focus_force)
+  const overlay = getOverlay(businessType as VerticalValue, verdict.focus_force)
 
   const applicableVariants = matchApplicableVariants(verdict, auditAnswers)
 
   // 6) Generate PDF + send email
   try {
-    const pdfBuffer = await generateAuditReportPdf({
-      identity,
-      verdict,
-      verticalLabel,
-      generatedAt: new Date(),
-      overlayContent: overlay?.content ?? null,
-      applicableVariants: applicableVariants.map((v) => ({
-        label: v.label,
-        body: v.body,
-      })),
-    })
+const pdfBuffer = await generateAuditReportPdf({
+  identity,
+  verdict,
+  verticalLabel,
+  generatedAt: new Date(),
+  overlayContent: overlay?.content ?? null,
+  applicableVariants: applicableVariants.map((v) => ({
+    label: v.label,
+    body: v.body,
+  })),
+  answers: auditAnswers,
+})
 
     await sendAuditReportEmail({
       to: email,
