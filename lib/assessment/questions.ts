@@ -494,6 +494,8 @@ const NEW_QUESTIONS: AuditQuestion[] = [
       },
       { value: "none", label: "Nothing — never written one", score: 0 },
     ],
+    helper:
+      "Opposite-test: would a real competitor credibly claim the opposite? 'Fast' passes (someone is 'thoughtful'). 'Best' fails — no one is 'worst'.",
   },
   {
     id: "q38_customer_one_liner",
