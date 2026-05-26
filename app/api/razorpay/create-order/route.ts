@@ -2,82 +2,95 @@ import { NextResponse } from "next/server"
 import { z } from "zod/v4"
 import { createClient } from "@/lib/supabase/server"
 import { razorpay } from "@/lib/razorpay"
-import { getPlansForCurrentTier, calculateGST } from "@/lib/plans"
 
-// Phase 2A: accept tier in the body so the legacy one-time payment path can
-// be triggered for any of the three product tiers. The pricing math itself
-// still flows through `getPlansForCurrentTier` (legacy single-tier bands)
-// because the public plans page rewrite to the 3-tier × 5-band shape lives
-// in a separate Phase 2B task. Tier only affects what we stamp into order
-// notes so the verify-payment + webhook handlers persist the right metadata.
+const PLAN_CONFIG = {
+  workshop_monthly: {
+    tier: "workshop",
+    label: "Workshop Monthly",
+    amountPaise: 129900,
+    durationDays: 30,
+  },
+  ai_lab_monthly: {
+    tier: "ai_lab",
+    label: "AI Lab Monthly",
+    amountPaise: 149900,
+    durationDays: 30,
+  },
+} as const
+
 const CreateOrderSchema = z.object({
-  planId: z.enum(["monthly", "annual"]),
-  tier: z.enum(["library", "workshop", "ai_lab"]).optional(),
+  planId: z.enum(["workshop_monthly", "ai_lab_monthly"]),
 })
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await request.json()
+
+    console.log("CREATE ORDER BODY:", body)
+
     const parsed = CreateOrderSchema.safeParse(body)
+
     if (!parsed.success) {
+      console.log("CREATE ORDER VALIDATION ERROR:", parsed.error.flatten())
+
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
     }
 
-    // Default to 'library' for legacy callers that don't yet send tier.
-    const tier = parsed.data.tier ?? "library"
+    const planId = parsed.data.planId
+    const plan = PLAN_CONFIG[planId]
 
-    // Get active subscriber count for tier pricing
-    const { count } = await supabase
-      .from("subscriptions")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "active")
-      .gte("expires_at", new Date().toISOString())
+    console.log("SELECTED ORDER PLAN:", {
+      planId,
+      tier: plan.tier,
+      amountPaise: plan.amountPaise,
+      label: plan.label,
+    })
 
-    const plans = getPlansForCurrentTier(count ?? 0)
-    const plan = plans.find((p) => p.id === parsed.data.planId)
-
-    if (!plan) {
-      return NextResponse.json({ error: "Plan not found" }, { status: 400 })
-    }
-
-    const gst = calculateGST(plan.pricePaise)
-
+    const receipt = `ord_${Date.now()}_${user.id.slice(0, 8)}`
     const order = await razorpay.orders.create({
-      amount: gst.total,
+      amount: plan.amountPaise,
       currency: "INR",
-      receipt: `order_${user.id}_${Date.now()}`,
+      receipt,
       notes: {
         user_id: user.id,
-        plan_id: plan.id,
+        plan_id: planId,
         plan_label: plan.label,
-        base_amount: plan.pricePaise.toString(),
+        base_amount: plan.amountPaise.toString(),
         duration_days: plan.durationDays.toString(),
-        tier,
+        tier: plan.tier,
       },
+    })
+
+    console.log("RAZORPAY ORDER CREATED:", {
+      orderId: order.id,
+      planId,
+      amount: plan.amountPaise,
+      tier: plan.tier,
     })
 
     return NextResponse.json({
       orderId: order.id,
-      amount: gst.total,
+      amount: plan.amountPaise,
       currency: "INR",
       planLabel: plan.label,
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-      gst: {
-        base: gst.base,
-        cgst: gst.cgst,
-        sgst: gst.sgst,
-        total: gst.total,
-      },
     })
   } catch (error) {
     console.error("Create order error:", error)
-    return NextResponse.json({ error: "Failed to create order" }, { status: 500 })
+
+    return NextResponse.json(
+      { error: "Failed to create order" },
+      { status: 500 }
+    )
   }
 }
