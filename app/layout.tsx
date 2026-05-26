@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Superhuman Entrepreneur",
+  title: "SuperFounder",
   description: "Exclusive community for business owners who want to build, scale & exit like a founder",
 };
 

@@ -53,7 +53,7 @@ export function Hero() {
         <div className="flex items-center justify-center gap-3 mb-6">
           <Rocket className="text-primary size-9 shrink-0" />
           <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-[#E53935] to-[#FF6D00] bg-clip-text text-transparent">
-            Superhuman Entrepreneur
+            SuperFounder
           </h1>
         </div>
 

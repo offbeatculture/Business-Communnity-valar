@@ -210,9 +210,9 @@ export const TIER_RANKS: Readonly<Record<ProductTier, 1 | 2 | 3>> = {
 }
 
 export const TIER_LABELS: Readonly<Record<ProductTier, string>> = {
-  library: "Library",
-  workshop: "Workshop",
-  ai_lab: "AI Lab",
+library: "Library",
+  workshop: "The Founders Room",
+  ai_lab: "The 100X Founders Room",
 }
 
 // ── The 15-entry pricing matrix (3 tiers × 5 bands) ──
@@ -278,8 +278,8 @@ export const TIER_BANDS: readonly TierBand[] = [
     maxMembers: 100,
     monthlyPaise: 129900,
     annualPaise: 1299000,
-    tierLabel: "Workshop",
-    tierRank: 2,
+    tierLabel: "The Founders Room",
+    tierRank: 1,
   },
   {
     tier: "workshop",
@@ -329,8 +329,8 @@ export const TIER_BANDS: readonly TierBand[] = [
     maxMembers: 100,
     monthlyPaise: 149900,
     annualPaise: 1499000,
-    tierLabel: "AI Lab",
-    tierRank: 3,
+    tierLabel: "The 100X Founders Room",
+    tierRank: 2,
   },
   {
     tier: "ai_lab",
@@ -339,7 +339,7 @@ export const TIER_BANDS: readonly TierBand[] = [
     maxMembers: 500,
     monthlyPaise: 149900,
     annualPaise: 149900,
-    tierLabel: "AI Lab",
+    tierLabel: "The 100X Founders Room",
     tierRank: 3,
   },
   {

@@ -32,7 +32,7 @@ const TIER_COPY: Record<
     cta: "Start with Library",
   },
   workshop: {
-    pitch: "Library, plus the live monthly workshop.",
+    pitch: "The Founders Room.",
     bullets: [
       "Everything in Library",
       "Live monthly Workshop event with Swastik (90 minutes, hot-seat format)",
@@ -40,10 +40,10 @@ const TIER_COPY: Record<
       "Priority on ₹5K diagnostic call slots",
       "Workshop tier badge on profile",
     ],
-    cta: "Start with Workshop",
+    cta: "Start with The Founders Room",
   },
   ai_lab: {
-    pitch: "Workshop, plus the monthly AI Lab.",
+    pitch: "The 100X Founders Room",
     bullets: [
       "Everything in Workshop",
       "Live monthly AI Lab event with Swastik (90 minutes, AI tools and workflows)",
@@ -51,7 +51,7 @@ const TIER_COPY: Record<
       "AI Lab tier badge on profile",
       "Early-bird ticket window for Reset events",
     ],
-    cta: "Start with AI Lab",
+    cta: "Start with The 100X Founders Room",
   },
 }
 
@@ -144,7 +144,7 @@ export default function PlansClient({
 
   return (
     <div className="min-h-screen bg-background px-4 py-10 sm:py-16">
-      <div className="mx-auto w-full max-w-6xl">
+      <div className="mx-auto w-full max-w-5xl">
         <div className="mb-6">
           <Link
             href="/"
@@ -171,12 +171,12 @@ export default function PlansClient({
           )}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3 md:items-stretch">
+        <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
            {tiers
     .filter((tier) => tier.tier !== "library")
     .map((tier) => {
             const copy = TIER_COPY[tier.tier]
-            const isFeatured = tier.tier === "workshop"
+            const isFeatured = tier.tier === "workshop" || tier.tier === "ai_lab"
             const isLoading = loadingTier === tier.tier
             const anyLoading = loadingTier !== null
 
@@ -190,13 +190,18 @@ export default function PlansClient({
                 }
               >
                 {isFeatured && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full bg-[#E53935] px-3 py-1 text-xs font-semibold text-white">
-                      Most popular
-                    </span>
-                  </div>
-                )}
-
+  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+    <span
+  className={
+    tier.tier === "workshop"
+      ? "rounded-full bg-[#E53935] px-3 py-1 text-xs font-semibold text-white"
+      : "rounded-full bg-[#F59E0B] px-3 py-1 text-xs font-semibold text-black"
+  }
+>
+  {tier.tier === "workshop" ? "Most popular" : "Premium"}
+</span>
+  </div>
+)}
                 <CardHeader className="text-center pb-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
                     Tier {tier.tierRank}
