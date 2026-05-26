@@ -78,7 +78,7 @@ export async function createSubscription(
 ): Promise<CreateSubscriptionResult> {
   const { email, sessionId } = args
   const tier: ProductTier = args.tier ?? "library"
-
+   
   let planId: string
   if (args.tier) {
     // Explicit tier — use the tier-specific env var. This is the new path.
@@ -96,17 +96,23 @@ export async function createSubscription(
       : getRazorpayPlanIdForTier("library")
   }
 
-  const subscription = await razorpay.subscriptions.create({
-    plan_id: planId,
-    total_count: 120, // max billing cycles (10 years monthly)
-    customer_notify: 0, // we handle emails via SES
-    notes: {
-      onboarding_session_id: sessionId,
-      email,
-      tier,
-    },
-  })
+console.log("Creating Razorpay subscription:", {
+  tier,
+  planId,
+  email,
+  sessionId,
+})
 
+const subscription = await razorpay.subscriptions.create({
+  plan_id: planId,
+  total_count: 120,
+  customer_notify: 0,
+  notes: {
+    onboarding_session_id: sessionId,
+    email,
+    tier,
+  },
+})
   return { subscription, planId, tier }
 }
 

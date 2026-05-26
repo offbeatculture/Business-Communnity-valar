@@ -4,9 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { createSubscription } from "@/lib/razorpay-subscriptions"
 import type { ProductTier } from "@/lib/plans"
 
-// Phase 2A: accept tier in the request body. Default to 'library' only when
-// the field is absent (back-compat for any legacy clients still in flight
-// during the rollout). New clients should always pass `tier` explicitly.
 const createSubSchema = z.object({
   sessionId: z.string().uuid("Invalid session ID"),
   tier: z.enum(["library", "workshop", "ai_lab"]).optional(),
@@ -15,9 +12,14 @@ const createSubSchema = z.object({
 export async function POST(request: Request) {
   try {
     const body = await request.json()
+
+    console.log("CREATE SUBSCRIPTION BODY:", body)
+
     const parsed = createSubSchema.safeParse(body)
 
     if (!parsed.success) {
+      console.log("CREATE SUBSCRIPTION VALIDATION ERROR:", parsed.error.flatten())
+
       return NextResponse.json(
         { error: "Invalid request" },
         { status: 400 }
@@ -26,14 +28,25 @@ export async function POST(request: Request) {
 
     const { sessionId } = parsed.data
     const tier: ProductTier = parsed.data.tier ?? "library"
+
+    console.log("SELECTED TIER:", tier)
+    console.log("SESSION ID:", sessionId)
+
     const supabase = createAdminClient()
 
-    // Fetch session
     const { data: session, error: sessionError } = await supabase
       .from("onboarding_sessions")
       .select("*")
       .eq("id", sessionId)
       .single()
+
+    console.log("ONBOARDING SESSION:", {
+      found: !!session,
+      email: session?.email,
+      status: session?.status,
+      existingSubscriptionId: session?.razorpay_subscription_id,
+      sessionError,
+    })
 
     if (sessionError || !session) {
       return NextResponse.json(
@@ -42,7 +55,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Check session is valid
     if (new Date(session.expires_at) < new Date()) {
       await supabase
         .from("onboarding_sessions")
@@ -62,26 +74,42 @@ export async function POST(request: Request) {
       )
     }
 
-    // If session already has a subscription, return it (idempotent)
     if (session.razorpay_subscription_id) {
+      console.log("REUSING EXISTING SUBSCRIPTION:", {
+        subscriptionId: session.razorpay_subscription_id,
+        requestedTier: tier,
+        existingPlanId: session.plan_id,
+      })
+
       return NextResponse.json({
         subscriptionId: session.razorpay_subscription_id,
         keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       })
     }
 
-    // Create Razorpay subscription on the tier-specific plan. Razorpay notes
-    // become the source of truth for tier — the webhook reads them back to
-    // populate the subscriptions row.
-    const { subscription: rzpSubscription } = await createSubscription({
+    console.log("CALLING createSubscription WITH:", {
       email: session.email,
       sessionId,
       tier,
     })
 
-    // Update session with subscription ID and a tier-aware plan_id label so
-    // operators reading onboarding_sessions can see at a glance which tier
-    // the user picked. Schema-compatible: the column is free-form text.
+    const {
+      subscription: rzpSubscription,
+      planId,
+      tier: createdTier,
+    } = await createSubscription({
+      email: session.email,
+      sessionId,
+      tier,
+    })
+
+    console.log("RAZORPAY SUBSCRIPTION CREATED:", {
+      subscriptionId: rzpSubscription.id,
+      requestedTier: tier,
+      createdTier,
+      planId,
+    })
+
     await supabase
       .from("onboarding_sessions")
       .update({
@@ -92,12 +120,19 @@ export async function POST(request: Request) {
       })
       .eq("id", sessionId)
 
+    console.log("ONBOARDING SESSION UPDATED:", {
+      sessionId,
+      subscriptionId: rzpSubscription.id,
+      plan_id: `${tier}_monthly`,
+    })
+
     return NextResponse.json({
       subscriptionId: rzpSubscription.id,
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     })
   } catch (error) {
     console.error("POST /api/onboarding/create-subscription error:", error)
+
     return NextResponse.json(
       { error: "Failed to create subscription" },
       { status: 500 }

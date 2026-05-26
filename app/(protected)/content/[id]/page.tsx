@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/server"
 import { fetchContentById } from "@/lib/content"
 import { fetchPromptsByContentId } from "@/lib/prompts"
 import { RelatedContent } from "@/components/content/RelatedContent"
@@ -26,11 +27,40 @@ type Props = {
   params: Promise<{ id: string }>
 }
 
+async function getUserPlan() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return "1299"
+  }
+
+  const { data: premiumSubscription, error } = await supabase
+    .from("subscriptions")
+    .select("id, amount_paid")
+    .eq("user_id", user.id)
+    .eq("amount_paid", 149900)
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    console.error("Subscription check error:", error)
+    return "1299"
+  }
+
+  return premiumSubscription ? "1499" : "1299"
+}
+
 export default async function ContentDetailPage({ params }: Props) {
   const { id } = await params
-  const [item, relatedPrompts] = await Promise.all([
+
+  const [item, relatedPrompts, userPlan] = await Promise.all([
     fetchContentById(id),
     fetchPromptsByContentId(id),
+    getUserPlan(),
   ])
 
   if (!item) notFound()
@@ -48,7 +78,7 @@ export default async function ContentDetailPage({ params }: Props) {
       </Link>
 
       {item.content_type === "resource" ? (
-        <ResourceDetail item={item} />
+        <ResourceDetail item={item} userPlan={userPlan} />
       ) : (
         <VideoSummaryDetail item={item} />
       )}
@@ -73,11 +103,13 @@ export default async function ContentDetailPage({ params }: Props) {
 
 function ResourceDetail({
   item,
+  userPlan,
 }: {
   item: Extract<
     Awaited<ReturnType<typeof fetchContentById>>,
     { content_type: "resource" }
   >
+  userPlan: string
 }) {
   const Icon = item.type === "cheat_sheet" ? FileText : FileSpreadsheet
   const typeLabel = item.type === "cheat_sheet" ? "Cheat Sheet" : "Template"
@@ -123,18 +155,26 @@ function ResourceDetail({
       )}
 
       {hasDocuments ? (
-        <DocumentTabs resourceId={item.id} documents={documents} />
+        <DocumentTabs
+          resourceId={item.id}
+          documents={documents}
+          userPlan={userPlan}
+        />
       ) : (
         <>
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             {item.file_url && (
-              <a href={`/api/content/${item.id}/download`} className="w-full sm:w-auto">
+              <a
+                href={`/api/content/${item.id}/download`}
+                className="w-full sm:w-auto"
+              >
                 <Button className="w-full sm:w-auto">
                   <Download className="size-4 mr-2" />
                   {isHtml ? "Download HTML" : "Download PDF"}
                 </Button>
               </a>
             )}
+
             {item.external_url && (
               <a
                 href={item.external_url}
@@ -191,20 +231,19 @@ function VideoSummaryDetail({
           <Eye className="size-4" />
           {item.view_count} views
         </span>
+
         {item.read_time_minutes && (
           <span className="flex items-center gap-1">
             <Clock className="size-4" />
             {item.read_time_minutes} min read
           </span>
         )}
+
         {item.video_duration_minutes && (
-          <span>
-            {item.video_duration_minutes} min video
-          </span>
+          <span>{item.video_duration_minutes} min video</span>
         )}
       </div>
 
-      {/* YouTube embed */}
       {videoId && (
         <div className="aspect-video rounded-lg overflow-hidden mb-6">
           <iframe
@@ -217,7 +256,6 @@ function VideoSummaryDetail({
         </div>
       )}
 
-      {/* One-line takeaway */}
       {item.one_line_takeaway && (
         <Card className="mb-6 border-primary/30 bg-primary/5">
           <CardContent className="flex items-start gap-3 pt-0">
@@ -227,7 +265,6 @@ function VideoSummaryDetail({
         </Card>
       )}
 
-      {/* Key Points */}
       {item.key_points && item.key_points.length > 0 && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-3">Key Points</h2>
@@ -249,7 +286,6 @@ function VideoSummaryDetail({
         </div>
       )}
 
-      {/* Action Items */}
       {item.action_items && item.action_items.length > 0 && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-3">Action Items</h2>
@@ -263,7 +299,6 @@ function VideoSummaryDetail({
         </div>
       )}
 
-      {/* Full Summary */}
       {item.full_summary && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-3">Full Summary</h2>
@@ -273,12 +308,7 @@ function VideoSummaryDetail({
         </div>
       )}
 
-      {/* Watch on YouTube */}
-      <a
-        href={item.youtube_url}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <a href={item.youtube_url} target="_blank" rel="noopener noreferrer">
         <Button variant="outline">
           <ExternalLink className="size-4 mr-2" />
           Watch on YouTube
