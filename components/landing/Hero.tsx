@@ -83,7 +83,7 @@ export function Hero() {
             className="w-full sm:w-auto h-12 px-8 text-base"
             disabled={loading}
           >
-            {loading ? "Starting..." : "Get Started"}
+            {loading ? "Starting..." : "Join the Community"}
           </Button>
         </form>
 
