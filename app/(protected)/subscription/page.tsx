@@ -204,8 +204,8 @@ export default async function SubscriptionPage() {
         <div className="mt-4 mb-6 rounded-lg border border-[#333] bg-[#1a1a1a] p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Autopay active</p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-sm font-medium text-white">Autopay active</p>
+              <p className="text-xs text-muted-foreground mt-1 text-white">
                 Next billing: {fmtDate(sub.expires_at)}
               </p>
             </div>
@@ -214,7 +214,7 @@ export default async function SubscriptionPage() {
       )}
 
       {/* ── Section B: Change tier ── */}
-      {sub && currentTier && !isExpired && (
+      {/* {sub && currentTier && !isExpired && (
         <section className="mb-8">
           <h2 className="text-lg font-semibold mb-3">Change tier</h2>
           <TierChangeCards
@@ -228,7 +228,7 @@ export default async function SubscriptionPage() {
             isLegacy={isLegacy}
           />
         </section>
-      )}
+      )} */}
 
       {/* ── Section C: Payment history ── */}
       <PaymentHistory

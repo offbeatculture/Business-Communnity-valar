@@ -28,7 +28,7 @@ const LEVEL_REWARDS = [
   "Green badge, business tagline",
   "Veteran status, custom banner color",
   "Trusted Contributor, Founder AMA",
-  "Pin own posts, 1:1 calls",
+  // "Pin own posts, 1:1 calls",
   "Community Elder, early access",
   "Pathfinders Wall, founder dinner",
 ]

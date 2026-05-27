@@ -136,9 +136,9 @@ export default async function EventsPage({ searchParams }: Props) {
         </p>
       </div>
 
-      <div className="mt-5 mb-5">
+      {/* <div className="mt-5 mb-5">
         <TierBanner userTier={tier} />
-      </div>
+      </div> */}
 
       <div className="mb-6">
         <Suspense>
@@ -153,8 +153,7 @@ export default async function EventsPage({ searchParams }: Props) {
         </h2>
         {upcomingEvents.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border/60 bg-card/30 px-4 py-8 text-center text-sm text-muted-foreground">
-            No upcoming events on your tier yet. Check back soon, or upgrade
-            to unlock more.
+            No upcoming events on your tier yet. Check back soon.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -213,7 +212,7 @@ export default async function EventsPage({ searchParams }: Props) {
         members; AI Lab members and unsubscribed users are skipped (the
         latter are already nudged by the top-of-page TierBanner).
       */}
-      <AiLabUpsellCard userTier={tier} />
+      {/* <AiLabUpsellCard userTier={tier} /> */}
     </div>
   )
 }

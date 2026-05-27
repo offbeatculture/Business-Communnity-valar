@@ -28,7 +28,7 @@ export const LEVEL_THRESHOLDS = [
   { level: 2, name: 'Sprout',     gp: 100,   color: 'green' },
   { level: 3, name: 'Builder',    gp: 500,   color: 'orange' },
   { level: 4, name: 'Grower',     gp: 1500,  color: 'amber' },
-  { level: 5, name: 'Scaler',     gp: 4000,  color: 'red' },
+  // { level: 5, name: 'Scaler',     gp: 4000,  color: 'red' },
   { level: 6, name: 'Leader',     gp: 10000, color: 'red-gradient' },
   { level: 7, name: 'Pathfinder', gp: 25000, color: 'gold-gradient' },
 ] as const

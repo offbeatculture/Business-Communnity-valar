@@ -5,9 +5,9 @@ import { useCallback } from "react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const filterTabs = [
-  { value: "all", label: "All" },
-  { value: "workshop", label: "Workshops" },
-  { value: "ai_lab", label: "AI Lab" },
+  { value: "all", label: "100X Super Founder Room" },
+  // { value: "workshop", label: "Workshops" },
+  // { value: "ai_lab", label: "AI Lab" },
 ]
 
 export function EventsFilter() {

@@ -91,7 +91,7 @@ export async function sendMagicLinkEmail({
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #f5f5f5; padding: 40px 20px;">
   <div style="max-width: 480px; margin: 0 auto;">
-    <h2 style="color: #E53935; margin-bottom: 8px;">Superhuman Entrepreneur</h2>
+    <h2 style="color: #E53935; margin-bottom: 8px;">100X Super Founder Room</h2>
     <p style="color: #9e9e9e; font-size: 14px; margin-bottom: 24px;">Your subscription is active</p>
     <p>${greeting},</p>
     <p>Your subscription is now active. Click the button below to access your account and set your password.</p>
@@ -103,7 +103,7 @@ export async function sendMagicLinkEmail({
     <p style="color: #9e9e9e; font-size: 13px;">This link expires in 20 minutes. If it has expired, you can request a new one from the payment success page.</p>
     <p style="color: #9e9e9e; font-size: 13px;">If you didn't sign up, you can safely ignore this email.</p>
     <hr style="border: none; border-top: 1px solid #333; margin: 32px 0;" />
-    <p style="color: #555; font-size: 12px;">Superhuman Entrepreneur &mdash; Own Your Growth</p>
+    <p style="color: #555; font-size: 12px;">100X Super Founder Room &mdash; Own Your Growth</p>
   </div>
 </body>
 </html>`
@@ -116,11 +116,11 @@ ${magicUrl}
 
 This link expires in 20 minutes.
 
-— Superhuman Entrepreneur`
+— 100X Super Founder Room`
 
   return sendEmail({
     to,
-    subject: "Your account is ready — Superhuman Entrepreneur",
+    subject: "Your account is ready — 100X Super Founder Room",
     html,
     text,
   })
@@ -145,7 +145,7 @@ export async function sendPaymentConfirmationEmail({
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #f5f5f5; padding: 40px 20px;">
   <div style="max-width: 480px; margin: 0 auto;">
-    <h2 style="color: #E53935; margin-bottom: 8px;">Superhuman Entrepreneur</h2>
+    <h2 style="color: #E53935; margin-bottom: 8px;">100X Super Founder Room</h2>
     <p>${greeting},</p>
     <p>We've received your payment. Here's a summary:</p>
     <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 24px 0;">
@@ -154,7 +154,7 @@ export async function sendPaymentConfirmationEmail({
     </div>
     <p style="color: #9e9e9e; font-size: 13px;">Your GST invoice will be available in your account under Subscription settings.</p>
     <hr style="border: none; border-top: 1px solid #333; margin: 32px 0;" />
-    <p style="color: #555; font-size: 12px;">Superhuman Entrepreneur &mdash; Own Your Growth</p>
+    <p style="color: #555; font-size: 12px;">100X Super Founder Room &mdash; Own Your Growth</p>
   </div>
 </body>
 </html>`
@@ -168,11 +168,11 @@ Amount: ${amount}
 
 Your GST invoice will be available in your account under Subscription settings.
 
-— Superhuman Entrepreneur`
+— 100X Super Founder Room`
 
   return sendEmail({
     to,
-    subject: "Payment received — Superhuman Entrepreneur",
+    subject: "Payment received — 100X Super Founder Room",
     html,
     text,
   })
