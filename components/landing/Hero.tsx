@@ -42,9 +42,8 @@ export function Hero() {
         return
       }
 
-      // Important:
-      // Email/session is still collected here.
-      // Then plans page will auto-open Razorpay without making the user click again.
+      // Email/session is collected here.
+      // Then the plans page auto-opens Razorpay.
       router.push(`/plans?session=${data.sessionId}&autoCheckout=1`)
     } catch {
       setError("Something went wrong. Please try again.")
@@ -55,7 +54,7 @@ export function Hero() {
   return (
     <section className="flex-1 flex flex-col items-center justify-center px-4 py-16 sm:py-24">
       <div className="w-full max-w-5xl">
-        <div className="grid gap-10 lg:grid-cols-[1fr_420px] lg:items-center">
+        <div className="grid gap-10 lg:grid-cols-[1fr_430px] lg:items-center">
           <div className="text-center lg:text-left">
             <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
               <Rocket className="text-primary size-9 shrink-0" />
@@ -72,43 +71,11 @@ export function Hero() {
               The 100X Founders Room
             </h2>
 
-            <p className="text-muted-foreground text-lg sm:text-xl mb-8 max-w-xl mx-auto lg:mx-0">
+            <p className="text-muted-foreground text-lg sm:text-xl max-w-xl mx-auto lg:mx-0">
               A private founder membership for business owners who want access
               to the community, live sessions, AI workflows, replays, and
               founder-focused opportunities.
             </p>
-
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col sm:flex-row items-center gap-3 max-w-md mx-auto lg:mx-0"
-            >
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-12 text-white bg-[#1a1a1a] border-[#333] focus:border-[#E53935] sm:flex-1"
-                required
-              />
-
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full sm:w-auto h-12 px-8 text-base bg-[#E53935] hover:bg-[#d32f2f]"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="size-4 mr-2 animate-spin" />
-                    Starting...
-                  </>
-                ) : (
-                  "Join Now"
-                )}
-              </Button>
-            </form>
-
-            {error && <p className="text-sm text-destructive mt-3">{error}</p>}
 
             <p className="text-sm text-muted-foreground mt-6">
               Already a member?{" "}
@@ -148,11 +115,10 @@ export function Hero() {
 
                 <ul className="space-y-4">
                   {[
-                    "Access to The 100X Founders Room community",
-                    "Live monthly founder sessions with Swastik",
+                    "TWO Live founder sessions with Swastik on the 3rd and 4th Wednesday of every month",
+                    "Access to The 100X Founders Room online community",
                     "AI tools, workflows, and implementation breakdowns",
-                    "Immediate access to all session replays",
-                    "Live calls on Third and Fourth Wenesday of Every Month",
+                    "Immediate access to all live session recordings",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm">
                       <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#E53935]/10">
@@ -166,7 +132,42 @@ export function Hero() {
                 </ul>
               </div>
 
-              <p className="mt-6 text-center text-xs text-muted-foreground">
+              <div className="my-6 h-px bg-border" />
+
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 text-white bg-[#1a1a1a] border-[#333] focus:border-[#E53935]"
+                  required
+                />
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full h-12 text-base bg-[#E53935] hover:bg-[#d32f2f]"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="size-4 mr-2 animate-spin" />
+                      Starting...
+                    </>
+                  ) : (
+                    "Join The Community"
+                  )}
+                </Button>
+              </form>
+
+              {error && (
+                <p className="text-sm text-destructive text-center mt-3">
+                  {error}
+                </p>
+              )}
+
+              <p className="mt-4 text-center text-xs text-muted-foreground">
                 Enter your email to continue to secure payment.
               </p>
             </CardContent>
