@@ -7,7 +7,7 @@ export default function LandingPage() {
   return (
     <div id="top" className="min-h-screen flex flex-col">
       <Hero />
-      <Features />
+      {/* <Features /> */}
       {/* <PricingSection /> */}
       <Footer />
     </div>
