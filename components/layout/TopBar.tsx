@@ -48,7 +48,7 @@ const mobileNavItems = [
   { label: "Events", href: "/events", icon: Calendar },
   { label: "Community", href: "/community", icon: MessageSquare },
   { label: "My Profile", href: "/profile", icon: User },
-  { label: "Subscription", href: "/subscription", icon: CreditCard },
+  // { label: "Subscription", href: "/subscription", icon: CreditCard },
 ]
 
 const adminItems = [
