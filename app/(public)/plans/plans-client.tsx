@@ -171,9 +171,9 @@ export default function PlansClient({
           )}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 md:items-stretch">
+        <div className="grid gap-6 md:grid-cols-1 md:items-stretch">
            {tiers
-    .filter((tier) => tier.tier !== "library")
+    .filter((tier) => tier.tier == "ai_lab")
     .map((tier) => {
             const copy = TIER_COPY[tier.tier]
             const isFeatured = tier.tier === "workshop" || tier.tier === "ai_lab"
@@ -195,7 +195,7 @@ export default function PlansClient({
   className={
     tier.tier === "workshop"
       ? "rounded-full bg-[#E53935] px-3 py-1 text-xs font-semibold text-white"
-      : "rounded-full bg-[#F59E0B] px-3 py-1 text-xs font-semibold text-black"
+      : "rounded-full bg-[#E53935] px-3 py-1 text-xs font-semibold text-white"
   }
 >
   {tier.tier === "workshop" ? "Most popular" : "Premium"}
