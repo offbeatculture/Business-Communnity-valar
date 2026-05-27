@@ -117,7 +117,7 @@ export function Hero() {
                   {[
                     "TWO Live founder sessions with Swastik on the 3rd and 4th Wednesday of every month",
                     "Access to The 100X Founders Room online community",
-                    "AI tools, workflows, and implementation breakdowns",
+                    "AI  workflows, and implementation breakdowns",
                     "Immediate access to all live session recordings",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm">
