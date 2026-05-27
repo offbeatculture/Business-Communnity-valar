@@ -417,7 +417,7 @@ async function handleSubscriptionActivated(
   sendPaymentConfirmationEmail({
     to: email,
     planLabel,
-    amount: `₹${(lockedPricePaise / 100).toFixed(2)} + 18% GST`,
+    amount: `₹${(lockedPricePaise / 100).toFixed(2)}`,
   }).catch((err) => console.error("Payment confirmation email error:", err))
 
   return NextResponse.json({ message: "Subscription activated, user created" })
@@ -506,7 +506,7 @@ async function handleSubscriptionCharged(
       to: userData.user.email,
       name: profile?.full_name ?? undefined,
       planLabel: renewalLabel,
-      amount: `₹${(renewalPaise / 100).toFixed(2)} + 18% GST`,
+      amount: `₹${(renewalPaise / 100).toFixed(2)}`,
     }).catch((err) => console.error("Renewal email error:", err))
   }
 
