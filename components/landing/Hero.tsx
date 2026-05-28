@@ -94,7 +94,7 @@ export function Hero() {
 
                 <div className="mt-5 flex items-end justify-center gap-1">
                   <span className="text-4xl sm:text-5xl font-bold">
-                    ₹1,499
+                    ₹1,799
                   </span>
                   <span className="pb-1 text-base text-muted-foreground">
                     /month
