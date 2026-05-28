@@ -5,6 +5,7 @@ import { rateLimit } from "@/lib/rate-limit"
 
 const startSchema = z.object({
   email: z.email("Invalid email address"),
+  planId: z.string().optional(),
 })
 
 export async function POST(request: Request) {
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
       .from("onboarding_sessions")
       .delete()
       .eq("email", normalizedEmail)
+      .eq("plan_id", parsed.data.planId ?? "monthly")
       .lt("expires_at", new Date().toISOString())
 
     // Check for an existing pending/payment_pending session
@@ -91,7 +93,7 @@ export async function POST(request: Request) {
       .from("onboarding_sessions")
       .insert({
         email: normalizedEmail,
-        plan_id: "monthly",
+         plan_id: parsed.data.planId ?? "monthly",
         status: "pending",
         expires_at: expiresAt.toISOString(),
       })

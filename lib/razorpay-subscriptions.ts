@@ -52,6 +52,7 @@ export type CreateSubscriptionArgs = {
    * When omitted, defaults to `'library'` and a warning is logged.
    */
   tier?: ProductTier
+  planId?: string 
 }
 
 export type CreateSubscriptionResult = {
