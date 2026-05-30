@@ -8,6 +8,7 @@ import { PromptCard } from "@/components/prompts/PromptCard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { ResourceVideoCards } from "@/components/content/ResourceVideoCards"
 import {
   ArrowLeft,
   Download,
@@ -26,6 +27,24 @@ import { DocumentTabs } from "@/components/content/DocumentTabs"
 type Props = {
   params: Promise<{ id: string }>
 }
+
+const RSB_VIDEOS = [
+  {
+    title: "Day 1 Video",
+    description: "Rapid Scaling Bootcamp - Day 1",
+    youtubeId: "uCO6VorqBc0",
+  },
+  {
+    title: "Day 2 Video",
+    description: "Rapid Scaling Bootcamp - Day 2",
+    youtubeId: "4JzbeWkGWlo",
+  },
+  {
+    title: "Day 3 Video",
+    description: "Rapid Scaling Bootcamp - Day 3",
+    youtubeId: "oGn8jKfIF6U",
+  },
+]
 
 async function getUserPlan() {
   const supabase = await createClient()
@@ -154,13 +173,19 @@ function ResourceDetail({
         <p className="text-muted-foreground mb-6">{item.description}</p>
       )}
 
-      {hasDocuments ? (
-        <DocumentTabs
-          resourceId={item.id}
-          documents={documents}
-          userPlan={userPlan}
-        />
-      ) : (
+    {hasDocuments ? (
+  <>
+    <DocumentTabs
+      resourceId={item.id}
+      documents={documents}
+      userPlan={userPlan}
+    />
+
+    {item.title === "Rapid Scaling Bootcamp" && (
+      <ResourceVideoCards videos={RSB_VIDEOS} />
+    )}
+  </>
+) : (
         <>
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             {item.file_url && (
