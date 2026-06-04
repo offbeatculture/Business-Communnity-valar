@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import Script from "next/script"
+import React, { useState } from "react"
 import { Play, X } from "lucide-react"
 
 type VideoItem = {
   title: string
   description: string
-  wistiaUrl: string
+  wistiaId: string
   coverImage?: string
 }
 
@@ -17,22 +18,33 @@ export function ResourceVideoCards({ videos }: { videos: VideoItem[] }) {
 
   return (
     <div className="mt-8">
+      <Script src="https://fast.wistia.com/player.js" strategy="lazyOnload" />
+
+      {videos.map((video) => (
+        <Script
+          key={video.wistiaId}
+          src={`https://fast.wistia.com/embed/${video.wistiaId}.js`}
+          type="module"
+          strategy="lazyOnload"
+        />
+      ))}
+
       <h2 className="text-lg font-semibold mb-3">Video Walkthroughs</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {videos.map((video) => (
           <button
-            key={video.wistiaUrl}
+            key={video.wistiaId}
             type="button"
             onClick={() => setActiveVideo(video)}
             className="group text-left rounded-xl border border-border/60 overflow-hidden bg-card hover:border-primary/40 transition"
           >
             <div className="relative aspect-video bg-muted overflow-hidden">
               <img
-  src={video.coverImage ?? DEFAULT_COVER_IMAGE}
-  alt={video.title}
-  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-/>
+                src={video.coverImage ?? DEFAULT_COVER_IMAGE}
+                alt={video.title}
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              />
 
               <div className="absolute inset-0 bg-black/35 group-hover:bg-black/45 transition" />
 
@@ -79,14 +91,11 @@ export function ResourceVideoCards({ videos }: { videos: VideoItem[] }) {
               </button>
             </div>
 
-            <div className="aspect-video bg-black">
-              <iframe
-                src={activeVideo.wistiaUrl}
-                title={activeVideo.title}
-                className="h-full w-full"
-                allow="autoplay; fullscreen"
-                allowFullScreen
-              />
+            <div className="aspect-[4/3] bg-black">
+              {React.createElement("wistia-player", {
+  "media-id": activeVideo.wistiaId,
+  aspect: "1.3333333333333333",
+})}
             </div>
           </div>
         </div>

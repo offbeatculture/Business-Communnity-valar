@@ -32,17 +32,17 @@ const RSB_VIDEOS = [
   {
     title: "Day 1 Video",
     description: "Rapid Scaling Bootcamp - Day 1",
-    wistiaUrl: "https://offbeatculture-1.wistia.com/s/f9n8claq4t57tj4",
+    wistiaId: "yvznjrgha9",
   },
   {
     title: "Day 2 Video",
     description: "Rapid Scaling Bootcamp - Day 2",
-    wistiaUrl: "https://offbeatculture-1.wistia.com/s/btburbtxyy4ruf1",
+    wistiaId: "oq3j7cr0bf",
   },
   {
     title: "Day 3 Video",
     description: "Rapid Scaling Bootcamp - Day 3",
-    wistiaUrl: "https://offbeatculture-1.wistia.com/s/6isoutkgz7uledv",
+    wistiaId: "eunb6hi8x9",
   },
 ]
 
