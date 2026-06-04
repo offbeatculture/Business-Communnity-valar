@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
 import { cn } from "@/lib/utils"
 import {
   User,
@@ -31,6 +32,7 @@ import {
   Calendar
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { NotificationBell } from "@/components/notifications/NotificationBell"
 
 type TopBarProps = {
   profile: {
@@ -105,11 +107,15 @@ export function TopBar({ profile }: TopBarProps) {
         </span>
 
         {/* Theme Toggle + User Menu */}
-        <div className="flex items-center gap-1 ml-2 shrink-0">
-        <div className="hidden md:block">
-          <ThemeToggle />
-        </div>
-        <DropdownMenu>
+        {/* Notifications + Theme Toggle + User Menu */}
+<div className="flex items-center gap-1 ml-2 shrink-0">
+  <NotificationBell />
+
+  <div className="hidden md:block">
+    <ThemeToggle />
+  </div>
+
+  <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-2 outline-none cursor-pointer">
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile?.avatar_url || undefined} />

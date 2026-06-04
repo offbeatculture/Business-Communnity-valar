@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { awardPoints } from "@/lib/engagement"
 import { GP_VALUES } from "@/lib/engagement-constants"
+import { createNotification } from "@/lib/notifications"
 
 export async function POST(
   _request: Request,
@@ -11,7 +12,9 @@ export async function POST(
   try {
     const { id } = await params
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -41,26 +44,50 @@ export async function POST(
       )
     }
 
-    // Increment like_count via admin client
     const admin = createAdminClient()
+
     const { data: post } = await admin
       .from("posts")
-      .select("like_count, user_id")
+      .select("id, like_count, user_id")
       .eq("id", id)
       .single()
 
     if (post) {
       await admin
         .from("posts")
-        .update({ like_count: post.like_count + 1 })
+        .update({ like_count: (post.like_count ?? 0) + 1 })
         .eq("id", id)
 
       // Award GP to liker
-      awardPoints(user.id, "like_given", GP_VALUES.like_given, id).catch(() => {})
+      awardPoints(user.id, "like_given", GP_VALUES.like_given, id).catch(
+        () => {}
+      )
 
-      // Award GP to post author for receiving a like (if not self-liking)
+      // Award GP + notify post author for receiving a like
       if (post.user_id !== user.id) {
-        awardPoints(post.user_id, "like_received", GP_VALUES.like_received, id).catch(() => {})
+        awardPoints(
+          post.user_id,
+          "like_received",
+          GP_VALUES.like_received,
+          id
+        ).catch(() => {})
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("user_id", user.id)
+          .single()
+
+        await createNotification({
+          userId: post.user_id,
+          actorId: user.id,
+          type: "like",
+          title: "New like on your post",
+          message: `${profile?.full_name || user.email || "Someone"} liked your community post.`,
+          linkUrl: `/community?post=${post.id}`,
+          entityType: "post",
+          entityId: post.id,
+        })
       }
     }
 
@@ -81,7 +108,9 @@ export async function DELETE(
   try {
     const { id } = await params
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -101,7 +130,7 @@ export async function DELETE(
       )
     }
 
-    // Decrement like_count via admin client (floor at 0)
+    // Decrement like_count via admin client, floor at 0
     const admin = createAdminClient()
     const { data: post } = await admin
       .from("posts")
@@ -112,7 +141,7 @@ export async function DELETE(
     if (post) {
       await admin
         .from("posts")
-        .update({ like_count: Math.max(0, post.like_count - 1) })
+        .update({ like_count: Math.max(0, (post.like_count ?? 0) - 1) })
         .eq("id", id)
     }
 
