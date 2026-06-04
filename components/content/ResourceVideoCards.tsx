@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { useState } from "react"
 import { Play, X } from "lucide-react"
 
@@ -29,14 +28,11 @@ export function ResourceVideoCards({ videos }: { videos: VideoItem[] }) {
             className="group text-left rounded-xl border border-border/60 overflow-hidden bg-card hover:border-primary/40 transition"
           >
             <div className="relative aspect-video bg-muted overflow-hidden">
-              <Image
-                src={video.coverImage ?? DEFAULT_COVER_IMAGE}
-                alt={video.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover transition duration-300 group-hover:scale-105"
-                priority={false}
-              />
+              <img
+  src={video.coverImage ?? DEFAULT_COVER_IMAGE}
+  alt={video.title}
+  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+/>
 
               <div className="absolute inset-0 bg-black/35 group-hover:bg-black/45 transition" />
 
