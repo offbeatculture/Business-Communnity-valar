@@ -1,16 +1,16 @@
 "use client"
 
 import { useState } from "react"
-import { Play, X } from "lucide-react"
+import { Play, X, Video } from "lucide-react"
 
-type Video = {
+type VideoItem = {
   title: string
   description: string
-  youtubeId: string
+  wistiaUrl: string
 }
 
-export function ResourceVideoCards({ videos }: { videos: Video[] }) {
-  const [activeVideo, setActiveVideo] = useState<Video | null>(null)
+export function ResourceVideoCards({ videos }: { videos: VideoItem[] }) {
+  const [activeVideo, setActiveVideo] = useState<VideoItem | null>(null)
 
   return (
     <div className="mt-8">
@@ -19,21 +19,25 @@ export function ResourceVideoCards({ videos }: { videos: Video[] }) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {videos.map((video) => (
           <button
-            key={video.youtubeId}
+            key={video.wistiaUrl}
             type="button"
             onClick={() => setActiveVideo(video)}
             className="group text-left rounded-xl border border-border/60 overflow-hidden bg-card hover:border-primary/40 transition"
           >
             <div className="relative aspect-video bg-muted">
-              <img
-                src={`https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
-                alt={video.title}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-background to-background">
+                <div className="rounded-full bg-primary/15 p-4 mb-3 group-hover:bg-primary/25 transition">
+                  <Video className="size-7 text-primary" />
+                </div>
 
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition">
-                <div className="rounded-full bg-primary text-primary-foreground p-3">
+                <p className="text-sm font-medium">{video.title}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Click to watch
+                </p>
+              </div>
+
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition">
+                <div className="rounded-full bg-primary text-primary-foreground p-3 shadow-lg">
                   <Play className="size-5 fill-current" />
                 </div>
               </div>
@@ -52,7 +56,7 @@ export function ResourceVideoCards({ videos }: { videos: Video[] }) {
       {activeVideo && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="w-full max-w-4xl rounded-xl bg-background border border-border overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border">
               <div>
                 <h3 className="font-semibold">{activeVideo.title}</h3>
                 <p className="text-sm text-muted-foreground">
@@ -63,7 +67,8 @@ export function ResourceVideoCards({ videos }: { videos: Video[] }) {
               <button
                 type="button"
                 onClick={() => setActiveVideo(null)}
-                className="rounded-lg p-2 hover:bg-muted transition"
+                className="rounded-lg p-2 hover:bg-muted transition shrink-0"
+                aria-label="Close video"
               >
                 <X className="size-5" />
               </button>
@@ -71,10 +76,10 @@ export function ResourceVideoCards({ videos }: { videos: Video[] }) {
 
             <div className="aspect-video bg-black">
               <iframe
-                src={`https://www.youtube.com/embed/${activeVideo.youtubeId}?autoplay=1&rel=0`}
+                src={activeVideo.wistiaUrl}
                 title={activeVideo.title}
                 className="h-full w-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allow="autoplay; fullscreen"
                 allowFullScreen
               />
             </div>
