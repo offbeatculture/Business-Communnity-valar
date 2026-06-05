@@ -42,7 +42,10 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
-
+// TEMP DEBUG ROUTE — remove after setting password
+if (pathname === "/api/debug-set-password") {
+  return supabaseResponse
+}
   // Public routes — pass through
   if (publicRoutes.some((route) => pathname === route) || pathname.startsWith("/auth/")) {
     // If user is already logged in and visiting login page, redirect to dashboard
@@ -145,7 +148,7 @@ export async function middleware(request: NextRequest) {
       .or("recurring_status.is.null,recurring_status.in.(active,paused)")
       .order("expires_at", { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     if (!subscription) {
       const url = request.nextUrl.clone()

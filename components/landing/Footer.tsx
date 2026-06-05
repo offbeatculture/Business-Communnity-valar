@@ -10,9 +10,9 @@ export function Footer() {
           <span className="font-semibold text-sm">SuperFounder</span>
         </div>
         <div className="flex items-center gap-6 text-xs text-muted-foreground">
-          <Link href="/login" className="hover:text-foreground transition-colors">
+          {/* <Link href="/login" className="hover:text-foreground transition-colors">
             Log In
-          </Link>
+          </Link> */}
           {/* <Link href="#pricing" className="hover:text-foreground transition-colors">
             Pricing
           </Link> */}

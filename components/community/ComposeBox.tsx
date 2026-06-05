@@ -2,16 +2,39 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Send, Loader2 } from "lucide-react"
+import {
+  CircleHelp,
+  Hand,
+  Loader2,
+  MessageCircle,
+  Send,
+  Trophy,
+} from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 
 const categories = [
-  { value: "win" as const, label: "Win", emoji: "🏆" },
-  { value: "question" as const, label: "Question", emoji: "❓" },
-  { value: "discussion" as const, label: "Discussion", emoji: "💬" },
-  { value: "introduction" as const, label: "Introduction", emoji: "👋" },
+  {
+    value: "win" as const,
+    label: "Win",
+    icon: Trophy,
+  },
+  {
+    value: "question" as const,
+    label: "Question",
+    icon: CircleHelp,
+  },
+  {
+    value: "discussion" as const,
+    label: "Discussion",
+    icon: MessageCircle,
+  },
+  {
+    value: "introduction" as const,
+    label: "Introduction",
+    icon: Hand,
+  },
 ]
 
 type CategoryValue = "win" | "question" | "discussion" | "introduction"
@@ -22,10 +45,16 @@ type Props = {
   defaultCategory?: CategoryValue
 }
 
-export function ComposeBox({ promptId, defaultContent, defaultCategory }: Props = {}) {
+export function ComposeBox({
+  promptId,
+  defaultContent,
+  defaultCategory,
+}: Props = {}) {
   const router = useRouter()
   const [content, setContent] = useState(defaultContent ?? "")
-  const [category, setCategory] = useState<CategoryValue>(defaultCategory ?? "discussion")
+  const [category, setCategory] = useState<CategoryValue>(
+    defaultCategory ?? "discussion"
+  )
   const [isPosting, setIsPosting] = useState(false)
 
   async function handlePost() {
@@ -33,11 +62,16 @@ export function ComposeBox({ promptId, defaultContent, defaultCategory }: Props 
     if (!trimmed || isPosting) return
 
     setIsPosting(true)
+
     try {
       const res = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: trimmed, category, ...(promptId && { prompt_id: promptId }) }),
+        body: JSON.stringify({
+          content: trimmed,
+          category,
+          ...(promptId && { prompt_id: promptId }),
+        }),
       })
 
       if (!res.ok) throw new Error("Failed")
@@ -54,40 +88,52 @@ export function ComposeBox({ promptId, defaultContent, defaultCategory }: Props 
   }
 
   return (
-    <div className="bg-card border border-border rounded-lg p-4">
+    <div className="rounded-3xl border border-border/70 bg-card p-3 shadow-sm sm:p-4">
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Share a win, ask a question, or start a discussion..."
         maxLength={2000}
         rows={3}
-        className="resize-none mb-3 border-0 bg-transparent p-0 focus-visible:ring-0 shadow-none"
+        className="mb-3 min-h-24 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 sm:min-h-20"
       />
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex gap-2 flex-wrap">
-          {categories.map((cat) => (
-            <button
-              key={cat.value}
-              onClick={() => setCategory(cat.value)}
-              className={`px-4 py-2.5 text-xs font-medium rounded-lg transition-colors cursor-pointer border ${
-                category === cat.value
-                  ? "bg-primary/10 text-primary border-primary/30"
-                  : "bg-secondary text-secondary-foreground border-transparent hover:text-foreground"
-              }`}
-            >
-              {cat.emoji} {cat.label}
-            </button>
-          ))}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-max gap-2">
+            {categories.map((cat) => {
+              const Icon = cat.icon
+              const isActive = category === cat.value
+
+              return (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => setCategory(cat.value)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition ${
+                    isActive
+                      ? "border-primary/35 bg-primary/10 text-primary"
+                      : "border-border/60 bg-muted/50 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Icon className="size-3.5" />
+                  {cat.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
+
         <Button
-          size="default"
+          size="sm"
           onClick={handlePost}
           disabled={!content.trim() || isPosting}
+          className="h-10 w-full rounded-full sm:w-auto"
         >
           {isPosting ? (
-            <Loader2 className="size-4 animate-spin mr-1.5" />
+            <Loader2 className="mr-1.5 size-4 animate-spin" />
           ) : (
-            <Send className="size-4 mr-1.5" />
+            <Send className="mr-1.5 size-4" />
           )}
           Post
         </Button>

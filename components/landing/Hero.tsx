@@ -42,8 +42,6 @@ export function Hero() {
         return
       }
 
-      // Email/session is collected here.
-      // Then the plans page auto-opens Razorpay.
       router.push(`/plans?session=${data.sessionId}&autoCheckout=1`)
     } catch {
       setError("Something went wrong. Please try again.")
@@ -52,7 +50,7 @@ export function Hero() {
   }
 
   return (
-    <section className="flex-1 flex flex-col items-center justify-center px-4 py-16 sm:py-24">
+    <section className="flex-1 flex flex-col items-center justify-center px-4 py-16 sm:py-24 bg-background text-foreground">
       <div className="w-full max-w-5xl">
         <div className="grid gap-10 lg:grid-cols-[1fr_430px] lg:items-center">
           <div className="text-center lg:text-left">
@@ -79,13 +77,13 @@ export function Hero() {
 
             <p className="text-sm text-muted-foreground mt-6">
               Already a member?{" "}
-              <Link href="/login" className="text-[#E53935] hover:underline">
+              <Link href="/login" className="text-primary hover:underline">
                 Log in
               </Link>
             </p>
           </div>
 
-          <Card className="border border-[#E53935]/40 bg-[#151515] shadow-xl">
+          <Card className="border-primary/30 bg-card text-card-foreground shadow-xl shadow-primary/5">
             <CardContent className="p-6 sm:p-8">
               <div className="text-center mb-6">
                 <h3 className="text-2xl font-bold">
@@ -117,12 +115,12 @@ export function Hero() {
                   {[
                     "TWO Live founder sessions with Swastik on the 3rd and 4th Wednesday of every month",
                     "Access to The 100X Founders Room online community",
-                    "AI  workflows, and implementation breakdowns",
+                    "AI workflows and implementation breakdowns",
                     "Immediate access to all live session recordings",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm">
-                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#E53935]/10">
-                        <Check className="size-3.5 text-[#E53935]" />
+                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                        <Check className="size-3.5 text-primary" />
                       </span>
                       <span className="leading-6 text-muted-foreground">
                         {item}
@@ -140,14 +138,14 @@ export function Hero() {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 text-white bg-[#1a1a1a] border-[#333] focus:border-[#E53935]"
+                  className="h-12 bg-background"
                   required
                 />
 
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full h-12 text-base bg-[#E53935] hover:bg-[#d32f2f]"
+                  className="w-full h-12 text-base"
                   disabled={loading}
                 >
                   {loading ? (

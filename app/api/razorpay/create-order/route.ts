@@ -4,22 +4,16 @@ import { createClient } from "@/lib/supabase/server"
 import { razorpay } from "@/lib/razorpay"
 
 const PLAN_CONFIG = {
-  workshop_monthly: {
-    tier: "workshop",
-    label: "Workshop Monthly",
-    amountPaise: 129900,
-    durationDays: 30,
-  },
   ai_lab_monthly: {
     tier: "ai_lab",
-    label: "AI Lab Monthly",
-    amountPaise: 149900,
+    label: "The 100X Founders Room",
+    amountPaise: 179900,
     durationDays: 30,
   },
 } as const
 
 const CreateOrderSchema = z.object({
-  planId: z.enum(["workshop_monthly", "ai_lab_monthly"]),
+  planId: z.enum(["ai_lab_monthly"]),
 })
 
 export async function POST(request: Request) {
@@ -57,6 +51,7 @@ export async function POST(request: Request) {
     })
 
     const receipt = `ord_${Date.now()}_${user.id.slice(0, 8)}`
+
     const order = await razorpay.orders.create({
       amount: plan.amountPaise,
       currency: "INR",
@@ -68,6 +63,7 @@ export async function POST(request: Request) {
         base_amount: plan.amountPaise.toString(),
         duration_days: plan.durationDays.toString(),
         tier: plan.tier,
+        purpose: "renewal",
       },
     })
 

@@ -96,6 +96,17 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .single()
 
+    // Mark older subscription rows inactive before creating the renewed access row
+await adminClient
+  .from("subscriptions")
+  .update({
+    status: "expired",
+    recurring_status: "expired",
+  })
+  .eq("user_id", user.id)
+  .neq("razorpay_payment_id", razorpay_payment_id)
+
+
     // Create subscription
     const { data: subscription, error: subError } = await adminClient
       .from("subscriptions")
@@ -107,6 +118,7 @@ export async function POST(request: Request) {
         amount_paid: typeof order.amount === "string" ? parseInt(order.amount, 10) : order.amount,
         currency: "INR",
         status: "active",
+        recurring_status: "active",
         starts_at: startsAt.toISOString(),
         expires_at: expiresAt.toISOString(),
         tier,

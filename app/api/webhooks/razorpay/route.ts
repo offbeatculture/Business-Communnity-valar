@@ -145,12 +145,25 @@ async function handlePaymentCaptured(
     return NextResponse.json({ error: "Missing payment data" }, { status: 400 })
   }
 
-  const notes = (entity.notes ?? {}) as Record<string, string>
-  const userId = notes.user_id
-  const planId = notes.plan_id ?? "monthly"
-  const planLabel = notes.plan_label ?? "Subscription"
-  const baseAmount = parseInt(notes.base_amount ?? "0", 10)
-  const durationDays = parseInt(notes.duration_days ?? "30", 10)
+let notes = (entity.notes ?? {}) as Record<string, string>
+
+// If Razorpay payment notes are empty, fetch order notes.
+// Our create-order route stores user_id/plan_id/tier in order notes.
+if ((!notes.user_id || !notes.plan_id) && entity.order_id) {
+  try {
+    const { razorpay } = await import("@/lib/razorpay")
+    const order = await razorpay.orders.fetch(entity.order_id as string)
+    notes = (order.notes ?? {}) as Record<string, string>
+  } catch (err) {
+    console.error("Failed to fetch Razorpay order notes:", err)
+  }
+}
+
+const userId = notes.user_id
+const planId = notes.plan_id ?? "ai_lab_monthly"
+const planLabel = notes.plan_label ?? "The 100X Founders Room"
+const baseAmount = parseInt(notes.base_amount ?? "179900", 10)
+const durationDays = parseInt(notes.duration_days ?? "30", 10)
   // Tier comes from order notes (set by create-order). Default 'library' for
   // legacy one-time payments that pre-date the three-tier system.
   const tier: ProductTier = isProductTier(notes.tier) ? notes.tier : "library"
@@ -182,6 +195,18 @@ async function handlePaymentCaptured(
   const band = getTierBand(tier, activeCount)
   const lockedPricePaise = baseAmount > 0 ? baseAmount : band.monthlyPaise
 
+
+  // Mark older subscription rows inactive before creating the renewed access row
+await adminClient
+  .from("subscriptions")
+  .update({
+    status: "expired",
+    recurring_status: "expired",
+  })
+  .eq("user_id", userId)
+  .neq("razorpay_payment_id", entity.id as string)
+
+
   const { data: subscription } = await adminClient
     .from("subscriptions")
     .insert({
@@ -194,6 +219,7 @@ async function handlePaymentCaptured(
       amount_paid: entity.amount as number,
       currency: (entity.currency as string) ?? "INR",
       status: "active",
+      recurring_status: "active",
       starts_at: startsAt.toISOString(),
       expires_at: expiresAt.toISOString(),
       tier,

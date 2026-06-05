@@ -5,6 +5,7 @@ import { fetchPosts, fetchUserInteractions } from "@/lib/community"
 import { ComposeBox } from "@/components/community/ComposeBox"
 import { CommunityFilters } from "@/components/community/CommunityFilters"
 import { PostList } from "@/components/community/PostList"
+import { MessageSquare } from "lucide-react"
 
 type Props = {
   searchParams: Promise<{
@@ -19,7 +20,9 @@ type Props = {
 export default async function CommunityPage({ searchParams }: Props) {
   const params = await searchParams
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) redirect("/login")
 
@@ -31,21 +34,43 @@ export default async function CommunityPage({ searchParams }: Props) {
 
   const userRole = (profile?.role ?? "member") as "member" | "admin"
 
-  // Build intro template if compose=introduction
   let composeContent: string | undefined
-  let composeCategory: "win" | "question" | "discussion" | "introduction" | undefined
+  let composeCategory:
+    | "win"
+    | "question"
+    | "discussion"
+    | "introduction"
+    | undefined
+
   if (params.compose === "introduction" && profile) {
     const name = profile.full_name?.split(" ")[0] ?? ""
     const city = profile.city ?? ""
     const biz = profile.business_name ?? ""
     const industry = profile.industry ?? ""
-    composeContent = `Hey everyone! 👋 I'm ${name}${city ? ` from ${city}` : ""}.${biz ? `\n\nI run ${biz}${industry ? ` in the ${industry} space` : ""}.` : ""}\n\nI joined this community because \n\nOne thing I'm working on right now is `
+
+    composeContent = `Hey everyone! 👋 I'm ${name}${
+      city ? ` from ${city}` : ""
+    }.${biz ? `\n\nI run ${biz}${industry ? ` in the ${industry} space` : ""}.` : ""}
+
+I joined this community because 
+
+One thing I'm working on right now is `
+
     composeCategory = "introduction"
   }
 
   const rawCategory = params.category
   const isSpecialFilter = rawCategory === "mine" || rawCategory === "saved"
-  const category = isSpecialFilter ? undefined : (rawCategory as "win" | "question" | "discussion" | "introduction" | undefined)
+
+  const category = isSpecialFilter
+    ? undefined
+    : (rawCategory as
+        | "win"
+        | "question"
+        | "discussion"
+        | "introduction"
+        | undefined)
+
   const filter = isSpecialFilter ? (rawCategory as "mine" | "saved") : undefined
   const sort = (params.sort as "newest" | "popular") ?? "newest"
 
@@ -62,14 +87,28 @@ export default async function CommunityPage({ searchParams }: Props) {
   const { likedIds, savedIds } = await fetchUserInteractions(user.id, postIds)
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-1">Community</h1>
-      <p className="text-muted-foreground text-sm mb-6">
-        Share wins, ask questions, and connect with fellow entrepreneurs.
-      </p>
+    <div className="mx-auto w-full max-w-4xl pb-24 sm:pb-8">
+      <div className="mb-5">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+          <MessageSquare className="size-3.5" />
+          Founder Community
+        </div>
 
-      <div className="space-y-6">
-        <ComposeBox defaultContent={composeContent} defaultCategory={composeCategory} />
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          Community
+        </h1>
+
+        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+          Share wins, ask questions, and learn from founders building alongside
+          you.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <ComposeBox
+          defaultContent={composeContent}
+          defaultCategory={composeCategory}
+        />
 
         <Suspense>
           <CommunityFilters />
