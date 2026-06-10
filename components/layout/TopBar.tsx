@@ -33,6 +33,7 @@ import {
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationBell } from "@/components/notifications/NotificationBell"
+import { SupportWidget } from "@/components/support/SupportWidget"
 
 type TopBarProps = {
   profile: {
@@ -110,7 +111,7 @@ export function TopBar({ profile }: TopBarProps) {
         {/* Notifications + Theme Toggle + User Menu */}
 <div className="flex items-center gap-1 ml-2 shrink-0">
   <NotificationBell />
-
+ <SupportWidget />
   <div className="hidden md:block">
     <ThemeToggle />
   </div>
@@ -211,7 +212,12 @@ export function TopBar({ profile }: TopBarProps) {
                 })}
               </>
             )}
+<div className="border-t border-border my-2" />
 
+<div className="flex items-center justify-between px-3 py-2.5">
+  <span className="text-sm font-medium text-muted-foreground">Support</span>
+  <SupportWidget />
+</div>
             {/* Theme toggle in mobile menu */}
             <div className="flex items-center justify-between px-3 py-2.5">
               <span className="text-sm font-medium text-muted-foreground">Dark Mode</span>

@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   FileQuestion,
   Calendar,
+  CircleHelp,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
@@ -36,6 +37,7 @@ const adminItems = [
   { label: "Daily Prompts", href: "/admin/prompts", icon: Lightbulb },
   { label: "Prompt Library", href: "/admin/prompts-library", icon: Sparkles },
   { label: "Assessment", href: "/admin/assessment", icon: ClipboardCheck },
+  { label: "Support Queries", href: "/admin/support", icon: CircleHelp },
 ]
 
 type SidebarProps = {
@@ -85,23 +87,27 @@ export function Sidebar({ profile }: SidebarProps) {
               Admin
             </p>
             {adminItems.map((item) => {
-              const isActive = pathname.startsWith(item.href)
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-accent text-accent-foreground border-l-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-                  )}
-                >
-                  <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
-                  {item.label}
-                </Link>
-              )
-            })}
+  const isActive =
+    item.href === "/admin"
+      ? pathname === "/admin"
+      : pathname === item.href || pathname.startsWith(item.href + "/")
+
+  return (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={cn(
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+        isActive
+          ? "bg-accent text-accent-foreground border-l-2 border-primary"
+          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+      )}
+    >
+      <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
+      {item.label}
+    </Link>
+  )
+})}
           </>
         )}
       </nav>
