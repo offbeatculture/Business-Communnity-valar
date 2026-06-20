@@ -26,14 +26,14 @@ function formatCategory(category: string) {
 
 function statusClass(status: string) {
   if (status === "closed") {
-    return "border-green-500/20 bg-green-500/10 text-green-500"
+    return "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
   }
 
   if (status === "in_progress") {
-    return "border-yellow-500/20 bg-yellow-500/10 text-yellow-600"
+    return "border-teal-500/20 bg-teal-500/10 text-teal-300"
   }
 
-  return "border-primary/20 bg-primary/10 text-primary"
+  return "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
 }
 
 export default async function AdminSupportPage() {
@@ -98,35 +98,36 @@ export default async function AdminSupportPage() {
   return (
     <div className="mx-auto w-full max-w-7xl pb-10">
       <div className="mb-6">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/5 px-3 py-1 text-xs font-medium text-teal-300">
           <CircleHelp className="size-3.5" />
-          Admin Support
+          Daily Breathwork Support
         </div>
 
         <h1 className="text-2xl font-bold tracking-tight">Support Queries</h1>
 
         <p className="mt-1 text-sm text-muted-foreground">
-          View user queries and respond from one place.
+          View member queries and respond from one place.
         </p>
       </div>
 
       {enrichedQueries.length === 0 ? (
-        <div className="flex min-h-[38vh] flex-col items-center justify-center rounded-3xl border border-dashed border-border/70 bg-card/40 px-6 py-12 text-center">
-          <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-muted">
-            <CircleHelp className="size-8 text-muted-foreground" />
+        <div className="flex min-h-[38vh] flex-col items-center justify-center rounded-3xl border border-dashed border-teal-500/25 bg-card/40 px-6 py-12 text-center">
+          <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-teal-500/10">
+            <CircleHelp className="size-8 text-teal-300" />
           </div>
 
           <h3 className="text-lg font-semibold">No support queries yet</h3>
+
           <p className="mt-1 max-w-xs text-sm text-muted-foreground">
-            User queries will appear here once submitted.
+            Member queries will appear here once submitted.
           </p>
         </div>
       ) : (
-        <Card className="overflow-hidden border-border/70">
+        <Card className="overflow-hidden border-teal-500/20 shadow-sm shadow-teal-500/5">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1100px] text-sm">
-                <thead className="border-b border-border bg-muted/40">
+                <thead className="border-b border-teal-500/20 bg-teal-500/5">
                   <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="px-4 py-3 font-medium">Name</th>
                     <th className="px-4 py-3 font-medium">Email</th>
@@ -138,9 +139,12 @@ export default async function AdminSupportPage() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-teal-500/15">
                   {enrichedQueries.map((query) => (
-                    <tr key={query.id} className="align-top">
+                    <tr
+                      key={query.id}
+                      className="align-top transition-colors hover:bg-teal-500/5"
+                    >
                       <td className="px-4 py-4 font-medium">
                         {query.user_name}
                       </td>
@@ -152,7 +156,7 @@ export default async function AdminSupportPage() {
                       <td className="px-4 py-4">
                         <Badge
                           variant="outline"
-                          className="rounded-full border-primary/20 bg-primary/10 text-primary"
+                          className="rounded-full border-teal-500/20 bg-teal-500/10 text-teal-300"
                         >
                           {formatCategory(query.category)}
                         </Badge>

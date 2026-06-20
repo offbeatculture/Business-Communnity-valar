@@ -37,7 +37,7 @@ const SUPPORT_OPTIONS: SupportOption[] = [
     label: "Recordings / content access",
     icon: Video,
     reply:
-      "Recordings and resources are available inside the Content Library. If a video or PDF is not loading, choose Other and mention the resource name.",
+      "Recordings and resources are available inside the Breathwork Library. If a video or PDF is not loading, choose Other and mention the resource name.",
   },
   {
     id: "login_password",
@@ -48,17 +48,17 @@ const SUPPORT_OPTIONS: SupportOption[] = [
   },
   {
     id: "assessment_report",
-    label: "Assessment / report",
+    label: "Check-in / report",
     icon: FileQuestion,
     reply:
-      "Assessment results appear under Assessments after completion. If your result is missing, choose Other and mention which assessment you completed.",
+      "Self check-in results appear under Self Check-ins after completion. If your result is missing, choose Other and mention which check-in you completed.",
   },
   {
     id: "community_post",
     label: "Community / post issue",
     icon: MessageCircle,
     reply:
-      "You can create posts, comment, like, and save inside Community. If something is not working, choose Other and describe the issue.",
+      "You can create reflections, comment, like, and save inside the Breathwork Community. If something is not working, choose Other and describe the issue.",
   },
   {
     id: "other",
@@ -127,18 +127,20 @@ export function SupportWidget() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex size-9 items-center justify-center rounded-full hover:bg-muted transition"
+        className="inline-flex size-9 items-center justify-center rounded-full text-[#4B3A25] transition hover:bg-[#C89B3C]/10 hover:text-[#8A6A22]"
         aria-label="Support"
       >
         <CircleHelp className="size-5" />
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-[330px] overflow-hidden rounded-2xl border border-border bg-background shadow-xl sm:w-[380px]">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="absolute right-0 z-50 mt-2 w-[330px] overflow-hidden rounded-2xl border border-[#C89B3C]/25 bg-[#F7F0E3] text-[#4B3A25] shadow-xl shadow-black/15 sm:w-[380px]">
+          <div className="flex items-center justify-between border-b border-[#C89B3C]/20 px-4 py-3">
             <div>
-              <p className="font-semibold">Support</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="font-serif text-xl font-semibold text-[#4B3A25]">
+                Support
+              </p>
+              <p className="text-xs font-medium text-[#6F7358]">
                 Select your query type
               </p>
             </div>
@@ -146,7 +148,7 @@ export function SupportWidget() {
             <button
               type="button"
               onClick={resetAndClose}
-              className="rounded-lg p-2 hover:bg-muted transition"
+              className="rounded-lg p-2 text-[#4B3A25] transition hover:bg-[#C89B3C]/10 hover:text-[#8A6A22]"
               aria-label="Close support"
             >
               <X className="size-4" />
@@ -155,18 +157,19 @@ export function SupportWidget() {
 
           <div className="max-h-[70vh] overflow-y-auto p-4">
             {submitted ? (
-              <div className="rounded-2xl border border-green-500/20 bg-green-500/10 p-4 text-center">
-                <p className="font-semibold text-green-600">
+              <div className="rounded-2xl border border-[#C89B3C]/25 bg-[#C89B3C]/10 p-4 text-center">
+                <p className="font-semibold text-[#8A6A22]">
                   Query submitted
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
+
+                <p className="mt-1 text-sm text-[#6F7358]">
                   Our team will look into this and get back to you quickly.
                 </p>
 
                 <Button
                   type="button"
                   size="sm"
-                  className="mt-4 rounded-full"
+                  className="mt-4 rounded-full bg-[#C89B3C] font-semibold text-[#122015] hover:bg-[#D8B76A]"
                   onClick={resetAndClose}
                 >
                   Done
@@ -190,21 +193,21 @@ export function SupportWidget() {
                         }}
                         className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
                           isActive
-                            ? "border-primary/40 bg-primary/10 text-primary"
-                            : "border-border/60 bg-card hover:border-primary/25 hover:bg-muted/40"
+                            ? "border-[#C89B3C]/45 bg-[#C89B3C]/10 text-[#8A6A22]"
+                            : "border-[#C89B3C]/20 bg-[#FFF8EA] text-[#4B3A25] hover:border-[#C89B3C]/40 hover:bg-[#E8DDC8]"
                         }`}
                       >
                         <div
                           className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${
                             isActive
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-muted-foreground"
+                              ? "bg-[#C89B3C] text-[#122015]"
+                              : "bg-[#E8DDC8] text-[#6F7358]"
                           }`}
                         >
                           <Icon className="size-4" />
                         </div>
 
-                        <span className="text-sm font-medium">
+                        <span className="text-sm font-semibold">
                           {option.label}
                         </span>
                       </button>
@@ -213,8 +216,8 @@ export function SupportWidget() {
                 </div>
 
                 {selected && (
-                  <div className="mt-4 rounded-2xl border border-border/60 bg-muted/30 p-4">
-                    <p className="text-sm leading-6 text-muted-foreground">
+                  <div className="mt-4 rounded-2xl border border-[#C89B3C]/20 bg-[#FFF8EA] p-4">
+                    <p className="text-sm font-medium leading-6 text-[#6F7358]">
                       {selected.reply}
                     </p>
 
@@ -223,7 +226,7 @@ export function SupportWidget() {
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Write your query here..."
-                        className="mt-3 min-h-28 resize-none rounded-2xl bg-background"
+                        className="mt-3 min-h-28 resize-none rounded-2xl border-[#C89B3C]/25 bg-[#F7F0E3] text-[#4B3A25] placeholder:text-[#6F7358]/70 focus-visible:ring-[#C89B3C]"
                         maxLength={2000}
                       />
                     )}
@@ -232,7 +235,7 @@ export function SupportWidget() {
                       type="button"
                       onClick={submitQuery}
                       disabled={loading}
-                      className="mt-3 w-full rounded-full"
+                      className="mt-3 w-full rounded-full bg-[#C89B3C] font-semibold text-[#122015] hover:bg-[#D8B76A]"
                     >
                       {loading ? (
                         <Loader2 className="mr-2 size-4 animate-spin" />

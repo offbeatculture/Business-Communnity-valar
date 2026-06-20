@@ -20,6 +20,7 @@ type Props = {
 export default async function CommunityPage({ searchParams }: Props) {
   const params = await searchParams
   const supabase = await createClient()
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -45,16 +46,14 @@ export default async function CommunityPage({ searchParams }: Props) {
   if (params.compose === "introduction" && profile) {
     const name = profile.full_name?.split(" ")[0] ?? ""
     const city = profile.city ?? ""
-    const biz = profile.business_name ?? ""
-    const industry = profile.industry ?? ""
 
-    composeContent = `Hey everyone! 👋 I'm ${name}${
+    composeContent = `Namaste everyone! 👋 I'm ${name}${
       city ? ` from ${city}` : ""
-    }.${biz ? `\n\nI run ${biz}${industry ? ` in the ${industry} space` : ""}.` : ""}
+    }.
 
-I joined this community because 
+I joined this Daily Breathwork community because 
 
-One thing I'm working on right now is `
+One thing I want to build consistency with is `
 
     composeCategory = "introduction"
   }
@@ -87,20 +86,20 @@ One thing I'm working on right now is `
   const { likedIds, savedIds } = await fetchUserInteractions(user.id, postIds)
 
   return (
-    <div className="mx-auto w-full max-w-4xl pb-24 sm:pb-8">
+    <div className="mx-auto w-full max-w-4xl pb-24 text-[#4B3A25] sm:pb-8">
       <div className="mb-5">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#C89B3C]/30 bg-[#F7F0E3] px-3 py-1 text-xs font-medium text-[#8A6A22]">
           <MessageSquare className="size-3.5" />
-          Founder Community
+          Daily Breathwork Community
         </div>
 
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Community
+        <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#4B3A25] sm:text-4xl">
+          Breathwork Community
         </h1>
 
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Share wins, ask questions, and learn from founders building alongside
-          you.
+        <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#6F7358]">
+          Share your reflections, ask questions, celebrate practice wins, and
+          stay connected with others on the Daily Breathwork journey.
         </p>
       </div>
 

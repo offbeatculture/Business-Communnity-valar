@@ -11,9 +11,9 @@ export function PromptGrid({ prompts }: Props) {
   if (prompts.length === 0) {
     return (
       <div className="flex min-h-[38vh] flex-col items-center justify-center rounded-3xl border border-dashed border-border/70 bg-card/40 px-6 py-12 text-center">
-        <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-          <Sparkles className="size-8 text-primary" />
-        </div>
+        <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#C89B3C]/10">
+  <Sparkles className="size-8 text-[#C89B3C]" />
+</div>
 
         <h3 className="text-lg font-semibold">No prompts found</h3>
 

@@ -72,51 +72,56 @@ export function PostList({
   const emptyState = useMemo(() => {
     if (activeFilter === "mine") {
       return {
-        icon: <MessageSquare className="size-8 text-primary" />,
-        title: "You have not posted yet",
+        icon: <MessageSquare className="size-8 text-[#C89B3C]" />,
+        title: "You have not shared yet",
         description:
-          "Share your first win, question, or discussion to start building visibility in the community.",
+          "Share your first practice win, question, or reflection with the Daily Breathwork community.",
         ctaHref: "/community?compose=introduction",
-        ctaLabel: "Create first post",
+        ctaLabel: "Create first reflection",
       }
     }
 
     if (activeFilter === "saved") {
       return {
-        icon: <Bookmark className="size-8 text-primary" />,
-        title: "No saved posts yet",
+        icon: <Bookmark className="size-8 text-[#C89B3C]" />,
+        title: "No saved reflections yet",
         description:
-          "Save useful posts from other members and they will appear here for quick access.",
+          "Save useful reflections from other members and they will appear here for quick access.",
         ctaHref: "/community",
-        ctaLabel: "Browse posts",
+        ctaLabel: "Browse reflections",
       }
     }
 
     return {
-      icon: <MessageSquare className="size-8 text-primary" />,
-      title: "No posts yet",
+      icon: <MessageSquare className="size-8 text-[#C89B3C]" />,
+      title: "No reflections yet",
       description:
-        "Be the first to share a win, ask a question, or start a discussion with the community.",
+        "Be the first to share a practice win, ask a question, or start a reflection with the community.",
       ctaHref: "/community?compose=introduction",
-      ctaLabel: "Start the first post",
+      ctaLabel: "Start the first reflection",
     }
   }, [activeFilter])
 
   if (posts.length === 0) {
     return (
-      <div className="flex min-h-[38vh] flex-col items-center justify-center rounded-3xl border border-dashed border-border/70 bg-card/40 px-6 py-12 text-center">
-        <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+      <div className="flex min-h-[38vh] flex-col items-center justify-center rounded-3xl border border-dashed border-[#C89B3C]/30 bg-[#F7F0E3]/70 px-6 py-12 text-center text-[#4B3A25]">
+        <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#C89B3C]/10">
           {emptyState.icon}
         </div>
 
-        <h3 className="text-lg font-semibold">{emptyState.title}</h3>
+        <h3 className="font-serif text-xl font-semibold text-[#4B3A25]">
+          {emptyState.title}
+        </h3>
 
-        <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
+        <p className="mt-1 max-w-sm text-sm leading-6 text-[#6F7358]">
           {emptyState.description}
         </p>
 
         <Link href={emptyState.ctaHref} className="mt-5">
-          <Button size="sm" className="rounded-full">
+          <Button
+            size="sm"
+            className="rounded-full bg-[#C89B3C] font-semibold text-[#122015] hover:bg-[#D8B76A]"
+          >
             <PlusCircle className="mr-1.5 size-4" />
             {emptyState.ctaLabel}
           </Button>
@@ -145,10 +150,10 @@ export function PostList({
             size="sm"
             onClick={loadMore}
             disabled={loading}
-            className="h-10 rounded-full border-primary/25 px-5 text-primary hover:bg-primary/10"
+            className="h-10 rounded-full border-[#C89B3C]/30 bg-[#F7F0E3] px-5 font-medium text-[#8A6A22] hover:bg-[#E8DDC8] hover:text-[#4B3A25]"
           >
             {loading && <Loader2 className="mr-1.5 size-4 animate-spin" />}
-            {loading ? "Loading..." : "Load more posts"}
+            {loading ? "Loading..." : "Load more reflections"}
           </Button>
         </div>
       )}

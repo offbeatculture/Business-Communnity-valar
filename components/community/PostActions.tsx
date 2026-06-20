@@ -33,14 +33,17 @@ export function PostActions({
 
   async function handleDelete() {
     setIsDeleting(true)
+
     try {
       const res = await fetch(`/api/posts/${postId}`, { method: "DELETE" })
+
       if (!res.ok) throw new Error("Failed")
-      toast.success("Post deleted")
+
+      toast.success("Reflection deleted")
       setDeleteOpen(false)
       router.refresh()
     } catch {
-      toast.error("Failed to delete post")
+      toast.error("Failed to delete reflection")
     } finally {
       setIsDeleting(false)
     }
@@ -53,8 +56,10 @@ export function PostActions({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_pinned: !isPinned }),
       })
+
       if (!res.ok) throw new Error("Failed")
-      toast.success(isPinned ? "Post unpinned" : "Post pinned")
+
+      toast.success(isPinned ? "Reflection unpinned" : "Reflection pinned")
       router.refresh()
     } catch {
       toast.error("Failed to update pin status")
@@ -65,20 +70,28 @@ export function PostActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-md hover:bg-accent">
+          <button className="cursor-pointer rounded-md p-1 text-[#6F7358] transition-colors hover:bg-[#C89B3C]/10 hover:text-[#C89B3C]">
             <MoreVertical size={16} />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+
+        <DropdownMenuContent
+          align="end"
+          className="border-[#C89B3C]/25 bg-[#F7F0E3] text-[#4B3A25]"
+        >
           {isAdmin && (
-            <DropdownMenuItem onClick={handlePin}>
+            <DropdownMenuItem
+              onClick={handlePin}
+              className="cursor-pointer focus:bg-[#C89B3C]/10 focus:text-[#8A6A22]"
+            >
               {isPinned ? <PinOff /> : <Pin />}
-              {isPinned ? "Unpin" : "Pin to top"}
+              {isPinned ? "Unpin reflection" : "Pin reflection"}
             </DropdownMenuItem>
           )}
+
           <DropdownMenuItem
-            variant="destructive"
             onClick={() => setDeleteOpen(true)}
+            className="cursor-pointer text-[#8A6A22] focus:bg-[#C89B3C]/10 focus:text-[#4B3A25]"
           >
             <Trash2 />
             Delete
@@ -89,8 +102,8 @@ export function PostActions({
       <DeleteConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Delete post?"
-        description="This action cannot be undone. The post and all its comments will be permanently deleted."
+        title="Delete reflection?"
+        description="This action cannot be undone. The reflection and all its comments will be permanently deleted."
         onConfirm={handleDelete}
         isLoading={isDeleting}
       />

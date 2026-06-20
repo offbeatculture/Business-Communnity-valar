@@ -11,6 +11,7 @@ import {
   Copy,
   ExternalLink,
   FileText,
+  Leaf,
   Megaphone,
   ShieldCheck,
   Sparkles,
@@ -24,6 +25,9 @@ type Props = {
   prompt: PromptLibraryItem
 }
 
+const chip = "border-[#C89B3C]/25 bg-[#C89B3C]/10 text-[#8A6A22]"
+const iconWrap = "bg-[#C89B3C]/10 text-[#8A6A22]"
+
 const CATEGORY_META: Record<
   string,
   {
@@ -34,64 +38,64 @@ const CATEGORY_META: Record<
   }
 > = {
   sales: {
-    label: "Sales",
-    icon: BadgeDollarSign,
-    chip: "border-red-500/20 bg-red-500/10 text-red-500",
-    iconWrap: "bg-red-500/10 text-red-500",
+    label: "Practice",
+    icon: Leaf,
+    chip,
+    iconWrap,
   },
   strategy: {
-    label: "Strategy",
+    label: "Clarity",
     icon: Target,
-    chip: "border-blue-500/20 bg-blue-500/10 text-blue-500",
-    iconWrap: "bg-blue-500/10 text-blue-500",
+    chip,
+    iconWrap,
   },
   offer: {
-    label: "Offer",
-    icon: Target,
-    chip: "border-orange-500/20 bg-orange-500/10 text-orange-500",
-    iconWrap: "bg-orange-500/10 text-orange-500",
+    label: "Reflection",
+    icon: Sparkles,
+    chip,
+    iconWrap,
   },
   leads: {
-    label: "Leads",
+    label: "Awareness",
     icon: Megaphone,
-    chip: "border-purple-500/20 bg-purple-500/10 text-purple-500",
-    iconWrap: "bg-purple-500/10 text-purple-500",
+    chip,
+    iconWrap,
   },
   conversion: {
-    label: "Conversion",
+    label: "Balance",
     icon: BadgeDollarSign,
-    chip: "border-green-500/20 bg-green-500/10 text-green-500",
-    iconWrap: "bg-green-500/10 text-green-500",
+    chip,
+    iconWrap,
   },
   ops: {
-    label: "Ops",
+    label: "Routine",
     icon: BriefcaseBusiness,
-    chip: "border-sky-500/20 bg-sky-500/10 text-sky-500",
-    iconWrap: "bg-sky-500/10 text-sky-500",
+    chip,
+    iconWrap,
   },
   team: {
-    label: "Team",
+    label: "Community",
     icon: Users,
-    chip: "border-indigo-500/20 bg-indigo-500/10 text-indigo-500",
-    iconWrap: "bg-indigo-500/10 text-indigo-500",
+    chip,
+    iconWrap,
   },
   money: {
-    label: "Money",
+    label: "Grounding",
     icon: BadgeDollarSign,
-    chip: "border-emerald-500/20 bg-emerald-500/10 text-emerald-500",
-    iconWrap: "bg-emerald-500/10 text-emerald-500",
+    chip,
+    iconWrap,
   },
   moat: {
-    label: "Moat",
+    label: "Inner Safety",
     icon: ShieldCheck,
-    chip: "border-yellow-500/20 bg-yellow-500/10 text-yellow-600",
-    iconWrap: "bg-yellow-500/10 text-yellow-600",
+    chip,
+    iconWrap,
   },
   retention: {
-    label: "Retention",
+    label: "Consistency",
     icon: Sparkles,
-    chip: "border-pink-500/20 bg-pink-500/10 text-pink-500",
-    iconWrap: "bg-pink-500/10 text-pink-500",
+    chip,
+    iconWrap,
   },
 }
 
@@ -100,8 +104,8 @@ function getCategoryMeta(category: string) {
     CATEGORY_META[category] ?? {
       label: category,
       icon: FileText,
-      chip: "border-border bg-muted text-muted-foreground",
-      iconWrap: "bg-muted text-muted-foreground",
+      chip,
+      iconWrap,
     }
   )
 }
@@ -123,7 +127,7 @@ export function PromptCard({ prompt }: Props) {
   }
 
   return (
-    <Card className="group h-full overflow-hidden border-border/60 bg-card transition-all duration-200 hover:border-primary/35 hover:shadow-md hover:shadow-primary/5">
+    <Card className="group h-full overflow-hidden border-[#C89B3C]/20 bg-[#F7F0E3] text-[#4B3A25] shadow-sm shadow-black/5 transition-all duration-200 hover:border-[#C89B3C]/40 hover:shadow-md hover:shadow-black/10">
       <CardContent className="flex h-full flex-col p-4">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -134,7 +138,7 @@ export function PromptCard({ prompt }: Props) {
             </div>
 
             <div className="min-w-0">
-              <h3 className="truncate text-base font-semibold">
+              <h3 className="truncate font-serif text-lg font-semibold text-[#4B3A25]">
                 {prompt.title}
               </h3>
 
@@ -152,8 +156,8 @@ export function PromptCard({ prompt }: Props) {
             onClick={handleCopy}
             className={
               copied
-                ? "shrink-0 border-green-500/50 text-green-500 hover:bg-green-500/10"
-                : "shrink-0 border-primary/30 text-primary hover:bg-primary/10"
+                ? "shrink-0 border-[#6F7358]/40 bg-[#E8DDC8] text-[#4B3A25] hover:bg-[#E8DDC8]"
+                : "shrink-0 border-[#C89B3C]/30 bg-transparent text-[#8A6A22] hover:bg-[#C89B3C]/10 hover:text-[#4B3A25]"
             }
           >
             {copied ? (
@@ -165,23 +169,21 @@ export function PromptCard({ prompt }: Props) {
           </Button>
         </div>
 
-        <div className="relative min-h-[150px] flex-1 overflow-hidden rounded-2xl border border-border/50 bg-muted/30 p-4">
-          <p className="line-clamp-7 whitespace-pre-line text-sm leading-6 text-muted-foreground">
+        <div className="relative min-h-[150px] flex-1 overflow-hidden rounded-2xl border border-[#C89B3C]/20 bg-[#E8DDC8]/65 p-4">
+          <p className="line-clamp-7 whitespace-pre-line text-sm leading-6 text-[#6F7358]">
             {prompt.prompt_text}
           </p>
 
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-muted/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#E8DDC8] to-transparent" />
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
-            Copy-ready AI prompt
-          </p>
+          <p className="text-xs text-[#6F7358]">Copy-ready practice prompt</p>
 
           {prompt.linked_content_id && (
             <Link
               href={`/content/${prompt.linked_content_id}`}
-              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-medium text-[#8A6A22] hover:underline"
             >
               Related content <ExternalLink className="size-3" />
             </Link>

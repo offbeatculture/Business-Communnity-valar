@@ -29,10 +29,20 @@ export default async function ContentPage({ searchParams }: Props) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1">Content Library</h1>
-      <p className="text-muted-foreground text-sm mb-6">
-        Cheat sheets, templates, and video summaries to grow your business.
-      </p>
+     <div className="mb-6 text-[#4B3A25]">
+  <p className="text-sm font-medium text-[#8A6A22]">
+    Daily Breathwork
+  </p>
+
+  <h1 className="mb-1 font-serif text-3xl font-semibold text-[#4B3A25]">
+    Breathwork Library
+  </h1>
+
+  <p className="text-sm font-medium leading-6 text-[#6F7358]">
+    Breathwork guides, practice worksheets, and session recordings for
+    your daily wellbeing practice.
+  </p>
+</div>
 
       <Suspense>
         <ContentFilters categories={categories} />
@@ -69,14 +79,17 @@ async function fetchContent(filters: {
     if (type === "cheat_sheet" || type === "template") {
       query = query.eq("type", type)
     }
+
     if (category) {
       query = query.eq("category", category)
     }
+
     if (q) {
       query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`)
     }
 
     const { data } = await query
+
     ;(data ?? []).forEach((r) =>
       items.push({ ...r, content_type: "resource" } as ContentItem)
     )
@@ -91,6 +104,7 @@ async function fetchContent(filters: {
     if (category) {
       query = query.eq("category", category)
     }
+
     if (q) {
       query = query.or(
         `title.ilike.%${q}%,one_line_takeaway.ilike.%${q}%,full_summary.ilike.%${q}%`
@@ -98,12 +112,12 @@ async function fetchContent(filters: {
     }
 
     const { data } = await query
+
     ;(data ?? []).forEach((v) =>
       items.push({ ...v, content_type: "video_summary" } as ContentItem)
     )
   }
 
-  // Sort
   if (sort === "popular") {
     items.sort((a, b) => b.view_count - a.view_count)
   } else if (sort === "az") {

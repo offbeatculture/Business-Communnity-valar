@@ -24,6 +24,7 @@ export function LikeButton({
 
     const wasLiked = liked
     const prevCount = count
+
     setLiked(!wasLiked)
     setCount(wasLiked ? Math.max(0, prevCount - 1) : prevCount + 1)
     setPending(true)
@@ -32,6 +33,7 @@ export function LikeButton({
       const res = await fetch(`/api/posts/${postId}/like`, {
         method: wasLiked ? "DELETE" : "POST",
       })
+
       if (!res.ok) throw new Error("Failed")
     } catch {
       setLiked(wasLiked)
@@ -45,18 +47,19 @@ export function LikeButton({
   return (
     <button
       onClick={toggle}
-      className="flex items-center gap-1.5 text-sm transition-colors cursor-pointer group"
+      className="group flex cursor-pointer items-center gap-1.5 text-sm transition-colors"
       disabled={pending}
     >
       <Heart
         size={18}
         className={
           liked
-            ? "fill-primary text-primary"
-            : "text-muted-foreground group-hover:text-foreground"
+            ? "fill-[#C89B3C] text-[#C89B3C]"
+            : "text-[#6F7358] group-hover:text-[#C89B3C]"
         }
       />
-      <span className={liked ? "text-primary" : "text-muted-foreground"}>
+
+      <span className={liked ? "text-[#C89B3C]" : "text-[#6F7358]"}>
         {count > 0 ? count : ""}
       </span>
     </button>

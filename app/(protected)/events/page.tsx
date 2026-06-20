@@ -11,8 +11,6 @@ import type {
 } from "@/lib/events"
 import { EventCard } from "@/components/events/EventCard"
 import { EventsFilter } from "@/components/events/EventsFilter"
-import { TierBanner } from "@/components/events/TierBanner"
-import { AiLabUpsellCard } from "@/components/events/AiLabUpsellCard"
 import { Button } from "@/components/ui/button"
 
 const PAST_PAGE_SIZE = 20
@@ -27,6 +25,7 @@ type Props = {
 export default async function EventsPage({ searchParams }: Props) {
   const params = await searchParams
   const supabase = await createClient()
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -46,13 +45,9 @@ export default async function EventsPage({ searchParams }: Props) {
   const nowIso = now.toISOString()
   const nowMs = now.getTime()
 
-  // Tier (drives the banner — RLS still hides rows the user cannot see).
-  // getUserTier returns null when there is no active subscription; the
-  // TierBanner accepts a null tier and renders the "no active sub" state.
   const tierState = await getUserTier()
   const tier = tierState?.tier ?? null
 
-  // Build base queries; RLS filters them per the access matrix.
   let upcomingQuery = supabase
     .from("live_events")
     .select("*")
@@ -83,7 +78,6 @@ export default async function EventsPage({ searchParams }: Props) {
     ...pastEvents.map((e) => e.id),
   ]
 
-  // RSVPs for upcoming, replay rows for past — both single-shot batch reads.
   const [rsvpRes, replayRes] = await Promise.all([
     allEventIds.length
       ? supabase
@@ -91,19 +85,24 @@ export default async function EventsPage({ searchParams }: Props) {
           .select("event_id, rsvp_status")
           .eq("user_id", user.id)
           .in("event_id", allEventIds)
-      : Promise.resolve({ data: [] as Pick<LiveEventRsvpRow, "event_id" | "rsvp_status">[] }),
+      : Promise.resolve({
+          data: [] as Pick<LiveEventRsvpRow, "event_id" | "rsvp_status">[],
+        }),
     pastEvents.length
       ? supabase
           .from("live_event_replays")
           .select("event_id")
           .in(
             "event_id",
-            pastEvents.map((e) => e.id),
+            pastEvents.map((e) => e.id)
           )
-      : Promise.resolve({ data: [] as Pick<LiveEventReplayRow, "event_id">[] }),
+      : Promise.resolve({
+          data: [] as Pick<LiveEventReplayRow, "event_id">[],
+        }),
   ])
 
   const rsvpMap = new Map<string, "yes" | "maybe" | "no">()
+
   for (const r of (rsvpRes.data ?? []) as Pick<
     LiveEventRsvpRow,
     "event_id" | "rsvp_status"
@@ -113,32 +112,38 @@ export default async function EventsPage({ searchParams }: Props) {
 
   const replaySet = new Set<string>(
     ((replayRes.data ?? []) as Pick<LiveEventReplayRow, "event_id">[]).map(
-      (r) => r.event_id,
-    ),
+      (r) => r.event_id
+    )
   )
 
   const morePastAvailable = pastEvents.length === PAST_PAGE_SIZE
+
   const buildPageHref = (p: number) => {
     const sp = new URLSearchParams()
+
     if (typeFilter) sp.set("type", typeFilter)
     if (p > 1) sp.set("page", String(p))
+
     const q = sp.toString()
     return q ? `/events?${q}` : "/events"
   }
 
   return (
-    <div className="max-w-5xl mx-auto pb-10">
-      <div className="mb-2">
-        <h1 className="text-2xl font-bold">Events</h1>
-        <p className="text-muted-foreground text-sm">
-          Live workshops and AI Lab sessions. Hot-seat applications are open
-          for upcoming workshops.
+    <div className="mx-auto max-w-5xl pb-10 text-[#4B3A25]">
+      <div className="mb-5">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#8A6A22]">
+          Daily Breathwork
+        </p>
+
+        <h1 className="font-serif text-3xl font-semibold text-[#4B3A25] sm:text-4xl">
+          Live Sessions
+        </h1>
+
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6F7358]">
+          Join live breathwork sessions, guided workshops, and access past
+          practice replays when available.
         </p>
       </div>
-
-      {/* <div className="mt-5 mb-5">
-        <TierBanner userTier={tier} />
-      </div> */}
 
       <div className="mb-6">
         <Suspense>
@@ -146,17 +151,17 @@ export default async function EventsPage({ searchParams }: Props) {
         </Suspense>
       </div>
 
-      {/* Upcoming */}
       <section className="mb-10">
-        <h2 className="border-l-2 border-primary pl-3 text-base font-semibold mb-4">
-          Upcoming
+        <h2 className="mb-4 border-l-2 border-[#C89B3C] pl-3 font-serif text-xl font-semibold text-[#4B3A25]">
+          Upcoming Sessions
         </h2>
+
         {upcomingEvents.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/60 bg-card/30 px-4 py-8 text-center text-sm text-muted-foreground">
-            No upcoming events on your tier yet. Check back soon.
+          <div className="rounded-2xl border border-dashed border-[#C89B3C]/30 bg-[#F7F0E3]/70 px-4 py-8 text-center text-sm text-[#6F7358]">
+            No upcoming sessions yet. Please check back soon.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {upcomingEvents.map((event) => (
               <EventCard
                 key={event.id}
@@ -169,17 +174,17 @@ export default async function EventsPage({ searchParams }: Props) {
         )}
       </section>
 
-      {/* Past */}
       <section>
-        <h2 className="border-l-2 border-muted-foreground/40 pl-3 text-base font-semibold mb-4">
-          Past events
+        <h2 className="mb-4 border-l-2 border-[#6F7358]/40 pl-3 font-serif text-xl font-semibold text-[#4B3A25]">
+          Past Sessions
         </h2>
+
         {pastEvents.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/60 bg-card/30 px-4 py-8 text-center text-sm text-muted-foreground">
-            No past events to show.
+          <div className="rounded-2xl border border-dashed border-[#C89B3C]/30 bg-[#F7F0E3]/70 px-4 py-8 text-center text-sm text-[#6F7358]">
+            No past sessions to show.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {pastEvents.map((event) => (
               <EventCard
                 key={event.id}
@@ -194,25 +199,29 @@ export default async function EventsPage({ searchParams }: Props) {
         {(page > 1 || morePastAvailable) && (
           <div className="mt-6 flex items-center justify-center gap-3">
             {page > 1 && (
-              <Button asChild variant="outline" size="sm">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="border-[#C89B3C]/30 bg-[#F7F0E3] text-[#8A6A22] hover:bg-[#E8DDC8] hover:text-[#4B3A25]"
+              >
                 <Link href={buildPageHref(page - 1)}>Previous</Link>
               </Button>
             )}
+
             {morePastAvailable && (
-              <Button asChild variant="outline" size="sm">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="border-[#C89B3C]/30 bg-[#F7F0E3] text-[#8A6A22] hover:bg-[#E8DDC8] hover:text-[#4B3A25]"
+              >
                 <Link href={buildPageHref(page + 1)}>Next</Link>
               </Button>
             )}
           </div>
         )}
       </section>
-
-      {/*
-        AI Lab upsell card. Renders only for active Library and Workshop
-        members; AI Lab members and unsubscribed users are skipped (the
-        latter are already nudged by the top-of-page TierBanner).
-      */}
-      {/* <AiLabUpsellCard userTier={tier} /> */}
     </div>
   )
 }

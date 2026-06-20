@@ -17,6 +17,7 @@ export function SaveButton({ postId, initialSaved }: SaveButtonProps) {
     if (pending) return
 
     const wasSaved = saved
+
     setSaved(!wasSaved)
     setPending(true)
 
@@ -24,6 +25,7 @@ export function SaveButton({ postId, initialSaved }: SaveButtonProps) {
       const res = await fetch(`/api/posts/${postId}/save`, {
         method: wasSaved ? "DELETE" : "POST",
       })
+
       if (!res.ok) throw new Error("Failed")
     } catch {
       setSaved(wasSaved)
@@ -36,15 +38,15 @@ export function SaveButton({ postId, initialSaved }: SaveButtonProps) {
   return (
     <button
       onClick={toggle}
-      className="flex items-center transition-colors cursor-pointer group"
+      className="group flex cursor-pointer items-center transition-colors"
       disabled={pending}
     >
       <Bookmark
         size={18}
         className={
           saved
-            ? "fill-primary text-primary"
-            : "text-muted-foreground group-hover:text-foreground"
+            ? "fill-[#C89B3C] text-[#C89B3C]"
+            : "text-[#6F7358] group-hover:text-[#C89B3C]"
         }
       />
     </button>

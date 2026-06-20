@@ -27,15 +27,19 @@ export default async function ProtectedLayout({
     .single()
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#E8DDC8] text-[#4B3A25]">
       <VisitTracker />
+
       <Sidebar profile={profile} />
-      <div className="md:pl-64 flex flex-col min-h-screen">
+
+      <div className="flex min-h-screen flex-col md:pl-64">
         <TopBar profile={profile} />
-        <main className="flex-1 p-4 sm:p-6 pb-20 md:pb-6">
+
+        <main className="flex-1 bg-[#E8DDC8] p-4 pb-20 text-[#4B3A25] sm:p-6 md:pb-6">
           {children}
         </main>
       </div>
+
       <MobileNav />
     </div>
   )

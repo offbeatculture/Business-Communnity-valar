@@ -7,6 +7,7 @@ import {
   BadgeDollarSign,
   BriefcaseBusiness,
   Layers,
+  Leaf,
   Megaphone,
   Search,
   ShieldCheck,
@@ -29,36 +30,36 @@ const CATEGORY_META: Record<
     icon: Layers,
   },
   offer: {
-    label: "Offer",
-    icon: Target,
+    label: "Reflection",
+    icon: Sparkles,
   },
   leads: {
-    label: "Leads",
+    label: "Awareness",
     icon: Megaphone,
   },
   conversion: {
-    label: "Conversion",
+    label: "Balance",
     icon: BadgeDollarSign,
   },
   ops: {
-    label: "Ops",
+    label: "Routine",
     icon: BriefcaseBusiness,
   },
   team: {
-    label: "Team",
+    label: "Community",
     icon: Users,
   },
   money: {
-    label: "Money",
-    icon: BadgeDollarSign,
+    label: "Grounding",
+    icon: Leaf,
   },
   moat: {
-    label: "Moat",
+    label: "Inner Safety",
     icon: ShieldCheck,
   },
   retention: {
-    label: "Retention",
-    icon: Sparkles,
+    label: "Consistency",
+    icon: Target,
   },
 }
 
@@ -114,14 +115,13 @@ export function PromptFilters() {
 
   return (
     <div className="space-y-3">
-      {/* Compact search first */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#8A6A22]" />
 
         <Input
-          placeholder="Search prompts..."
+          placeholder="Search practice prompts..."
           value={searchValue}
-          className="h-11 rounded-2xl border-border/70 bg-card pl-10 pr-10 text-sm shadow-sm"
+          className="h-11 rounded-2xl border-[#C89B3C]/25 bg-[#F7F0E3] pl-10 pr-10 text-sm text-[#4B3A25] shadow-sm placeholder:text-[#6F7358]/70 focus-visible:ring-[#C89B3C]"
           onChange={(e) => setSearchValue(e.target.value)}
         />
 
@@ -129,7 +129,7 @@ export function PromptFilters() {
           <button
             type="button"
             onClick={() => setSearchValue("")}
-            className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full bg-muted text-muted-foreground hover:text-foreground"
+            className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full bg-[#E8DDC8] text-[#6F7358] hover:text-[#4B3A25]"
             aria-label="Clear search"
           >
             <X className="size-3.5" />
@@ -137,7 +137,6 @@ export function PromptFilters() {
         )}
       </div>
 
-      {/* Category chips */}
       <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
         <div className="flex min-w-max gap-2">
           {categories.map((category) => {
@@ -152,8 +151,8 @@ export function PromptFilters() {
                 onClick={() => updateParams("category", category)}
                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium capitalize transition ${
                   isActive
-                    ? "border-primary/40 bg-primary text-primary-foreground shadow-sm shadow-primary/10"
-                    : "border-border/70 bg-card text-muted-foreground hover:border-primary/25 hover:text-foreground"
+                    ? "border-[#C89B3C]/50 bg-[#C89B3C] text-[#122015] shadow-sm shadow-black/10"
+                    : "border-[#C89B3C]/25 bg-[#F7F0E3] text-[#6F7358] hover:border-[#C89B3C]/45 hover:bg-[#E8DDC8] hover:text-[#4B3A25]"
                 }`}
               >
                 <Icon className="size-3.5" />

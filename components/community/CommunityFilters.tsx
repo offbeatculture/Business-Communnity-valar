@@ -14,17 +14,18 @@ import {
   CircleHelp,
   Hand,
   Layers,
+  Leaf,
   MessageCircle,
-  Trophy,
+  Sparkles,
   UserCircle,
 } from "lucide-react"
 
 const categoryTabs = [
   { value: "all", label: "All", icon: Layers },
-  { value: "introduction", label: "Intros", icon: Hand },
-  { value: "win", label: "Wins", icon: Trophy },
+  { value: "introduction", label: "Introductions", icon: Hand },
+  { value: "win", label: "Practice Wins", icon: Sparkles },
   { value: "question", label: "Questions", icon: CircleHelp },
-  { value: "discussion", label: "Discussions", icon: MessageCircle },
+  { value: "discussion", label: "Reflections", icon: MessageCircle },
   { value: "mine", label: "My Posts", icon: UserCircle },
   { value: "saved", label: "Saved", icon: Bookmark },
 ]
@@ -69,8 +70,8 @@ export function CommunityFilters() {
                 onClick={() => updateParams("category", tab.value)}
                 className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition ${
                   isActive
-                    ? "border-primary/40 bg-primary text-primary-foreground shadow-sm shadow-primary/10"
-                    : "border-border/70 bg-card text-muted-foreground hover:border-primary/25 hover:text-foreground"
+                    ? "border-[#C89B3C]/50 bg-[#C89B3C] text-[#122015] shadow-sm shadow-black/10"
+                    : "border-[#C89B3C]/20 bg-[#F7F0E3] text-[#6F7358] hover:border-[#C89B3C]/45 hover:text-[#4B3A25]"
                 }`}
               >
                 <Icon className="size-3.5" />
@@ -81,14 +82,17 @@ export function CommunityFilters() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card px-3 py-2">
-        <span className="text-sm text-muted-foreground">Sort posts</span>
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#C89B3C]/20 bg-[#F7F0E3] px-3 py-2">
+        <span className="flex items-center gap-2 text-sm text-[#6F7358]">
+          <Leaf className="size-4 text-[#C89B3C]" />
+          Sort reflections
+        </span>
 
         <Select
           value={activeSort}
           onValueChange={(v) => updateParams("sort", v)}
         >
-          <SelectTrigger className="h-9 w-[135px] rounded-xl border-border/70 bg-background text-xs">
+          <SelectTrigger className="h-9 w-[135px] rounded-xl border-[#C89B3C]/25 bg-[#E8DDC8] text-xs text-[#4B3A25] focus:ring-[#C89B3C]">
             <SelectValue />
           </SelectTrigger>
 

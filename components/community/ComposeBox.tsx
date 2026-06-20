@@ -8,7 +8,7 @@ import {
   Loader2,
   MessageCircle,
   Send,
-  Trophy,
+  Sparkles,
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -17,8 +17,8 @@ import { Textarea } from "@/components/ui/textarea"
 const categories = [
   {
     value: "win" as const,
-    label: "Win",
-    icon: Trophy,
+    label: "Practice Win",
+    icon: Sparkles,
   },
   {
     value: "question" as const,
@@ -27,7 +27,7 @@ const categories = [
   },
   {
     value: "discussion" as const,
-    label: "Discussion",
+    label: "Reflection",
     icon: MessageCircle,
   },
   {
@@ -78,24 +78,24 @@ export function ComposeBox({
 
       setContent("")
       setCategory("discussion")
-      toast.success("Post shared!")
+      toast.success("Reflection shared!")
       router.refresh()
     } catch {
-      toast.error("Failed to create post")
+      toast.error("Failed to share reflection")
     } finally {
       setIsPosting(false)
     }
   }
 
   return (
-    <div className="rounded-3xl border border-border/70 bg-card p-3 shadow-sm sm:p-4">
+    <div className="rounded-3xl border border-[#C89B3C]/20 bg-[#F7F0E3] p-3 shadow-sm shadow-black/5 sm:p-4">
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="Share a win, ask a question, or start a discussion..."
+        placeholder="Share a practice win, ask a question, or write a reflection..."
         maxLength={2000}
         rows={3}
-        className="mb-3 min-h-24 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 sm:min-h-20"
+        className="mb-3 min-h-24 resize-none border-0 bg-transparent p-0 text-sm text-[#4B3A25] shadow-none placeholder:text-[#6F7358]/70 focus-visible:ring-0 sm:min-h-20"
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -112,8 +112,8 @@ export function ComposeBox({
                   onClick={() => setCategory(cat.value)}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition ${
                     isActive
-                      ? "border-primary/35 bg-primary/10 text-primary"
-                      : "border-border/60 bg-muted/50 text-muted-foreground hover:text-foreground"
+                      ? "border-[#C89B3C]/50 bg-[#C89B3C] text-[#122015] shadow-sm shadow-black/10"
+                      : "border-[#C89B3C]/20 bg-[#E8DDC8] text-[#6F7358] hover:border-[#C89B3C]/45 hover:text-[#4B3A25]"
                   }`}
                 >
                   <Icon className="size-3.5" />
@@ -128,14 +128,14 @@ export function ComposeBox({
           size="sm"
           onClick={handlePost}
           disabled={!content.trim() || isPosting}
-          className="h-10 w-full rounded-full sm:w-auto"
+          className="h-10 w-full rounded-full bg-[#C89B3C] font-semibold text-[#122015] hover:bg-[#D8B76A] sm:w-auto"
         >
           {isPosting ? (
             <Loader2 className="mr-1.5 size-4 animate-spin" />
           ) : (
             <Send className="mr-1.5 size-4" />
           )}
-          Post
+          Share
         </Button>
       </div>
     </div>

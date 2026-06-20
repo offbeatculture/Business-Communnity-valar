@@ -8,7 +8,9 @@ import type { PromptLibraryItem } from "@/types"
 
 export default async function AdminPromptLibraryPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) redirect("/login")
 
@@ -21,28 +23,48 @@ export default async function AdminPromptLibraryPage() {
   if (profile?.role !== "admin") redirect("/dashboard")
 
   const admin = createAdminClient()
+
   const { data: prompts } = await admin
     .from("prompt_library")
     .select("*")
     .order("created_at", { ascending: false })
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">Prompt Library</h1>
+    <div className="mx-auto max-w-2xl space-y-6 text-[#4B3A25]">
+      <div>
+        <p className="text-sm font-medium text-[#8A6A22]">
+          Daily Breathwork Admin
+        </p>
 
-      <Card>
-        <CardHeader className="pb-3 px-4 pt-4">
-          <CardTitle className="text-sm font-semibold">Add Prompt</CardTitle>
+        <h1 className="font-serif text-3xl font-semibold text-[#4B3A25]">
+          Practice Prompt Library
+        </h1>
+
+        <p className="mt-1 text-sm text-[#6F7358]">
+          Add and manage breathwork reflection prompts for the Valarmathi
+          community.
+        </p>
+      </div>
+
+      <Card className="border-[#C89B3C]/20 bg-[#F7F0E3] text-[#4B3A25] shadow-sm shadow-black/5">
+        <CardHeader className="px-4 pb-3 pt-4">
+          <CardTitle className="font-serif text-lg font-semibold">
+            Add Practice Prompt
+          </CardTitle>
         </CardHeader>
+
         <CardContent className="px-4 pb-4">
           <PromptLibraryForm />
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-3 px-4 pt-4">
-          <CardTitle className="text-sm font-semibold">All Prompts ({(prompts ?? []).length})</CardTitle>
+      <Card className="border-[#C89B3C]/20 bg-[#F7F0E3] text-[#4B3A25] shadow-sm shadow-black/5">
+        <CardHeader className="px-4 pb-3 pt-4">
+          <CardTitle className="font-serif text-lg font-semibold">
+            All Practice Prompts ({(prompts ?? []).length})
+          </CardTitle>
         </CardHeader>
+
         <CardContent className="px-4 pb-4">
           <PromptLibraryTable prompts={(prompts ?? []) as PromptLibraryItem[]} />
         </CardContent>

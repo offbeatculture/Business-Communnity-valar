@@ -15,8 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SuperFounder",
-  description: "Exclusive community for business owners who want to build, scale & exit like a founder",
+  title: "Daily Breathwork Membership | Dr. Valarmathi Srinivasan",
+  description:
+    "Guided breathwork membership with Dr. Valarmathi Srinivasan for calmness, clarity, emotional balance, and daily wellbeing.",
 };
 
 export const viewport = {

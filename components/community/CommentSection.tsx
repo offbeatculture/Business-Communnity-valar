@@ -47,9 +47,9 @@ export function CommentSection({
       const newComment: CommentWithAuthor = await res.json()
       setComments((prev) => [...prev, newComment])
       setContent("")
-      toast.success("Comment added")
+      toast.success("Reflection added")
     } catch {
-      toast.error("Failed to add comment")
+      toast.error("Failed to add reflection")
     } finally {
       setIsPosting(false)
     }
@@ -67,10 +67,10 @@ export function CommentSection({
       if (!res.ok) throw new Error("Failed")
 
       setComments((prev) => prev.filter((c) => c.id !== deleteTarget))
-      toast.success("Comment deleted")
+      toast.success("Reflection deleted")
       setDeleteTarget(null)
     } catch {
-      toast.error("Failed to delete comment")
+      toast.error("Failed to delete reflection")
     } finally {
       setIsDeleting(false)
     }
@@ -79,41 +79,44 @@ export function CommentSection({
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-medium text-muted-foreground">
-        Comments ({comments.length})
+        Reflections ({comments.length})
       </h3>
 
-      {/* Add comment */}
       <div className="flex gap-3">
-        <Avatar size="sm" className="mt-1">
-          <AvatarFallback>You</AvatarFallback>
+        <Avatar size="sm" className="mt-1 border border-teal-500/20">
+          <AvatarFallback className="bg-teal-500/10 text-teal-300">
+            You
+          </AvatarFallback>
         </Avatar>
+
         <div className="flex-1">
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Write a comment..."
+            placeholder="Share your reflection..."
             maxLength={1000}
             rows={2}
-            className="resize-none mb-2"
+            className="mb-2 resize-none border-teal-500/20 focus-visible:ring-teal-500"
           />
+
           <div className="flex justify-end">
             <Button
               size="sm"
               onClick={handleAdd}
               disabled={!content.trim() || isPosting}
+              className="bg-teal-500 text-white hover:bg-teal-600"
             >
               {isPosting ? (
-                <Loader2 className="size-4 animate-spin mr-1.5" />
+                <Loader2 className="mr-1.5 size-4 animate-spin" />
               ) : (
-                <Send className="size-4 mr-1.5" />
+                <Send className="mr-1.5 size-4" />
               )}
-              Comment
+              Reflect
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Comment list */}
       {comments.length > 0 && (
         <div className="space-y-3">
           {comments.map((comment) => {
@@ -128,11 +131,14 @@ export function CommentSection({
 
             return (
               <div key={comment.id} className="flex gap-3">
-                <Avatar size="sm" className="mt-0.5">
-                  <AvatarFallback>{initials}</AvatarFallback>
+                <Avatar size="sm" className="mt-0.5 border border-teal-500/20">
+                  <AvatarFallback className="bg-teal-500/10 text-teal-300">
+                    {initials}
+                  </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
+
+                <div className="min-w-0 flex-1">
+                  <div className="mb-0.5 flex items-center gap-2">
                     <span className="text-sm font-medium">{authorName}</span>
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(comment.created_at), {
@@ -140,14 +146,16 @@ export function CommentSection({
                       })}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+
+                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">
                     {comment.content}
                   </p>
                 </div>
+
                 {canDelete && (
                   <button
                     onClick={() => setDeleteTarget(comment.id)}
-                    className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0 cursor-pointer"
+                    className="shrink-0 cursor-pointer p-1 text-muted-foreground transition-colors hover:text-teal-300"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -161,8 +169,8 @@ export function CommentSection({
       <DeleteConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="Delete comment?"
-        description="This comment will be permanently deleted."
+        title="Delete reflection?"
+        description="This reflection will be permanently deleted."
         onConfirm={handleDelete}
         isLoading={isDeleting}
       />

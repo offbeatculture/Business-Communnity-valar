@@ -5,7 +5,7 @@ import { useCallback } from "react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const filterTabs = [
-  { value: "all", label: "100X Super Founder Room" },
+  { value: "all", label: "Daily Breathwork Membership" },
   // { value: "workshop", label: "Workshops" },
   // { value: "ai_lab", label: "AI Lab" },
 ]

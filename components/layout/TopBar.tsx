@@ -29,7 +29,7 @@ import {
   Lightbulb,
   Sparkles,
   FileQuestion,
-  Calendar
+  Calendar,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationBell } from "@/components/notifications/NotificationBell"
@@ -45,18 +45,17 @@ type TopBarProps = {
 
 const mobileNavItems = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Content Library", href: "/content", icon: BookOpen },
-  { label: "Prompts", href: "/prompts", icon: Sparkles },
-  { label: "Assessments", href: "/assessment", icon: FileQuestion },
-  { label: "Events", href: "/events", icon: Calendar },
-  { label: "Community", href: "/community", icon: MessageSquare },
+  { label: "Breathwork Library", href: "/content", icon: BookOpen },
+  { label: "Practice Prompts", href: "/prompts", icon: Sparkles },
+  { label: "Self Check-ins", href: "/assessment", icon: FileQuestion },
+  { label: "Live Sessions", href: "/events", icon: Calendar },
+  { label: "Breathwork Community", href: "/community", icon: MessageSquare },
   { label: "My Profile", href: "/profile", icon: User },
-  // { label: "Subscription", href: "/subscription", icon: CreditCard },
 ]
 
 const adminItems = [
   { label: "Admin Panel", href: "/admin", icon: Shield },
-  { label: "Daily Prompts", href: "/admin/prompts", icon: Lightbulb },
+  { label: "Daily Practice Prompts", href: "/admin/prompts", icon: Lightbulb },
 ]
 
 export function TopBar({ profile }: TopBarProps) {
@@ -64,12 +63,13 @@ export function TopBar({ profile }: TopBarProps) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const initials = profile?.full_name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "?"
+  const initials =
+    profile?.full_name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "?"
 
   const handleLogout = async () => {
     const res = await fetch("/api/auth/logout", { method: "POST" })
@@ -81,162 +81,197 @@ export function TopBar({ profile }: TopBarProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 h-14 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6 select-none">
-        {/* Hamburger - mobile only */}
+      <header className="sticky top-0 z-40 flex h-14 select-none items-center justify-between border-b border-[#C89B3C]/20 bg-[#F7F0E3] px-4 text-[#4B3A25] shadow-sm shadow-black/5 sm:px-6">
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden shrink-0"
+          className="shrink-0 text-[#4B3A25] hover:bg-[#C89B3C]/10 hover:text-[#8A6A22] md:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
         </Button>
 
-        {/* Search */}
-        <div className="hidden md:block relative w-full max-w-sm ml-2 md:ml-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative ml-2 hidden w-full max-w-sm md:ml-0 md:block">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A6A22]" />
           <Input
-            placeholder="Search..."
-            className="pl-9 bg-background"
+            placeholder="Search breathwork resources..."
+            className="border-[#C89B3C]/25 bg-[#E8DDC8] pl-9 text-[#4B3A25] placeholder:text-[#6F7358]/70 focus-visible:ring-[#C89B3C]"
             disabled
           />
         </div>
 
-        {/* App title — mobile only */}
-        <span className="md:hidden text-sm font-semibold tracking-tight flex-1 text-center">
-          Scale Community
+        <span className="flex-1 text-center text-sm font-semibold tracking-tight text-[#4B3A25] md:hidden">
+          Daily Breathwork
         </span>
 
-        {/* Theme Toggle + User Menu */}
-        {/* Notifications + Theme Toggle + User Menu */}
-<div className="flex items-center gap-1 ml-2 shrink-0">
-  <NotificationBell />
- <SupportWidget />
-  <div className="hidden md:block">
-    <ThemeToggle />
-  </div>
+        <div className="ml-2 flex shrink-0 items-center gap-1 text-[#4B3A25]">
+          <NotificationBell />
+          <SupportWidget />
 
-  <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 outline-none cursor-pointer">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/20 text-primary text-xs">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium hidden sm:inline-block">
-              {profile?.full_name || "User"}
-            </span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => router.push("/profile")}>
-              <User className="mr-2 h-4 w-4" />
-              My Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/subscription")}>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Subscription
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 outline-none">
+              <Avatar className="h-8 w-8 border border-[#C89B3C]/25">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-[#C89B3C]/15 text-xs text-[#8A6A22]">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+
+              <span className="hidden text-sm font-medium text-[#4B3A25] sm:inline-block">
+                {profile?.full_name || "User"}
+              </span>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="end"
+              className="w-48 border-[#C89B3C]/25 bg-[#F7F0E3] text-[#4B3A25]"
+            >
+              <DropdownMenuItem
+                onClick={() => router.push("/profile")}
+                className="focus:bg-[#C89B3C]/10 focus:text-[#4B3A25]"
+              >
+                <User className="mr-2 h-4 w-4 text-[#8A6A22]" />
+                My Profile
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => router.push("/subscription")}
+                className="focus:bg-[#C89B3C]/10 focus:text-[#4B3A25]"
+              >
+                <CreditCard className="mr-2 h-4 w-4 text-[#8A6A22]" />
+                Subscription
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator className="bg-[#C89B3C]/20" />
+
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-[#8A6A22] focus:bg-[#C89B3C]/10 focus:text-[#4B3A25]"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
-      {/* Mobile slide-down menu */}
       <div
         className={cn(
-          "md:hidden fixed inset-0 top-14 z-50 transition-opacity duration-200",
-          menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          "fixed inset-0 top-14 z-50 transition-opacity duration-200 md:hidden",
+          menuOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
         )}
         aria-hidden={!menuOpen}
       >
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setMenuOpen(false)}
-          />
-          {/* Panel */}
-          <nav className={cn(
-            "relative bg-card border-b border-border px-4 py-3 space-y-1 transition-transform duration-200",
+        <div
+          className="absolute inset-0 bg-black/50"
+          onClick={() => setMenuOpen(false)}
+        />
+
+        <nav
+          className={cn(
+            "relative space-y-1 border-b border-[#C89B3C]/20 bg-[#122015] px-4 py-3 text-[#F7F0E3] transition-transform duration-200",
             menuOpen ? "translate-y-0" : "-translate-y-4"
-          )}>
-            {mobileNavItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMenuOpen(false)}
+          )}
+        >
+          {mobileNavItems.map((item) => {
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/")
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "border-l-2 border-[#C89B3C] bg-[#F7F0E3] text-[#122015]"
+                    : "text-[#E8DDC8]/70 hover:bg-[#F7F0E3]/8 hover:text-[#F7F0E3]"
+                )}
+              >
+                <item.icon
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-accent text-accent-foreground border-l-2 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                    "h-4 w-4",
+                    isActive ? "text-[#8A6A22]" : "text-[#E8DDC8]/60"
                   )}
-                >
-                  <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
-                  {item.label}
-                </Link>
-              )
-            })}
+                />
+                {item.label}
+              </Link>
+            )
+          })}
 
-            {profile?.role === "admin" && (
-              <>
-                <div className="border-t border-border my-2" />
-                <p className="px-3 mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Admin
-                </p>
-                {adminItems.map((item) => {
-                  const isActive = pathname.startsWith(item.href)
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMenuOpen(false)}
+          {profile?.role === "admin" && (
+            <>
+              <div className="my-2 border-t border-[#C89B3C]/20" />
+
+              <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-[#D8B76A]">
+                Admin
+              </p>
+
+              {adminItems.map((item) => {
+                const isActive = pathname.startsWith(item.href)
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                      isActive
+                        ? "border-l-2 border-[#C89B3C] bg-[#F7F0E3] text-[#122015]"
+                        : "text-[#E8DDC8]/70 hover:bg-[#F7F0E3]/8 hover:text-[#F7F0E3]"
+                    )}
+                  >
+                    <item.icon
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-accent text-accent-foreground border-l-2 border-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                        "h-4 w-4",
+                        isActive ? "text-[#8A6A22]" : "text-[#E8DDC8]/60"
                       )}
-                    >
-                      <item.icon className={cn("h-4 w-4", isActive && "text-primary")} />
-                      {item.label}
-                    </Link>
-                  )
-                })}
-              </>
-            )}
-<div className="border-t border-border my-2" />
+                    />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </>
+          )}
 
-<div className="flex items-center justify-between px-3 py-2.5">
-  <span className="text-sm font-medium text-muted-foreground">Support</span>
-  <SupportWidget />
-</div>
-            {/* Theme toggle in mobile menu */}
-            <div className="flex items-center justify-between px-3 py-2.5">
-              <span className="text-sm font-medium text-muted-foreground">Dark Mode</span>
-              <ThemeToggle />
-            </div>
+          <div className="my-2 border-t border-[#C89B3C]/20" />
 
-            {/* Logout */}
-            <div className="border-t border-border my-2" />
-            <button
-              onClick={() => {
-                setMenuOpen(false)
-                handleLogout()
-              }}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-accent/50 transition-colors w-full"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </button>
-          </nav>
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <span className="text-sm font-medium text-[#E8DDC8]/70">
+              Support
+            </span>
+            <SupportWidget />
+          </div>
+
+          <div className="flex items-center justify-between px-3 py-2.5">
+            <span className="text-sm font-medium text-[#E8DDC8]/70">
+              Dark Mode
+            </span>
+            <ThemeToggle />
+          </div>
+
+          <div className="my-2 border-t border-[#C89B3C]/20" />
+
+          <button
+            onClick={() => {
+              setMenuOpen(false)
+              handleLogout()
+            }}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#D8B76A] transition-colors hover:bg-[#F7F0E3]/8"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
+        </nav>
       </div>
     </>
   )

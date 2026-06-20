@@ -16,47 +16,54 @@ export default async function AdminPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-1">Admin Panel</h1>
-      <p className="text-muted-foreground text-sm mb-6">
-        Manage your community content and settings.
-      </p>
+      <div className="mb-6">
+        <p className="text-sm font-medium text-teal-300">
+          Daily Breathwork Admin
+        </p>
+
+        <h1 className="mb-1 text-2xl font-bold">Admin Panel</h1>
+
+        <p className="text-sm text-muted-foreground">
+          Manage Valarmathi community content, members, sessions, and practice resources.
+        </p>
+      </div>
 
       <AdminStatsCards stats={stats} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Link href="/admin/content">
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
+          <Card className="h-full cursor-pointer border-teal-500/20 transition-colors hover:border-teal-400/50 hover:bg-teal-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BookOpen className="size-5 text-primary" />
-                Content Library
+                <BookOpen className="size-5 text-teal-300" />
+                Breathwork Library
               </CardTitle>
               <CardDescription>
-                Create and manage cheat sheets, templates, and AI video summaries.
+                Create and manage practice guides, worksheets, session videos, and resources.
               </CardDescription>
             </CardHeader>
           </Card>
         </Link>
 
         <Link href="/community">
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
+          <Card className="h-full cursor-pointer border-teal-500/20 transition-colors hover:border-teal-400/50 hover:bg-teal-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="size-5 text-primary" />
+                <MessageSquare className="size-5 text-teal-300" />
                 Community Moderation
               </CardTitle>
               <CardDescription>
-                Pin posts, remove content, and manage discussions.
+                Pin reflections, remove content, and manage member discussions.
               </CardDescription>
             </CardHeader>
           </Card>
         </Link>
 
         <Link href="/admin/members">
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
+          <Card className="h-full cursor-pointer border-teal-500/20 transition-colors hover:border-teal-400/50 hover:bg-teal-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="size-5 text-primary" />
+                <Users className="size-5 text-teal-300" />
                 Members
               </CardTitle>
               <CardDescription>
@@ -65,42 +72,44 @@ export default async function AdminPage() {
             </CardHeader>
           </Card>
         </Link>
+
         <Link href="/admin/prompts">
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
+          <Card className="h-full cursor-pointer border-teal-500/20 transition-colors hover:border-teal-400/50 hover:bg-teal-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="size-5 text-primary" />
-                Daily Prompts
+                <Lightbulb className="size-5 text-teal-300" />
+                Daily Practice Prompts
               </CardTitle>
               <CardDescription>
-                Create and schedule daily prompts for member engagement.
+                Create and schedule daily breathwork prompts for member engagement.
               </CardDescription>
             </CardHeader>
           </Card>
         </Link>
+
         <Link href="/admin/events">
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
+          <Card className="h-full cursor-pointer border-teal-500/20 transition-colors hover:border-teal-400/50 hover:bg-teal-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="size-5 text-primary" />
-                Live Events
+                <Calendar className="size-5 text-teal-300" />
+                Live Sessions
               </CardTitle>
               <CardDescription>
-                Schedule workshops, AI Lab sessions, and manage replays.
+                Schedule breathwork sessions, workshops, and manage replays.
               </CardDescription>
             </CardHeader>
           </Card>
         </Link>
+
         <Link href="/admin/assessment-reports">
-          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
+          <Card className="h-full cursor-pointer border-teal-500/20 transition-colors hover:border-teal-400/50 hover:bg-teal-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ClipboardCheck className="size-5 text-primary" />
-                Assessment Reports
+                <ClipboardCheck className="size-5 text-teal-300" />
+                Wellbeing Reports
               </CardTitle>
               <CardDescription>
-                Review and approve long-form assessment drafts before they
-                reach founders.
+                Review and approve assessment reports before they reach members.
               </CardDescription>
             </CardHeader>
           </Card>

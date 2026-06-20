@@ -16,6 +16,7 @@ type Props = {
 export default async function PromptsPage({ searchParams }: Props) {
   const params = await searchParams
   const supabase = await createClient()
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -28,20 +29,20 @@ export default async function PromptsPage({ searchParams }: Props) {
   })
 
   return (
-    <div className="mx-auto w-full max-w-6xl pb-24 sm:pb-8">
-      <div className="mb-4">
-        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+    <div className="mx-auto w-full max-w-6xl pb-24 text-[#4B3A25] sm:pb-8">
+      <div className="mb-5">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#C89B3C]/30 bg-[#F7F0E3] px-3 py-1 text-xs font-medium text-[#8A6A22]">
           <Sparkles className="size-3.5" />
-          AI Prompt Toolkit
+          Practice Prompt Library
         </div>
 
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Prompt Library
+        <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#4B3A25] sm:text-4xl">
+          Daily Practice Prompts
         </h1>
 
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Copy ready-to-use prompts for sales, leads, operations, content, and
-          business growth.
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#6F7358]">
+          Explore ready-to-use breathwork reflection prompts for calmness,
+          consistency, self-awareness, and daily inner practice.
         </p>
       </div>
 

@@ -6,7 +6,7 @@ import {
   Hand,
   MessageCircle,
   Pin,
-  Trophy,
+  Sparkles,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -24,24 +24,24 @@ const categoryConfig: Record<
   }
 > = {
   win: {
-    label: "Win",
-    icon: Trophy,
-    className: "border-green-500/20 bg-green-500/10 text-green-500",
+    label: "Practice Win",
+    icon: Sparkles,
+    className: "border-[#C89B3C]/25 bg-[#C89B3C]/10 text-[#8A6A22]",
   },
   question: {
     label: "Question",
     icon: CircleHelp,
-    className: "border-yellow-500/20 bg-yellow-500/10 text-yellow-600",
+    className: "border-[#6F7358]/25 bg-[#6F7358]/10 text-[#4B3A25]",
   },
   discussion: {
-    label: "Discussion",
+    label: "Reflection",
     icon: MessageCircle,
-    className: "border-blue-500/20 bg-blue-500/10 text-blue-500",
+    className: "border-[#C89B3C]/20 bg-[#F7F0E3] text-[#6F7358]",
   },
   introduction: {
     label: "Introduction",
     icon: Hand,
-    className: "border-purple-500/20 bg-purple-500/10 text-purple-500",
+    className: "border-[#1F2A1B]/20 bg-[#1F2A1B]/10 text-[#1F2A1B]",
   },
 }
 
@@ -86,12 +86,11 @@ export function PostCard({
   const CategoryIcon = cat.icon
 
   return (
-    <article className="rounded-3xl border border-border/70 bg-card p-4 shadow-sm transition-all duration-200 hover:border-primary/25 hover:shadow-md hover:shadow-primary/5 active:bg-accent/30 sm:p-5">
-      {/* Header */}
+    <article className="rounded-3xl border border-[#C89B3C]/20 bg-[#F7F0E3] p-4 text-[#4B3A25] shadow-sm shadow-black/5 transition-all duration-200 hover:border-[#C89B3C]/35 hover:shadow-md hover:shadow-black/10 active:bg-[#E8DDC8] sm:p-5">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
-          <Avatar className="size-10 shrink-0">
-            <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
+          <Avatar className="size-10 shrink-0 border border-[#C89B3C]/25">
+            <AvatarFallback className="bg-[#C89B3C]/10 text-xs font-medium text-[#8A6A22]">
               {initials || "U"}
             </AvatarFallback>
           </Avatar>
@@ -101,18 +100,18 @@ export function PostCard({
               {post.profiles?.id ? (
                 <Link
                   href={`/members/${post.profiles.id}`}
-                  className="truncate text-sm font-semibold hover:underline"
+                  className="truncate text-sm font-semibold text-[#4B3A25] hover:text-[#8A6A22] hover:underline"
                 >
                   {authorName}
                 </Link>
               ) : (
-                <span className="truncate text-sm font-semibold">
+                <span className="truncate text-sm font-semibold text-[#4B3A25]">
                   {authorName}
                 </span>
               )}
 
               {post.is_pinned && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                <span className="inline-flex items-center gap-1 rounded-full border border-[#C89B3C]/25 bg-[#C89B3C]/10 px-2 py-0.5 text-[10px] font-medium text-[#8A6A22]">
                   <Pin className="size-3" />
                   Pinned
                 </span>
@@ -120,7 +119,7 @@ export function PostCard({
             </div>
 
             <div className="mt-1 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-muted-foreground">{timeAgo}</span>
+              <span className="text-xs text-[#6F7358]">{timeAgo}</span>
 
               <span
                 className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${cat.className}`}
@@ -140,36 +139,34 @@ export function PostCard({
         />
       </div>
 
-      {/* Prompt context */}
       {post.daily_prompts?.prompt_text && (
-        <div className="mb-4 rounded-2xl border border-primary/15 bg-primary/[0.04] px-3 py-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">
-            Daily Prompt
+        <div className="mb-4 rounded-2xl border border-[#C89B3C]/20 bg-[#E8DDC8]/70 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8A6A22]">
+            Daily Practice Prompt
           </p>
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+
+          <p className="mt-1 line-clamp-2 text-sm leading-6 text-[#6F7358]">
             {post.daily_prompts.prompt_text}
           </p>
         </div>
       )}
 
-      {/* Content */}
       <div className="mb-4">
-        <p className="whitespace-pre-wrap text-sm leading-7 text-foreground/90">
+        <p className="whitespace-pre-wrap text-sm leading-7 text-[#4B3A25]/90">
           {displayContent}
         </p>
 
         {shouldTruncate && (
           <Link
             href={`/community/${post.id}`}
-            className="mt-2 inline-flex text-sm font-medium text-primary hover:underline"
+            className="mt-2 inline-flex text-sm font-medium text-[#8A6A22] hover:underline"
           >
             Read more
           </Link>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between border-t border-border/60 pt-3">
+      <div className="flex items-center justify-between border-t border-[#C89B3C]/20 pt-3">
         <div className="flex items-center gap-1">
           <LikeButton
             postId={post.id}
@@ -179,7 +176,7 @@ export function PostCard({
 
           <Link
             href={`/community/${post.id}`}
-            className="flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-full text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-full text-sm text-[#6F7358] transition-colors hover:bg-[#C89B3C]/10 hover:text-[#8A6A22]"
           >
             <MessageCircle className="size-[18px]" />
             <span>{post.comment_count > 0 ? post.comment_count : ""}</span>
