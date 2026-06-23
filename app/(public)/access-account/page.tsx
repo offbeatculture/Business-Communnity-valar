@@ -2,10 +2,16 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Users, Loader2, CheckCircle2 } from "lucide-react"
+import { Leaf, Loader2, CheckCircle2 } from "lucide-react"
 
 export default function AccessAccountPage() {
   const [email, setEmail] = useState("")
@@ -46,35 +52,59 @@ export default function AccessAccountPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-[#E8DDC8] p-4 text-[#4B3A25]">
+      <Card className="w-full max-w-md border-[#C89B3C]/25 bg-[#F7F0E3] text-[#4B3A25] shadow-2xl shadow-black/10">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="flex items-center gap-2">
-              <Users className="h-8 w-8 text-[#E53935]" />
-              <span className="text-2xl font-bold">Community</span>
+          <div className="mb-4 flex justify-center">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-full bg-[#C89B3C]/10">
+                <Leaf className="h-6 w-6 text-[#8A6A22]" />
+              </div>
+
+              <div className="text-left">
+                <span className="block text-xl font-bold leading-tight">
+                  Daily Breathwork
+                </span>
+                <span className="text-xs text-[#6F7358]">
+                  Valarmathi Community
+                </span>
+              </div>
             </div>
           </div>
-          <CardTitle className="text-xl">Access Your Account</CardTitle>
-          <CardDescription>
+
+          <CardTitle className="font-serif text-3xl font-semibold text-[#4B3A25]">
+            Access Your Account
+          </CardTitle>
+
+          <CardDescription className="font-medium leading-6 text-[#6F7358]">
             Paid but didn&apos;t receive the email? Enter your email and
             we&apos;ll help you access your account.
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           {success ? (
             <div className="space-y-4 text-center">
               <div className="flex justify-center">
-                <div className="size-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                  <CheckCircle2 className="size-6 text-green-500" />
+                <div className="flex size-12 items-center justify-center rounded-full bg-[#C89B3C]/10">
+                  <CheckCircle2 className="size-6 text-[#8A6A22]" />
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">{successMessage}</p>
-              <p className="text-xs text-muted-foreground">
-                Check your inbox and spam folder. The link expires in 20 minutes.
+
+              <p className="text-sm font-medium leading-6 text-[#6F7358]">
+                {successMessage}
               </p>
+
+              <p className="text-xs font-medium text-[#6F7358]">
+                Check your inbox and spam folder. The link expires in 20
+                minutes.
+              </p>
+
               <Link href="/login">
-                <Button variant="outline" className="w-full mt-2">
+                <Button
+                  variant="outline"
+                  className="mt-2 w-full rounded-full border-[#C89B3C]/30 bg-transparent text-[#8A6A22] hover:bg-[#C89B3C]/10 hover:text-[#4B3A25]"
+                >
                   Back to Login
                 </Button>
               </Link>
@@ -82,25 +112,34 @@ export default function AccessAccountPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
+                <label
+                  htmlFor="email"
+                  className="text-sm font-medium text-[#4B3A25]"
+                >
                   Email
                 </label>
+
                 <Input
                   id="email"
                   type="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="border-[#C89B3C]/25 bg-[#FFF8EA] text-[#4B3A25] placeholder:text-[#6F7358]/60 focus-visible:ring-[#C89B3C]"
                   required
                 />
               </div>
 
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-sm text-[#B42318]">{error}</p>}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full rounded-full bg-[#C89B3C] font-semibold text-[#122015] hover:bg-[#D8B76A]"
+                disabled={loading}
+              >
                 {loading ? (
                   <>
-                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    <Loader2 className="mr-2 size-4 animate-spin" />
                     Checking...
                   </>
                 ) : (
@@ -108,9 +147,9 @@ export default function AccessAccountPage() {
                 )}
               </Button>
 
-              <p className="text-sm text-muted-foreground text-center mt-4">
+              <p className="mt-4 text-center text-sm font-medium text-[#6F7358]">
                 Already have a password?{" "}
-                <Link href="/login" className="text-[#E53935] hover:underline">
+                <Link href="/login" className="text-[#8A6A22] hover:underline">
                   Log in
                 </Link>
               </p>
