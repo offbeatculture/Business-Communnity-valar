@@ -127,7 +127,7 @@ export function ContentFilters({ categories }: Props) {
         )}
       </div>
 
-      <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
+      {/* <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
         <div className="flex min-w-max gap-2 sm:grid sm:min-w-0 sm:grid-cols-4">
           {TYPE_FILTERS.map((item) => {
             const Icon = item.icon
@@ -171,7 +171,7 @@ export function ContentFilters({ categories }: Props) {
             )
           })}
         </div>
-      </div>
+      </div> */}
 
       <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0">
         <div className="flex min-w-max gap-2">

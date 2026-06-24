@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 
-function requiresPremiumAccess(label: string) {
+function requiresMembershipAccess(label: string) {
   const normalizedLabel = label.toLowerCase()
 
   return (
@@ -41,28 +41,30 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
-    const isPremiumDoc = requiresPremiumAccess(doc.label || "")
+    const isMembersOnlyDoc = requiresMembershipAccess(doc.label || "")
 
-    if (isPremiumDoc) {
-      const { data: premiumSubscription, error: subError } = await supabase
+    if (isMembersOnlyDoc) {
+      const { data: activeSubscription, error: subError } = await supabase
         .from("subscriptions")
         .select("id")
         .eq("user_id", user.id)
-        .eq("amount_paid", 149900)
+        .eq("status", "active")
+        .gte("expires_at", new Date().toISOString())
         .limit(1)
         .maybeSingle()
 
       if (subError) {
         console.error("Subscription check error:", subError)
+
         return NextResponse.json(
-          { error: "Unable to verify subscription" },
+          { error: "Unable to verify membership" },
           { status: 500 }
         )
       }
 
-      if (!premiumSubscription) {
+      if (!activeSubscription) {
         return NextResponse.json(
-          { error: "Upgrade required" },
+          { error: "Active membership required" },
           { status: 403 }
         )
       }
@@ -76,6 +78,7 @@ export async function GET(
 
     if (signError || !signed) {
       console.error("Signed URL error:", signError)
+
       return NextResponse.json(
         { error: "Failed to generate download URL" },
         { status: 500 }
@@ -111,7 +114,9 @@ export async function GET(
 
     admin
       .from("resource_documents")
-      .update({ download_count: (doc.download_count || 0) + 1 })
+      .update({
+        download_count: (doc.download_count || 0) + 1,
+      })
       .eq("id", docId)
       .then(() => {})
 

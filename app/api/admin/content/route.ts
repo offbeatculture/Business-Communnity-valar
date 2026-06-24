@@ -12,27 +12,33 @@ const ResourceSchema = z.object({
   file_url: z.string().optional(),
   external_url: z.string().url().optional(),
   is_published: z.boolean().default(true),
-  documents: z.array(z.object({
-    label: z.string().min(1),
-    file_url: z.string(),
-    sort_order: z.number(),
-  })).optional(),
+  documents: z
+    .array(
+      z.object({
+        label: z.string().min(1),
+        file_url: z.string(),
+        sort_order: z.number(),
+      })
+    )
+    .optional(),
 })
 
 const VideoSummarySchema = z.object({
   content_type: z.literal("video_summary"),
+  folder_id: z.string().uuid().optional().nullable(),
   title: z.string().min(1),
   youtube_url: z.string().url(),
-  youtube_video_id: z.string().optional(),
+  youtube_video_id: z.string().optional().nullable(),
   category: z.string().min(1),
-  video_duration_minutes: z.number().optional(),
-  read_time_minutes: z.number().optional(),
-  one_line_takeaway: z.string().optional(),
+  video_duration_minutes: z.number().optional().nullable(),
+  read_time_minutes: z.number().optional().nullable(),
+  one_line_takeaway: z.string().optional().nullable(),
   key_points: z
     .array(z.object({ point: z.string(), timestamp: z.string().optional() }))
-    .optional(),
-  action_items: z.array(z.string()).optional(),
-  full_summary: z.string().optional(),
+    .optional()
+    .nullable(),
+  action_items: z.array(z.string()).optional().nullable(),
+  full_summary: z.string().optional().nullable(),
   is_published: z.boolean().default(true),
 })
 
@@ -41,26 +47,39 @@ const CreateContentSchema = z.discriminatedUnion("content_type", [
   VideoSummarySchema,
 ])
 
+async function verifyAdmin() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { user: null, error: "Unauthorized", status: 401 }
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("user_id", user.id)
+    .single()
+
+  if (profile?.role !== "admin") {
+    return { user: null, error: "Forbidden", status: 403 }
+  }
+
+  return { user, error: null, status: 200 }
+}
+
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const auth = await verifyAdmin()
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Verify admin role
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("user_id", user.id)
-      .single()
-
-    if (profile?.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    if (auth.error) {
+      return NextResponse.json(
+        { error: auth.error },
+        { status: auth.status }
+      )
     }
 
     const body = await request.json()
@@ -78,6 +97,7 @@ export async function POST(request: Request) {
 
     if (content_type === "resource") {
       const { content_type: _, documents, ...resourceData } = parsed.data
+
       const { data: created, error } = await admin
         .from("resources")
         .insert(resourceData)
@@ -92,7 +112,6 @@ export async function POST(request: Request) {
         )
       }
 
-      // Insert resource_documents if provided
       if (documents && documents.length > 0) {
         const docRows = documents.map((doc) => ({
           resource_id: created.id,
@@ -107,18 +126,20 @@ export async function POST(request: Request) {
 
         if (docError) {
           console.error("Create resource documents error:", docError)
-          // Resource was created, just warn about documents
         }
       }
 
       return NextResponse.json(created, { status: 201 })
     }
 
-    // video_summary
-    const { content_type: __, ...videoData } = parsed.data
+    const { content_type: _, ...videoData } = parsed.data
+
     const { data: created, error } = await admin
       .from("video_summaries")
-      .insert(videoData)
+      .insert({
+        ...videoData,
+        folder_id: videoData.folder_id || null,
+      })
       .select()
       .single()
 

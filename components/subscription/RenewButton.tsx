@@ -1,17 +1,23 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout"
-import { useRouter } from "next/navigation"
+import { SINGLE_PLAN } from "@/lib/plans"
 
 type Props = {
-  planId: string
+  planId?: string
   userEmail?: string
   userName?: string
 }
 
-export function RenewButton({ planId, userEmail, userName }: Props) {
+export function RenewButton({
+  planId: _planId,
+  userEmail,
+  userName,
+}: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -23,21 +29,30 @@ export function RenewButton({ planId, userEmail, userName }: Props) {
     try {
       const res = await fetch("/api/razorpay/create-order", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          planId: SINGLE_PLAN.id,
+        }),
       })
 
+      const data = await res.json()
+
       if (!res.ok) {
-        const data = await res.json()
-        setError(data.error ?? "Failed to create order")
+        setError(data.error ?? "Failed to create payment order")
         setLoading(false)
         return
       }
 
-      const { orderId, amount, planLabel } = await res.json()
-
       await openRazorpayCheckout(
-        { orderId, amount, planLabel, userEmail, userName },
+        {
+          orderId: data.orderId,
+          amount: data.amount,
+          planLabel: data.planLabel ?? SINGLE_PLAN.name,
+          userEmail,
+          userName,
+        },
         () => {
           setLoading(false)
           router.push("/subscription?success=true")
@@ -57,9 +72,11 @@ export function RenewButton({ planId, userEmail, userName }: Props) {
   return (
     <div>
       <Button onClick={handleRenew} disabled={loading}>
-        {loading ? "Processing..." : "Renew Subscription"}
+        {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+        {loading ? "Opening Payment..." : "Renew Membership"}
       </Button>
-      {error && <p className="text-destructive text-sm mt-2">{error}</p>}
+
+      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
     </div>
   )
 }
