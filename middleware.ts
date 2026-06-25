@@ -96,12 +96,11 @@ if (pathname === "/api/debug-set-password") {
     pathname.startsWith("/set-password")
 
   if (!skipProfileCheck) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("business_name, password_set, role")
-      .eq("user_id", user.id)
-      .single()
-
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("full_name, phone, city, password_set, role")
+  .eq("user_id", user.id)
+  .maybeSingle()
     // Password not yet set — redirect to /set-password
     // Strict check: only false triggers redirect (NULL and true pass through)
     if (profile && profile.password_set === false && !pathname.startsWith("/set-password")) {
@@ -126,11 +125,16 @@ if (pathname === "/api/debug-set-password") {
       pathname.startsWith("/profile") ||
       pathname.startsWith("/members")
 
-    if (!skipSetupCheck && profile && !profile.business_name) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/setup"
-      return NextResponse.redirect(url)
-    }
+const isProfileComplete =
+  !!profile?.full_name?.trim() &&
+  !!profile?.phone?.trim() &&
+  !!profile?.city?.trim()
+
+if (!skipSetupCheck && !isProfileComplete) {
+  const url = request.nextUrl.clone()
+  url.pathname = "/setup"
+  return NextResponse.redirect(url)
+}
   }
 
   // Skip subscription check for routes that don't require it

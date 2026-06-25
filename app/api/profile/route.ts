@@ -47,7 +47,6 @@ export async function GET() {
       return NextResponse.json({
         id: "",
         user_id: user.id,
-        email: user.email,
         full_name:
           user.user_metadata?.full_name ||
           user.email?.split("@")[0] ||
@@ -97,13 +96,12 @@ export async function PATCH(request: Request) {
 
     const admin = createAdminClient()
 
-    const payload = {
-      user_id: user.id,
-      email: user.email ?? null,
-      role: "member",
-      ...parsed.data,
-      updated_at: new Date().toISOString(),
-    }
+const payload = {
+  user_id: user.id,
+  role: "member",
+  ...parsed.data,
+  updated_at: new Date().toISOString(),
+}
 
     const { data: existingProfile } = await admin
       .from("profiles")
