@@ -327,7 +327,7 @@ async function handleSubscriptionActivated(
   const planAmountFromRazorpay =
     typeof subEntity.plan_amount === "number" ? subEntity.plan_amount : null
 
-  const lockedPricePaise = planAmountFromRazorpay ?? SINGLE_PLAN.amountPaise
+  const lockedPricePaise = SINGLE_PLAN.amountPaise
 
   const startsAt = new Date()
   const expiresAt = new Date(startsAt)
