@@ -12,8 +12,32 @@ import {
   Trophy,
   Clock,
   Heart,
-  Flame,
+  Video,
 } from "lucide-react"
+
+type DashboardRecording = {
+  id: string
+  title: string
+  category: string
+  duration: string
+  description: string
+  thumbnail: string | null
+  href: string
+  comingSoon?: false
+}
+
+type ComingSoonRecording = {
+  id: string
+  title: string
+  category: string
+  duration: string
+  description: string
+  thumbnail: null
+  href: string
+  comingSoon: true
+}
+
+type RecordingSlot = DashboardRecording | ComingSoonRecording
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -24,10 +48,11 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login")
 
-  const [profile, stats, { posts }] = await Promise.all([
+  const [profile, stats, { posts }, latestRecordings] = await Promise.all([
     fetchProfile(user.id),
     fetchProfileStats(user.id),
     fetchPosts({ page: 1, perPage: 4 }),
+    fetchLatestRecordings(supabase),
   ])
 
   if (!profile) redirect("/profile")
@@ -37,26 +62,7 @@ export default async function DashboardPage() {
 
   const firstName = profile.full_name?.split(" ")[0] ?? "there"
 
-  const recordings = [
-    {
-      title: "Morning Breathwork Practice",
-      category: "Breathwork",
-      duration: "12 min",
-      description: "A simple practice to start your day with calm energy.",
-    },
-    {
-      title: "Chakra Balancing Session",
-      category: "Chakra",
-      duration: "18 min",
-      description: "A guided recording to bring balance across the body.",
-    },
-    {
-      title: "Evening Relaxation Breath",
-      category: "Relaxation",
-      duration: "10 min",
-      description: "Slow breathing to release the day and settle the mind.",
-    },
-  ]
+  const recordings = buildRecordingSlots(latestRecordings)
 
   const leaderboard = [
     {
@@ -91,7 +97,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 pb-24 sm:pb-10">
-      {/* Welcome */}
       <Card className="overflow-hidden border-primary/10 bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-lg shadow-primary/5">
         <CardContent className="p-5 sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -126,10 +131,8 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Main Grid */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <main className="space-y-6">
-          {/* Community Posts */}
           <section>
             <SectionHeader
               title="Community Posts"
@@ -166,7 +169,6 @@ export default async function DashboardPage() {
             )}
           </section>
 
-          {/* Recordings */}
           <section>
             <SectionHeader
               title="Latest Recordings"
@@ -177,13 +179,12 @@ export default async function DashboardPage() {
 
             <div className="grid gap-4 md:grid-cols-3">
               {recordings.map((recording) => (
-                <RecordingCard key={recording.title} recording={recording} />
+                <RecordingCard key={recording.id} recording={recording} />
               ))}
             </div>
           </section>
         </main>
 
-        {/* Leaderboard */}
         <aside className="space-y-6 xl:sticky xl:top-20 xl:self-start">
           <Card className="border-primary/15 bg-card shadow-sm">
             <CardContent className="p-5">
@@ -237,6 +238,93 @@ export default async function DashboardPage() {
       </div>
     </div>
   )
+}
+
+async function fetchLatestRecordings(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<DashboardRecording[]> {
+  const { data, error } = await supabase
+    .from("video_summaries")
+    .select(
+      "id, title, youtube_video_id, youtube_url, video_duration_minutes, one_line_takeaway, full_summary, created_at"
+    )
+    .eq("is_published", true)
+    .order("created_at", { ascending: false })
+    .limit(3)
+
+  if (error) {
+    console.error("Dashboard recordings fetch error:", error)
+    return []
+  }
+
+  return (data ?? []).map((video) => {
+    const videoId =
+      video.youtube_video_id || getYouTubeVideoId(video.youtube_url)
+
+    return {
+      id: video.id,
+      title: video.title || "Session Recording",
+      category: "Recording",
+      duration: video.video_duration_minutes
+        ? `${video.video_duration_minutes} min`
+        : "Watch now",
+      description:
+        video.one_line_takeaway ||
+        video.full_summary ||
+        "Watch the latest guided breathwork session.",
+      thumbnail: videoId
+        ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+        : null,
+      href: `/content/${video.id}`,
+    }
+  })
+}
+
+function buildRecordingSlots(recordings: DashboardRecording[]): RecordingSlot[] {
+  const slots: RecordingSlot[] = [...recordings]
+
+  while (slots.length < 3) {
+    slots.push({
+      id: `coming-soon-${slots.length + 1}`,
+      title: "Coming Soon",
+      category: "New Session",
+      duration: "Soon",
+      description: "A new guided breathwork recording will be added here shortly.",
+      thumbnail: null,
+      href: "/content",
+      comingSoon: true,
+    })
+  }
+
+  return slots
+}
+
+function getYouTubeVideoId(url?: string | null) {
+  if (!url) return null
+
+  try {
+    const parsed = new URL(url)
+
+    if (parsed.hostname === "youtu.be") {
+      return parsed.pathname.slice(1) || null
+    }
+
+    if (
+      parsed.hostname === "www.youtube.com" ||
+      parsed.hostname === "youtube.com"
+    ) {
+      if (parsed.searchParams.has("v")) {
+        return parsed.searchParams.get("v")
+      }
+
+      const match = parsed.pathname.match(/^\/(embed|shorts)\/([^/?]+)/)
+      if (match) return match[2]
+    }
+
+    return null
+  } catch {
+    return null
+  }
 }
 
 function SectionHeader({
@@ -359,22 +447,31 @@ function DashboardPostCard({
   )
 }
 
-function RecordingCard({
-  recording,
-}: {
-  recording: {
-    title: string
-    category: string
-    duration: string
-    description: string
-  }
-}) {
+function RecordingCard({ recording }: { recording: RecordingSlot }) {
   return (
     <Card className="group overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
       <CardContent className="p-0">
-        <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-primary/15 via-primary/5 to-background">
-          <div className="flex size-13 items-center justify-center rounded-full bg-background/80 shadow-sm transition group-hover:scale-105">
-            <PlayCircle className="size-7 text-primary" />
+        <div className="relative flex aspect-video items-center justify-center overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-background">
+          {recording.thumbnail ? (
+            <img
+              src={recording.thumbnail}
+              alt={recording.title}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-card to-background">
+              <Video className="size-10 text-primary" />
+            </div>
+          )}
+
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+            <div className="flex size-12 items-center justify-center rounded-full bg-background/85 shadow-sm transition group-hover:scale-105">
+              <PlayCircle className="size-7 text-primary" />
+            </div>
+          </div>
+
+          <div className="absolute bottom-2 right-2 rounded-md bg-black/75 px-2 py-1 text-[11px] font-medium text-white">
+            {recording.comingSoon ? "Coming Soon" : recording.duration}
           </div>
         </div>
 
@@ -399,11 +496,22 @@ function RecordingCard({
               {recording.duration}
             </span>
 
-            <Link href="/content">
-              <Button size="sm" variant="ghost" className="h-8 px-2 text-primary">
-                Watch
+            {recording.comingSoon ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled
+                className="h-8 px-2 text-muted-foreground"
+              >
+                Soon
               </Button>
-            </Link>
+            ) : (
+              <Link href={recording.href}>
+                <Button size="sm" variant="ghost" className="h-8 px-2 text-primary">
+                  Watch
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </CardContent>

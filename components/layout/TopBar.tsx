@@ -44,10 +44,10 @@ type TopBarProps = {
 }
 
 const mobileNavItems = [
-  { label: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Breathwork Library", href: "/content", icon: BookOpen },
-  { label: "Practice Prompts", href: "/prompts", icon: Sparkles },
-  { label: "Self Check-ins", href: "/assessment", icon: FileQuestion },
+    { label: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Recordings", href: "/content", icon: BookOpen },
+  // { label: "Practice Prompts", href: "/prompts", icon: Sparkles },
+  // { label: "Self Check-ins", href: "/assessment", icon: FileQuestion },
   { label: "Live Sessions", href: "/events", icon: Calendar },
   { label: "Breathwork Community", href: "/community", icon: MessageSquare },
   { label: "My Profile", href: "/profile", icon: User },
@@ -252,12 +252,12 @@ export function TopBar({ profile }: TopBarProps) {
             <SupportWidget />
           </div>
 
-          <div className="flex items-center justify-between px-3 py-2.5">
+          {/* <div className="flex items-center justify-between px-3 py-2.5">
             <span className="text-sm font-medium text-[#E8DDC8]/70">
               Dark Mode
             </span>
             <ThemeToggle />
-          </div>
+          </div> */}
 
           <div className="my-2 border-t border-[#C89B3C]/20" />
 
