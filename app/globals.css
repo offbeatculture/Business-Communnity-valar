@@ -4,7 +4,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-html, body {
+html,
+body {
   overflow: auto !important;
   height: auto !important;
 }
@@ -14,6 +15,7 @@ html, body {
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -22,11 +24,13 @@ html, body {
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -43,6 +47,7 @@ html, body {
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -53,73 +58,101 @@ html, body {
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: #FAFAFA;
-  --foreground: #1A1A1A;
-  --card: #FFFFFF;
-  --card-foreground: #1A1A1A;
-  --popover: #FFFFFF;
-  --popover-foreground: #1A1A1A;
-  --primary: #D32F2F;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F5F5F5;
-  --secondary-foreground: #1A1A1A;
-  --muted: #F5F5F5;
-  --muted-foreground: #757575;
-  --accent: #F5F5F5;
-  --accent-foreground: #1A1A1A;
-  --destructive: #EF5350;
-  --border: #E0E0E0;
-  --input: #E0E0E0;
-  --ring: #D32F2F;
-  --chart-1: #D32F2F;
-  --chart-2: #E65100;
-  --chart-3: #FB8C00;
-  --chart-4: #1565C0;
-  --chart-5: #388E3C;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1A1A1A;
-  --sidebar-primary: #D32F2F;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F5F5F5;
-  --sidebar-accent-foreground: #1A1A1A;
-  --sidebar-border: #E0E0E0;
-  --sidebar-ring: #D32F2F;
+  --radius: 0.875rem;
+
+  /* Base */
+  --background: #eadfc8;
+  --foreground: #2f271c;
+
+  /* Cards */
+  --card: #fffaf0;
+  --card-foreground: #2f271c;
+
+  --popover: #fffaf0;
+  --popover-foreground: #2f271c;
+
+  /* Brand */
+  --primary: #c99a2e;
+  --primary-foreground: #fffaf0;
+
+  /* Soft sections */
+  --secondary: #f4ead7;
+  --secondary-foreground: #2f271c;
+
+  --muted: #f4ead7;
+  --muted-foreground: #756b5a;
+
+  --accent: #ead8b4;
+  --accent-foreground: #2f271c;
+
+  /* Error only */
+  --destructive: #c2410c;
+
+  /* Borders */
+  --border: #dfcda8;
+  --input: #dfcda8;
+  --ring: #c99a2e;
+
+  /* Charts */
+  --chart-1: #c99a2e;
+  --chart-2: #102719;
+  --chart-3: #8b6f2a;
+  --chart-4: #6f8f72;
+  --chart-5: #b98b23;
+
+  /* Sidebar */
+  --sidebar: #102719;
+  --sidebar-foreground: #f7ecd7;
+  --sidebar-primary: #c99a2e;
+  --sidebar-primary-foreground: #102719;
+  --sidebar-accent: #f7ecd7;
+  --sidebar-accent-foreground: #2f271c;
+  --sidebar-border: #284330;
+  --sidebar-ring: #c99a2e;
 }
 
 .dark {
-  /* Brand: Own Your Growth — Dark theme with warm red/orange accents */
-  --background: #0F0F0F;
-  --foreground: #F5F5F5;
-  --card: #1A1A1A;
-  --card-foreground: #F5F5F5;
-  --popover: #1A1A1A;
-  --popover-foreground: #F5F5F5;
-  --primary: #E53935;
-  --primary-foreground: #FFFFFF;
-  --secondary: #262626;
-  --secondary-foreground: #E0E0E0;
-  --muted: #262626;
-  --muted-foreground: #9E9E9E;
-  --accent: #262626;
-  --accent-foreground: #E0E0E0;
-  --destructive: #EF5350;
-  --border: #333333;
-  --input: #262626;
-  --ring: #E53935;
-  --chart-1: #E53935;
-  --chart-2: #FF6D00;
-  --chart-3: #FFA726;
-  --chart-4: #2979FF;
-  --chart-5: #4CAF50;
-  --sidebar: #1A1A1A;
-  --sidebar-foreground: #F5F5F5;
-  --sidebar-primary: #E53935;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #262626;
-  --sidebar-accent-foreground: #E0E0E0;
-  --sidebar-border: #333333;
-  --sidebar-ring: #E53935;
+  --background: #102719;
+  --foreground: #f7ecd7;
+
+  --card: #17351f;
+  --card-foreground: #f7ecd7;
+
+  --popover: #17351f;
+  --popover-foreground: #f7ecd7;
+
+  --primary: #d4a83f;
+  --primary-foreground: #102719;
+
+  --secondary: #203f28;
+  --secondary-foreground: #f7ecd7;
+
+  --muted: #203f28;
+  --muted-foreground: #c9bfa9;
+
+  --accent: #2b4d34;
+  --accent-foreground: #f7ecd7;
+
+  --destructive: #ef4444;
+
+  --border: #36533d;
+  --input: #36533d;
+  --ring: #d4a83f;
+
+  --chart-1: #d4a83f;
+  --chart-2: #f7ecd7;
+  --chart-3: #8fb996;
+  --chart-4: #c9bfa9;
+  --chart-5: #b98b23;
+
+  --sidebar: #0b1d11;
+  --sidebar-foreground: #f7ecd7;
+  --sidebar-primary: #d4a83f;
+  --sidebar-primary-foreground: #102719;
+  --sidebar-accent: #f7ecd7;
+  --sidebar-accent-foreground: #2f271c;
+  --sidebar-border: #284330;
+  --sidebar-ring: #d4a83f;
 }
 
 @layer base {
@@ -127,18 +160,9 @@ html, body {
     @apply border-border outline-ring/50;
     touch-action: auto;
   }
- body {
-  @apply bg-background text-foreground overflow-x-hidden;
-  -webkit-tap-highlight-color: transparent;  /* ✅ keep only this */
-}
-}
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-textarea:-webkit-autofill,
-textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus {
-  -webkit-text-fill-color: #ffffff;
-  box-shadow: 0 0 0px 1000px #123d22 inset;
-  transition: background-color 5000s ease-in-out 0s;
+
+  body {
+    @apply bg-background text-foreground overflow-x-hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
 }

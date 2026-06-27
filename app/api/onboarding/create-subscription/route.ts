@@ -2,11 +2,14 @@ import { NextResponse } from "next/server"
 import { z } from "zod/v4"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createSubscription } from "@/lib/razorpay-subscriptions"
-import type { ProductTier } from "@/lib/plans"
+import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
+
+const SINGLE_TIER: ProductTier = "membership"
 
 const createSubSchema = z.object({
   sessionId: z.string().uuid("Invalid session ID"),
-  tier: z.enum(["library", "workshop", "ai_lab"]).optional(),
+  tier: z.enum(["membership"]).optional(),
+  planId: z.string().optional(),
 })
 
 export async function POST(request: Request) {
@@ -21,16 +24,24 @@ export async function POST(request: Request) {
       console.log("CREATE SUBSCRIPTION VALIDATION ERROR:", parsed.error.flatten())
 
       return NextResponse.json(
-        { error: "Invalid request" },
+        {
+          error: "Invalid request",
+          details: parsed.error.flatten(),
+        },
         { status: 400 }
       )
     }
 
     const { sessionId } = parsed.data
-    const tier: ProductTier = parsed.data.tier ?? "library"
+    const tier = SINGLE_TIER
 
-    console.log("SELECTED TIER:", tier)
-    console.log("SESSION ID:", sessionId)
+    console.log("SELECTED PLAN:", {
+      tier,
+      planId: SINGLE_PLAN.id,
+      planName: SINGLE_PLAN.name,
+      amount: SINGLE_PLAN.amountRupees,
+      envKey: SINGLE_PLAN.razorpayPlanEnvKey,
+    })
 
     const supabase = createAdminClient()
 
@@ -58,7 +69,10 @@ export async function POST(request: Request) {
     if (new Date(session.expires_at) < new Date()) {
       await supabase
         .from("onboarding_sessions")
-        .update({ status: "expired" })
+        .update({
+          status: "expired",
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", sessionId)
 
       return NextResponse.json(
@@ -77,8 +91,7 @@ export async function POST(request: Request) {
     if (session.razorpay_subscription_id) {
       console.log("REUSING EXISTING SUBSCRIPTION:", {
         subscriptionId: session.razorpay_subscription_id,
-        requestedTier: tier,
-        existingPlanId: session.plan_id,
+        planId: session.plan_id,
       })
 
       return NextResponse.json({
@@ -91,6 +104,7 @@ export async function POST(request: Request) {
       email: session.email,
       sessionId,
       tier,
+      planId: SINGLE_PLAN.id,
     })
 
     const {
@@ -114,7 +128,7 @@ export async function POST(request: Request) {
       .from("onboarding_sessions")
       .update({
         razorpay_subscription_id: rzpSubscription.id,
-        plan_id: `${tier}_monthly`,
+        plan_id: SINGLE_PLAN.id,
         status: "payment_pending",
         updated_at: new Date().toISOString(),
       })
@@ -123,7 +137,7 @@ export async function POST(request: Request) {
     console.log("ONBOARDING SESSION UPDATED:", {
       sessionId,
       subscriptionId: rzpSubscription.id,
-      plan_id: `${tier}_monthly`,
+      plan_id: SINGLE_PLAN.id,
     })
 
     return NextResponse.json({

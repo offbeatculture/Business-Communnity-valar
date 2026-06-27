@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Bell } from "lucide-react"
 
@@ -20,8 +20,13 @@ export function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(false)
 
-  async function fetchNotifications() {
+  const fetchingRef = useRef(false)
+
+  const fetchNotifications = useCallback(async () => {
+    if (fetchingRef.current) return
+
     try {
+      fetchingRef.current = true
       setLoading(true)
 
       const res = await fetch("/api/notifications", {
@@ -37,9 +42,10 @@ export function NotificationBell() {
     } catch (error) {
       console.error("Fetch notifications error:", error)
     } finally {
+      fetchingRef.current = false
       setLoading(false)
     }
-  }
+  }, [])
 
   async function markAsRead(id: string) {
     try {
@@ -67,8 +73,7 @@ export function NotificationBell() {
     }, 30000)
 
     return () => clearInterval(interval)
-  }, [])
-
+  }, [fetchNotifications])
   return (
     <div className="relative">
       <button

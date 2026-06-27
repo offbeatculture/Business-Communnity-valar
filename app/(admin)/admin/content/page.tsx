@@ -2,12 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CheatSheetForm } from "@/components/admin/CheatSheetForm"
-import { TemplateForm } from "@/components/admin/TemplateForm"
 import { VideoSummaryForm } from "@/components/admin/VideoSummaryForm"
 import { AdminContentTable } from "@/components/admin/AdminContentTable"
-import { Loader2 } from "lucide-react"
+import { Loader2, Video } from "lucide-react"
 import type { ContentItem, Category } from "@/types"
 
 export default function AdminContentPage() {
@@ -19,9 +16,20 @@ export default function AdminContentPage() {
     try {
       const res = await fetch("/api/content")
       const data = await res.json()
-      setItems(data.data ?? [])
+
+      const allItems = data.data ?? []
+
+      const videoItems = allItems.filter((item: any) => {
+        return (
+          item.type === "video_summary" ||
+          item.content_type === "video_summary" ||
+          item.kind === "video_summary"
+        )
+      })
+
+      setItems(videoItems)
     } catch {
-      console.error("Failed to fetch content")
+      console.error("Failed to fetch video content")
     }
   }, [])
 
@@ -34,14 +42,24 @@ export default function AdminContentPage() {
         ])
 
         const contentData = await contentRes.json()
-        setItems(contentData.data ?? [])
+        const allItems = contentData.data ?? []
+
+        const videoItems = allItems.filter((item: any) => {
+          return (
+            item.type === "video_summary" ||
+            item.content_type === "video_summary" ||
+            item.kind === "video_summary"
+          )
+        })
+
+        setItems(videoItems)
 
         if (catRes.ok) {
           const catData = await catRes.json()
           setCategories(catData)
         }
       } catch {
-        console.error("Failed to load data")
+        console.error("Failed to load admin video content data")
       } finally {
         setLoading(false)
       }
@@ -59,54 +77,45 @@ export default function AdminContentPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-1">Content Management</h1>
-      <p className="text-muted-foreground text-sm mb-6">
-        Create and manage cheat sheets, templates, and AI-generated video summaries.
-      </p>
+    <div className="space-y-8">
+      <div>
+        <p className="text-sm font-medium text-primary">Admin</p>
+        <h1 className="mt-1 text-2xl font-bold">Video Content Management</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Create and manage Dr Valar&apos;s breathwork session videos, YouTube
+          summaries, and recording resources.
+        </p>
+      </div>
 
-      {/* Create Content */}
-      <Card className="mb-8">
+      {/* Create Video Content */}
+      <Card className="border-border/70 bg-card shadow-sm">
         <CardHeader>
-          <CardTitle>Create New Content</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+              <Video className="size-5 text-primary" />
+            </div>
+
+            <div>
+              <CardTitle>Create New Video</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Add a YouTube URL, summary, key points, and assign the video to
+                a folder.
+              </p>
+            </div>
+          </div>
         </CardHeader>
+
         <CardContent>
-          <Tabs defaultValue="cheat_sheet">
-            <TabsList className="mb-4 overflow-x-auto w-full sm:w-auto">
-              <TabsTrigger value="cheat_sheet">Cheat Sheet</TabsTrigger>
-              <TabsTrigger value="template">Template</TabsTrigger>
-              <TabsTrigger value="video_summary">Video Summary</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="cheat_sheet">
-              <CheatSheetForm
-                categories={categories}
-                onSuccess={fetchItems}
-              />
-            </TabsContent>
-
-            <TabsContent value="template">
-              <TemplateForm
-                categories={categories}
-                onSuccess={fetchItems}
-              />
-            </TabsContent>
-
-            <TabsContent value="video_summary">
-              <VideoSummaryForm
-                categories={categories}
-                onSuccess={fetchItems}
-              />
-            </TabsContent>
-          </Tabs>
+          <VideoSummaryForm categories={categories} onSuccess={fetchItems} />
         </CardContent>
       </Card>
 
-      {/* Content Table */}
-      <Card>
+      {/* Video Table */}
+      <Card className="border-border/70 bg-card shadow-sm">
         <CardHeader>
-          <CardTitle>All Content ({items.length})</CardTitle>
+          <CardTitle>All Videos ({items.length})</CardTitle>
         </CardHeader>
+
         <CardContent>
           <AdminContentTable
             items={items}

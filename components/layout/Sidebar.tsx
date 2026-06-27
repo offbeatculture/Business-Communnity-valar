@@ -21,9 +21,9 @@ import { Separator } from "@/components/ui/separator"
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Breathwork Library", href: "/content", icon: BookOpen },
-  { label: "Practice Prompts", href: "/prompts", icon: Sparkles },
-  { label: "Self Check-ins", href: "/assessment", icon: FileQuestion },
+  { label: "Recordings", href: "/content", icon: BookOpen },
+  // { label: "Practice Prompts", href: "/prompts", icon: Sparkles },
+  // { label: "Self Check-ins", href: "/assessment", icon: FileQuestion },
   { label: "Live Sessions", href: "/events", icon: Calendar },
   { label: "Breathwork Community", href: "/community", icon: MessageSquare },
   { label: "My Profile", href: "/profile", icon: User },

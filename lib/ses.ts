@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer"
 
-const SMTP_HOST = process.env.SES_SMTP_HOST ?? "email-smtp.ap-south-1.amazonaws.com"
+const SMTP_HOST =
+  process.env.SES_SMTP_HOST ?? "email-smtp.ap-south-1.amazonaws.com"
+
 const SMTP_PORT = Number(process.env.SES_SMTP_PORT ?? "587")
 const SMTP_SECURE = SMTP_PORT === 465
 
@@ -8,9 +10,19 @@ const SMTP_USERNAME = process.env.SES_SMTP_USERNAME ?? ""
 const SMTP_PASSWORD = process.env.SES_SMTP_PASSWORD ?? ""
 
 const FROM_EMAIL =
-  process.env.SES_FROM_EMAIL ?? "noreply@superhumanentrepreneur.com"
+  process.env.SES_FROM_EMAIL ??
+  "Dr. Valarmathi Srinivasan <noreply@valarmathisrinivasan.in>"
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  "http://localhost:3000"
+
+const BRAND_NAME = "Daily Breathwork Community"
+const COACH_NAME = "Dr. Valarmathi Srinivasan"
+const BRAND_COLOR = "#C99A2E"
+const DARK_GREEN = "#102719"
+const CREAM = "#FFF8EA"
 
 const transporter = nodemailer.createTransport({
   host: SMTP_HOST,
@@ -88,39 +100,71 @@ export async function sendMagicLinkEmail({
   const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #f5f5f5; padding: 40px 20px;">
-  <div style="max-width: 480px; margin: 0 auto;">
-    <h2 style="color: #E53935; margin-bottom: 8px;">100X Super Founder Room</h2>
-    <p style="color: #9e9e9e; font-size: 14px; margin-bottom: 24px;">Your subscription is active</p>
-    <p>${greeting},</p>
-    <p>Your subscription is now active. Click the button below to access your account and set your password.</p>
-    <div style="margin: 32px 0;">
-      <a href="${magicUrl}" style="background: #E53935; color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
-        Access Your Account
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body style="margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background:${DARK_GREEN}; color:${CREAM}; padding:40px 20px;">
+  <div style="max-width:520px; margin:0 auto; background:#183522; border:1px solid rgba(201,154,46,0.35); border-radius:18px; padding:32px;">
+    <p style="margin:0 0 10px; color:${BRAND_COLOR}; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">
+      ${BRAND_NAME}
+    </p>
+
+    <h2 style="margin:0 0 8px; color:${CREAM}; font-size:26px; line-height:1.2;">
+      Your community access is ready
+    </h2>
+
+    <p style="margin:0 0 24px; color:#D8C9A7; font-size:14px;">
+      Guided by ${COACH_NAME}
+    </p>
+
+    <p style="margin:0 0 14px; color:${CREAM}; font-size:15px; line-height:1.7;">
+      ${greeting},
+    </p>
+
+    <p style="margin:0 0 18px; color:#E7DDC8; font-size:15px; line-height:1.7;">
+      Your Breathwork Community membership is active. Click the button below to access your account and continue your daily practice.
+    </p>
+
+    <div style="margin:30px 0;">
+      <a href="${magicUrl}" style="background:${BRAND_COLOR}; color:#102719; padding:14px 28px; border-radius:999px; text-decoration:none; font-weight:700; display:inline-block;">
+        Access My Account
       </a>
     </div>
-    <p style="color: #9e9e9e; font-size: 13px;">This link expires in 20 minutes. If it has expired, you can request a new one from the payment success page.</p>
-    <p style="color: #9e9e9e; font-size: 13px;">If you didn't sign up, you can safely ignore this email.</p>
-    <hr style="border: none; border-top: 1px solid #333; margin: 32px 0;" />
-    <p style="color: #555; font-size: 12px;">100X Super Founder Room &mdash; Own Your Growth</p>
+
+    <p style="margin:0 0 12px; color:#CDBF9F; font-size:13px; line-height:1.6;">
+      This secure link expires in 20 minutes. If it expires, you can request a new access link from the login page.
+    </p>
+
+    <p style="margin:0; color:#CDBF9F; font-size:13px; line-height:1.6;">
+      If you did not request this, you can safely ignore this email.
+    </p>
+
+    <hr style="border:none; border-top:1px solid rgba(201,154,46,0.25); margin:28px 0;" />
+
+    <p style="margin:0; color:#AFA17F; font-size:12px; line-height:1.6;">
+      ${BRAND_NAME}<br />
+      ${COACH_NAME}
+    </p>
   </div>
 </body>
 </html>`
 
   const text = `${greeting},
 
-Your subscription is now active. Click the link below to access your account and set your password:
+Your Breathwork Community membership is active.
 
+Access your account here:
 ${magicUrl}
 
-This link expires in 20 minutes.
+This secure link expires in 20 minutes. If it expires, you can request a new access link from the login page.
 
-— 100X Super Founder Room`
+${BRAND_NAME}
+${COACH_NAME}`
 
   return sendEmail({
     to,
-    subject: "Your account is ready — 100X Super Founder Room",
+    subject: "Your Breathwork Community access is ready",
     html,
     text,
   })
@@ -142,37 +186,75 @@ export async function sendPaymentConfirmationEmail({
   const html = `
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #f5f5f5; padding: 40px 20px;">
-  <div style="max-width: 480px; margin: 0 auto;">
-    <h2 style="color: #E53935; margin-bottom: 8px;">100X Super Founder Room</h2>
-    <p>${greeting},</p>
-    <p>We've received your payment. Here's a summary:</p>
-    <div style="background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 20px; margin: 24px 0;">
-      <p style="margin: 0 0 8px;"><strong>Plan:</strong> ${planLabel}</p>
-      <p style="margin: 0;"><strong>Amount:</strong> ${amount}</p>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body style="margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background:${DARK_GREEN}; color:${CREAM}; padding:40px 20px;">
+  <div style="max-width:520px; margin:0 auto; background:#183522; border:1px solid rgba(201,154,46,0.35); border-radius:18px; padding:32px;">
+    <p style="margin:0 0 10px; color:${BRAND_COLOR}; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">
+      ${BRAND_NAME}
+    </p>
+
+    <h2 style="margin:0 0 18px; color:${CREAM}; font-size:26px; line-height:1.2;">
+      Payment received
+    </h2>
+
+    <p style="margin:0 0 14px; color:${CREAM}; font-size:15px; line-height:1.7;">
+      ${greeting},
+    </p>
+
+    <p style="margin:0 0 18px; color:#E7DDC8; font-size:15px; line-height:1.7;">
+      Thank you. Your payment has been received and your Breathwork Community membership is active.
+    </p>
+
+    <div style="background:#102719; border:1px solid rgba(201,154,46,0.25); border-radius:14px; padding:18px; margin:24px 0;">
+      <p style="margin:0 0 10px; color:#E7DDC8; font-size:14px;">
+        <strong style="color:${CREAM};">Membership:</strong> ${planLabel}
+      </p>
+      <p style="margin:0; color:#E7DDC8; font-size:14px;">
+        <strong style="color:${CREAM};">Amount:</strong> ${amount}
+      </p>
     </div>
-    <p style="color: #9e9e9e; font-size: 13px;">Your GST invoice will be available in your account under Subscription settings.</p>
-    <hr style="border: none; border-top: 1px solid #333; margin: 32px 0;" />
-    <p style="color: #555; font-size: 12px;">100X Super Founder Room &mdash; Own Your Growth</p>
+
+    <p style="margin:0 0 18px; color:#E7DDC8; font-size:15px; line-height:1.7;">
+      You can now access the community, session recordings, and daily practice resources.
+    </p>
+
+    <div style="margin:28px 0;">
+      <a href="${APP_URL}/dashboard" style="background:${BRAND_COLOR}; color:#102719; padding:14px 28px; border-radius:999px; text-decoration:none; font-weight:700; display:inline-block;">
+        Go to Community
+      </a>
+    </div>
+
+    <hr style="border:none; border-top:1px solid rgba(201,154,46,0.25); margin:28px 0;" />
+
+    <p style="margin:0; color:#AFA17F; font-size:12px; line-height:1.6;">
+      ${BRAND_NAME}<br />
+      ${COACH_NAME}
+    </p>
   </div>
 </body>
 </html>`
 
   const text = `${greeting},
 
-We've received your payment.
+Thank you. Your payment has been received and your Breathwork Community membership is active.
 
-Plan: ${planLabel}
+Membership: ${planLabel}
 Amount: ${amount}
 
-Your GST invoice will be available in your account under Subscription settings.
+You can now access the community, session recordings, and daily practice resources.
 
-— 100X Super Founder Room`
+Go to community:
+${APP_URL}/dashboard
+
+${BRAND_NAME}
+${COACH_NAME}`
 
   return sendEmail({
     to,
-    subject: "Payment received — 100X Super Founder Room",
+    subject: "Payment received — Breathwork Community",
     html,
     text,
   })

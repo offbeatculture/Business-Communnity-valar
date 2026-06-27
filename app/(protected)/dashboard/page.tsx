@@ -1,16 +1,43 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
+import { fetchProfile, fetchProfileStats } from "@/lib/profile"
+import { fetchPosts, fetchUserInteractions } from "@/lib/community"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
-  BookOpen,
-  Calendar,
-  MessageSquare,
-  Sparkles,
-  ClipboardCheck,
   ArrowRight,
+  MessageSquare,
+  PlayCircle,
+  Trophy,
+  Clock,
+  Heart,
+  Video,
 } from "lucide-react"
+
+type DashboardRecording = {
+  id: string
+  title: string
+  category: string
+  duration: string
+  description: string
+  thumbnail: string | null
+  href: string
+  comingSoon?: false
+}
+
+type ComingSoonRecording = {
+  id: string
+  title: string
+  category: string
+  duration: string
+  description: string
+  thumbnail: null
+  href: string
+  comingSoon: true
+}
+
+type RecordingSlot = DashboardRecording | ComingSoonRecording
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -21,145 +48,473 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login")
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("user_id", user.id)
-    .single()
+  const [profile, stats, { posts }, latestRecordings] = await Promise.all([
+    fetchProfile(user.id),
+    fetchProfileStats(user.id),
+    fetchPosts({ page: 1, perPage: 4 }),
+    fetchLatestRecordings(supabase),
+  ])
 
-  const firstName = profile?.full_name?.split(" ")[0] || "there"
+  if (!profile) redirect("/profile")
+
+  const postIds = posts.map((post) => post.id)
+  const { likedIds, savedIds } = await fetchUserInteractions(user.id, postIds)
+
+  const firstName = profile.full_name?.split(" ")[0] ?? "there"
+
+  const recordings = buildRecordingSlots(latestRecordings)
+
+  const leaderboard = [
+    {
+      rank: 1,
+      name: firstName,
+      label: "You",
+      points: stats.postCount * 10 + stats.commentCount * 5 + stats.likesReceived,
+      streak: "Active",
+    },
+    {
+      rank: 2,
+      name: "Meera",
+      label: "Member",
+      points: 86,
+      streak: "7 days",
+    },
+    {
+      rank: 3,
+      name: "Arjun",
+      label: "Member",
+      points: 72,
+      streak: "5 days",
+    },
+    {
+      rank: 4,
+      name: "Kavya",
+      label: "Member",
+      points: 64,
+      streak: "4 days",
+    },
+  ]
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 pb-24 text-[#4B3A25] sm:pb-10">
-      <Card className="border-[#C89B3C]/20 bg-[#F7F0E3] text-[#4B3A25] shadow-lg shadow-black/5">
-        <CardContent className="p-5 sm:p-7">
-          <p className="text-sm font-medium text-[#8A6A22]">
-            Daily Breathwork
-          </p>
+    <div className="mx-auto w-full max-w-6xl space-y-6 pb-24 sm:pb-10">
+      <Card className="overflow-hidden border-primary/10 bg-gradient-to-br from-card via-card to-primary/[0.04] shadow-lg shadow-primary/5">
+        <CardContent className="p-5 sm:p-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                {(() => {
+                  const h = new Date().getHours()
+                  return h < 12
+                    ? "Good morning"
+                    : h < 17
+                      ? "Good afternoon"
+                      : "Good evening"
+                })()}
+              </p>
 
-          <h1 className="mt-2 font-serif text-3xl font-semibold tracking-tight text-[#4B3A25] sm:text-4xl">
-            Welcome back, {firstName}
-          </h1>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+                Welcome back, {firstName}!
+              </h1>
 
-          <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-[#6F7358]">
-            Continue your daily breathwork journey with practice prompts,
-            guided resources, live sessions, and community reflections.
-          </p>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+                Continue your breathwork journey, check new community posts, and
+                revisit the latest recordings from Dr Valar.
+              </p>
+            </div>
 
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Button
-              asChild
-              className="rounded-full bg-[#C89B3C] font-semibold text-[#122015] hover:bg-[#D8B76A]"
-            >
-              <Link href="/community">
-                Go to Community <ArrowRight className="ml-2 size-4" />
+            <div className="grid grid-cols-3 gap-3 rounded-2xl border border-border/60 bg-background/50 p-3">
+              <StatItem label="Posts" value={stats.postCount} />
+              <StatItem label="Comments" value={stats.commentCount} />
+              <StatItem label="Likes" value={stats.likesReceived} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <main className="space-y-6">
+          <section>
+            <SectionHeader
+              title="Community Posts"
+              description="Latest conversations from the breathwork community."
+              href="/community"
+              action="View all"
+            />
+
+            {posts.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {posts.map((post) => (
+                  <DashboardPostCard
+                    key={post.id}
+                    post={post}
+                    isLiked={likedIds.has(post.id)}
+                    isSaved={savedIds.has(post.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Card className="border-border/60">
+                <CardContent className="flex flex-col items-center justify-center px-4 py-12 text-center">
+                  <MessageSquare className="mb-3 size-9 text-muted-foreground" />
+                  <h3 className="font-semibold">No community posts yet</h3>
+                  <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                    Be the first to share your breathwork experience or ask a
+                    question.
+                  </p>
+                  <Link href="/community?compose=introduction" className="mt-4">
+                    <Button>Start a Post</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+          </section>
+
+          <section>
+            <SectionHeader
+              title="Latest Recordings"
+              description="Continue with guided breathwork and healing sessions."
+              href="/content"
+              action="View recordings"
+            />
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {recordings.map((recording) => (
+                <RecordingCard key={recording.id} recording={recording} />
+              ))}
+            </div>
+          </section>
+        </main>
+
+        <aside className="space-y-6 xl:sticky xl:top-20 xl:self-start">
+          <Card className="border-primary/15 bg-card shadow-sm">
+            <CardContent className="p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
+                  <Trophy className="size-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-semibold">Leaderboard</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Active members this week
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {leaderboard.map((member) => (
+                  <div
+                    key={member.rank}
+                    className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/40 p-3"
+                  >
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      {member.rank}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {member.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {member.label} · {member.streak}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-sm font-bold">{member.points}</p>
+                      <p className="text-[11px] text-muted-foreground">pts</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Link href="/community" className="mt-4 block">
+                <Button variant="outline" className="w-full">
+                  Open Community
+                </Button>
               </Link>
-            </Button>
-
-            <Button
-              asChild
-              variant="outline"
-              className="rounded-full border-[#C89B3C]/30 bg-transparent text-[#8A6A22] hover:bg-[#C89B3C]/10 hover:text-[#4B3A25]"
-            >
-              <Link href="/content">Open Library</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div>
-        <h2 className="mb-4 font-serif text-2xl font-semibold text-[#4B3A25]">
-          Start here
-        </h2>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <DashboardCard
-            href="/content"
-            icon={<BookOpen className="size-5 text-[#8A6A22]" />}
-            title="Breathwork Library"
-            description="Access practice guides, worksheets, and session recordings."
-          />
-
-          <DashboardCard
-            href="/prompts"
-            icon={<Sparkles className="size-5 text-[#8A6A22]" />}
-            title="Practice Prompts"
-            description="Use daily prompts for reflection and consistency."
-          />
-
-          <DashboardCard
-            href="/assessment"
-            icon={<ClipboardCheck className="size-5 text-[#8A6A22]" />}
-            title="Self Check-ins"
-            description="Reflect on your wellbeing and breathwork practice."
-          />
-
-          <DashboardCard
-            href="/events"
-            icon={<Calendar className="size-5 text-[#8A6A22]" />}
-            title="Live Sessions"
-            description="Join upcoming breathwork sessions and replays."
-          />
-        </div>
+            </CardContent>
+          </Card>
+        </aside>
       </div>
-
-      <Card className="border-[#C89B3C]/20 bg-[#F7F0E3] text-[#4B3A25] shadow-sm shadow-black/5">
-        <CardContent className="flex flex-col items-center justify-center px-6 py-12 text-center">
-          <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#C89B3C]/10">
-            <MessageSquare className="size-8 text-[#C89B3C]" />
-          </div>
-
-          <h3 className="font-serif text-2xl font-semibold text-[#4B3A25]">
-            Share your first reflection
-          </h3>
-
-          <p className="mt-2 max-w-md text-sm font-medium leading-6 text-[#6F7358]">
-            Introduce yourself, share a practice win, ask a question, or write
-            what shifted during your breathwork practice.
-          </p>
-
-          <Button
-            asChild
-            className="mt-5 rounded-full bg-[#C89B3C] font-semibold text-[#122015] hover:bg-[#D8B76A]"
-          >
-            <Link href="/community?compose=introduction">
-              Introduce Yourself
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   )
 }
 
-function DashboardCard({
-  href,
-  icon,
+async function fetchLatestRecordings(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<DashboardRecording[]> {
+  const { data, error } = await supabase
+    .from("video_summaries")
+    .select(
+      "id, title, youtube_video_id, youtube_url, video_duration_minutes, one_line_takeaway, full_summary, created_at"
+    )
+    .eq("is_published", true)
+    .order("created_at", { ascending: false })
+    .limit(3)
+
+  if (error) {
+    console.error("Dashboard recordings fetch error:", error)
+    return []
+  }
+
+  return (data ?? []).map((video) => {
+    const videoId =
+      video.youtube_video_id || getYouTubeVideoId(video.youtube_url)
+
+    return {
+      id: video.id,
+      title: video.title || "Session Recording",
+      category: "Recording",
+      duration: video.video_duration_minutes
+        ? `${video.video_duration_minutes} min`
+        : "Watch now",
+      description:
+        video.one_line_takeaway ||
+        video.full_summary ||
+        "Watch the latest guided breathwork session.",
+      thumbnail: videoId
+        ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+        : null,
+      href: `/content/${video.id}`,
+    }
+  })
+}
+
+function buildRecordingSlots(recordings: DashboardRecording[]): RecordingSlot[] {
+  const slots: RecordingSlot[] = [...recordings]
+
+  while (slots.length < 3) {
+    slots.push({
+      id: `coming-soon-${slots.length + 1}`,
+      title: "Coming Soon",
+      category: "New Session",
+      duration: "Soon",
+      description: "A new guided breathwork recording will be added here shortly.",
+      thumbnail: null,
+      href: "/content",
+      comingSoon: true,
+    })
+  }
+
+  return slots
+}
+
+function getYouTubeVideoId(url?: string | null) {
+  if (!url) return null
+
+  try {
+    const parsed = new URL(url)
+
+    if (parsed.hostname === "youtu.be") {
+      return parsed.pathname.slice(1) || null
+    }
+
+    if (
+      parsed.hostname === "www.youtube.com" ||
+      parsed.hostname === "youtube.com"
+    ) {
+      if (parsed.searchParams.has("v")) {
+        return parsed.searchParams.get("v")
+      }
+
+      const match = parsed.pathname.match(/^\/(embed|shorts)\/([^/?]+)/)
+      if (match) return match[2]
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
+function SectionHeader({
   title,
   description,
+  href,
+  action,
 }: {
-  href: string
-  icon: React.ReactNode
   title: string
   description: string
+  href: string
+  action: string
 }) {
   return (
-    <Link href={href} className="group">
-      <Card className="h-full border-[#C89B3C]/20 bg-[#F7F0E3] text-[#4B3A25] shadow-sm shadow-black/5 transition-all duration-200 hover:border-[#C89B3C]/40 hover:bg-[#FFF8EA] hover:shadow-md hover:shadow-black/10">
-        <CardContent className="p-5">
-          <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-[#C89B3C]/10">
-            {icon}
+    <div className="mb-4 flex items-end justify-between gap-4">
+      <div>
+        <h2 className="border-l-2 border-primary pl-3 text-base font-semibold">
+          {title}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      </div>
+
+      <Link href={href}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-primary/30 text-primary hover:bg-primary/10"
+        >
+          {action}
+          <ArrowRight className="ml-1 size-4" />
+        </Button>
+      </Link>
+    </div>
+  )
+}
+
+function StatItem({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="min-w-20 rounded-xl bg-background/40 px-3 py-3 text-center">
+      <p className="text-xl font-bold tabular-nums">{value}</p>
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+    </div>
+  )
+}
+
+function DashboardPostCard({
+  post,
+  isLiked,
+  isSaved,
+}: {
+  post: any
+  isLiked: boolean
+  isSaved: boolean
+}) {
+  const authorName =
+    post.author?.full_name ||
+    post.profile?.full_name ||
+    post.profiles?.full_name ||
+    "Community Member"
+
+  const content = post.content || post.body || post.message || "Community post"
+
+  const createdAt = post.created_at
+    ? new Date(post.created_at).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      })
+    : "Today"
+
+  const likes = post.likes_count ?? post.like_count ?? post.likes ?? 0
+  const comments = post.comments_count ?? post.comment_count ?? post.comments ?? 0
+
+  return (
+    <Card className="group h-full overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
+      <CardContent className="flex h-full flex-col p-4">
+        <div className="mb-3 flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+            {authorName.charAt(0).toUpperCase()}
           </div>
 
-          <h3 className="font-serif text-xl font-semibold text-[#4B3A25]">
-            {title}
-          </h3>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">{authorName}</p>
+            <p className="text-xs text-muted-foreground">{createdAt}</p>
+          </div>
 
-          <p className="mt-2 text-sm font-medium leading-6 text-[#6F7358]">
-            {description}
-          </p>
-        </CardContent>
-      </Card>
-    </Link>
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+            Community
+          </span>
+        </div>
+
+        <p className="line-clamp-4 flex-1 text-sm leading-6 text-foreground/85">
+          {content}
+        </p>
+
+        <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1">
+              <Heart
+                className={`size-4 ${
+                  isLiked ? "fill-primary text-primary" : ""
+                }`}
+              />
+              {likes}
+            </span>
+
+            <span className="inline-flex items-center gap-1">
+              <MessageSquare className="size-4" />
+              {comments}
+            </span>
+          </div>
+
+          {isSaved && (
+            <span className="rounded-full bg-primary/10 px-2 py-1 text-primary">
+              Saved
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function RecordingCard({ recording }: { recording: RecordingSlot }) {
+  return (
+    <Card className="group overflow-hidden border-border/60 bg-card transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
+      <CardContent className="p-0">
+        <div className="relative flex aspect-video items-center justify-center overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-background">
+          {recording.thumbnail ? (
+            <img
+              src={recording.thumbnail}
+              alt={recording.title}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 via-card to-background">
+              <Video className="size-10 text-primary" />
+            </div>
+          )}
+
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+            <div className="flex size-12 items-center justify-center rounded-full bg-background/85 shadow-sm transition group-hover:scale-105">
+              <PlayCircle className="size-7 text-primary" />
+            </div>
+          </div>
+
+          <div className="absolute bottom-2 right-2 rounded-md bg-black/75 px-2 py-1 text-[11px] font-medium text-white">
+            {recording.comingSoon ? "Coming Soon" : recording.duration}
+          </div>
+        </div>
+
+        <div className="space-y-3 p-4">
+          <div>
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+              {recording.category}
+            </span>
+
+            <h3 className="mt-3 line-clamp-2 text-sm font-semibold">
+              {recording.title}
+            </h3>
+
+            <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+              {recording.description}
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="size-3.5" />
+              {recording.duration}
+            </span>
+
+            {recording.comingSoon ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled
+                className="h-8 px-2 text-muted-foreground"
+              >
+                Soon
+              </Button>
+            ) : (
+              <Link href={recording.href}>
+                <Button size="sm" variant="ghost" className="h-8 px-2 text-primary">
+                  Watch
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

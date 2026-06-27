@@ -7,34 +7,25 @@ interface TierBannerProps {
 }
 
 export function TierBanner({ userTier }: TierBannerProps) {
-  // AI Lab members see no banner (full access)
-  if (userTier === "ai_lab") return null
-
-  let copy: string
-  let cta: string
-
-  if (!userTier || userTier === "library") {
-    copy =
-      "Upgrade to Workshop tier to attend live workshops, apply for hot seats, and unlock instant replays."
-    cta = "See upgrade options"
-  } else {
-    // workshop tier
-    copy =
-      "AI Lab events are available on the AI Lab tier. Upgrade for live access and exclusive AI Lab replays."
-    cta = "Explore AI Lab"
-  }
+  // Active members should not see upgrade banners.
+  if (userTier) return null
 
   return (
-    <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 flex items-start sm:items-center gap-3 text-sm flex-col sm:flex-row">
-      <div className="flex items-center gap-2 flex-1">
-        <Sparkles className="size-4 text-primary shrink-0" />
-        <span className="text-foreground/90">{copy}</span>
+    <div className="flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm sm:flex-row sm:items-center">
+      <div className="flex flex-1 items-center gap-2">
+        <Sparkles className="size-4 shrink-0 text-primary" />
+
+        <span className="text-foreground/90">
+          Join the Breathwork Community Membership to access live sessions,
+          recordings, and practice resources.
+        </span>
       </div>
+
       <Link
-        href="/subscription"
-        className="text-sm font-medium text-primary hover:underline whitespace-nowrap"
+        href="/plans"
+        className="whitespace-nowrap text-sm font-medium text-primary hover:underline"
       >
-        {cta} →
+        Join Membership →
       </Link>
     </div>
   )

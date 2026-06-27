@@ -7,6 +7,7 @@ import { GP_VALUES } from "@/lib/engagement-constants"
 
 const updateProfileSchema = z.object({
   full_name: z.string().min(1).max(100).optional(),
+  phone: z.string().max(20).nullable().optional(),
   business_name: z.string().max(100).nullable().optional(),
   industry: z.string().max(50).nullable().optional(),
   city: z.string().max(100).nullable().optional(),
@@ -19,7 +20,10 @@ const updateProfileSchema = z.object({
 export async function GET() {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -29,23 +33,49 @@ export async function GET() {
       .from("profiles")
       .select("*")
       .eq("user_id", user.id)
-      .single()
+      .maybeSingle()
 
-    if (error || !profile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 })
+    if (error) {
+      console.error("GET profile error:", error)
+      return NextResponse.json(
+        { error: "Failed to fetch profile" },
+        { status: 500 }
+      )
+    }
+
+    if (!profile) {
+      return NextResponse.json({
+        id: "",
+        user_id: user.id,
+        full_name:
+          user.user_metadata?.full_name ||
+          user.email?.split("@")[0] ||
+          "",
+        phone: "",
+        city: "",
+        bio: "",
+        role: "member",
+      })
     }
 
     return NextResponse.json(profile)
   } catch (error) {
     console.error("GET /api/profile error:", error)
-    return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 })
+
+    return NextResponse.json(
+      { error: "Failed to fetch profile" },
+      { status: 500 }
+    )
   }
 }
 
 export async function PATCH(request: Request) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -56,26 +86,66 @@ export async function PATCH(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: parsed.error.issues },
+        {
+          error: "Invalid input",
+          details: parsed.error.issues,
+        },
         { status: 400 }
       )
     }
 
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .update({ ...parsed.data, updated_at: new Date().toISOString() })
-      .eq("user_id", user.id)
-      .select("*")
-      .single()
+    const admin = createAdminClient()
 
-    if (error) {
-      console.error("Update profile error:", error)
-      return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
+const payload = {
+  user_id: user.id,
+  role: "member",
+  ...parsed.data,
+  updated_at: new Date().toISOString(),
+}
+
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle()
+
+    let profile
+    let error
+
+    if (existingProfile) {
+      const result = await admin
+        .from("profiles")
+        .update(payload)
+        .eq("user_id", user.id)
+        .select("*")
+        .single()
+
+      profile = result.data
+      error = result.error
+    } else {
+      const result = await admin
+        .from("profiles")
+        .insert({
+          ...payload,
+          created_at: new Date().toISOString(),
+        })
+        .select("*")
+        .single()
+
+      profile = result.data
+      error = result.error
     }
 
-    // Award GP for profile setup (once) if business_name and city are now filled
-    if (profile.business_name && profile.city) {
-      const admin = createAdminClient()
+    if (error) {
+      console.error("Profile save error:", error)
+
+      return NextResponse.json(
+        { error: "Failed to save profile" },
+        { status: 500 }
+      )
+    }
+
+    if (profile?.full_name && profile?.city) {
       const { data: alreadyAwarded } = await admin
         .from("engagement_log")
         .select("id")
@@ -92,6 +162,10 @@ export async function PATCH(request: Request) {
     return NextResponse.json(profile)
   } catch (error) {
     console.error("PATCH /api/profile error:", error)
-    return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
+
+    return NextResponse.json(
+      { error: "Failed to save profile" },
+      { status: 500 }
+    )
   }
 }

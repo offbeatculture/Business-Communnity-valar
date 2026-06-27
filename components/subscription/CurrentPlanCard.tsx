@@ -1,81 +1,158 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { formatINR } from "@/lib/plans"
+import { SINGLE_PLAN, formatINR } from "@/lib/plans"
 import type { Subscription } from "@/types"
 
-export function CurrentPlanCard({ subscription }: { subscription: Subscription | null }) {
+type SubscriptionRow = Subscription & {
+  plan_id?: string | null
+  plan_name?: string | null
+  plan_label?: string | null
+  amount_paid?: number | string | null
+  amount_paise?: number | string | null
+  locked_price_paise?: number | string | null
+  expires_at?: string | null
+  recurring_status?: string | null
+  razorpay_subscription_id?: string | null
+}
+
+function toPaise(value: number | string | null | undefined): number {
+  if (typeof value === "number") return value
+  if (typeof value === "string") return Number.parseInt(value, 10) || 0
+  return 0
+}
+
+export function CurrentPlanCard({
+  subscription,
+}: {
+  subscription: Subscription | null
+}) {
   if (!subscription) {
     return (
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Current Plan</CardTitle>
+          <CardTitle>Current Membership</CardTitle>
         </CardHeader>
+
         <CardContent>
-          <p className="text-muted-foreground">No active subscription.</p>
+          <p className="text-sm text-muted-foreground">
+            No active membership found.
+          </p>
         </CardContent>
       </Card>
     )
   }
 
-  const expiresAt = new Date(subscription.expires_at)
-  const now = new Date()
-  const daysRemaining = Math.max(
-    0,
-    Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  )
-  const isExpired = daysRemaining === 0
-  const isExpiringSoon = daysRemaining > 0 && daysRemaining <= 7
+  const sub = subscription as SubscriptionRow
 
-  const planLabels: Record<string, string> = {
-    monthly: "Monthly",
-    annual: "Annual",
-  }
+  const expiresAt = sub.expires_at ? new Date(sub.expires_at) : null
+  const now = new Date()
+
+  const daysRemaining = expiresAt
+    ? Math.max(
+        0,
+        Math.ceil(
+          (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        )
+      )
+    : 0
+
+  const isExpired = !expiresAt || daysRemaining === 0
+  const isExpiringSoon = daysRemaining > 0 && daysRemaining <= 7
+  const isCancelling = sub.recurring_status === "cancelled" && !isExpired
+  const isRecurring = !!sub.razorpay_subscription_id
+
+  const amountPaise =
+    toPaise(sub.locked_price_paise) ||
+    toPaise(sub.amount_paise) ||
+    toPaise(sub.amount_paid) ||
+    SINGLE_PLAN.amountPaise
 
   return (
     <Card className={`mb-6 ${!isExpired ? "border-primary/30" : ""}`}>
-      <CardHeader className="flex-row items-start justify-between">
+      <CardHeader className="flex-row items-start justify-between gap-4">
         <div>
-          <CardTitle>Current Plan</CardTitle>
-          <p className="text-muted-foreground text-sm mt-1">
-            {planLabels[subscription.plan_name] ?? subscription.plan_name}
+          <CardTitle>Current Membership</CardTitle>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            {SINGLE_PLAN.name}
           </p>
         </div>
+
         <Badge
           variant={isExpired ? "destructive" : "secondary"}
           className={
             !isExpired && !isExpiringSoon
-              ? "bg-green-500/10 text-green-500 border-green-500/20"
+              ? "border-green-500/20 bg-green-500/10 text-green-600"
               : isExpiringSoon
-                ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                ? "border-amber-500/20 bg-amber-500/10 text-amber-600"
                 : ""
           }
         >
-          {isExpired ? "Expired" : isExpiringSoon ? "Expiring Soon" : "Active"}
+          {isExpired
+            ? "Expired"
+            : isCancelling
+              ? "Cancelling"
+              : isExpiringSoon
+                ? "Expiring Soon"
+                : "Active"}
         </Badge>
       </CardHeader>
+
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
+        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3 sm:gap-4">
           <div>
-            <p className="text-muted-foreground mb-1">Amount</p>
-            <p className="font-medium tabular-nums">{formatINR(subscription.amount_paid)}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground mb-1">Expires</p>
+            <p className="mb-1 text-muted-foreground">Amount</p>
             <p className="font-medium tabular-nums">
-              {expiresAt.toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
+              {formatINR(amountPaise)}
+              <span className="text-muted-foreground"> / month</span>
             </p>
           </div>
+
           <div>
-            <p className="text-muted-foreground mb-1">Days Left</p>
-            <p className={`font-medium tabular-nums ${isExpired ? "text-destructive" : isExpiringSoon ? "text-amber-500" : ""}`}>
+            <p className="mb-1 text-muted-foreground">
+              {isRecurring && !isCancelling ? "Next Billing" : "Valid Until"}
+            </p>
+
+            <p className="font-medium tabular-nums">
+              {expiresAt
+                ? expiresAt.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "—"}
+            </p>
+          </div>
+
+          <div>
+            <p className="mb-1 text-muted-foreground">Days Left</p>
+
+            <p
+              className={`font-medium tabular-nums ${
+                isExpired
+                  ? "text-destructive"
+                  : isExpiringSoon
+                    ? "text-amber-600"
+                    : ""
+              }`}
+            >
               {isExpired ? "0" : daysRemaining}
             </p>
           </div>
         </div>
+
+        {isRecurring && !isExpired && (
+          <p className="mt-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-muted-foreground">
+            Autopay is active. Your membership renews automatically every month.
+          </p>
+        )}
+
+        {isCancelling && (
+          <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-xs text-muted-foreground">
+            Your membership will stay active until the current billing period
+            ends. You will not be charged again.
+          </p>
+        )}
       </CardContent>
     </Card>
   )

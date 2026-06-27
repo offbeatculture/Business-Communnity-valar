@@ -240,105 +240,177 @@ function VideoSummaryDetail({
   const videoId = item.youtube_video_id
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-3">
-        <Badge variant="secondary" className="bg-purple-500/10 text-purple-500">
-          <Video className="size-3" />
-          Video Summary
-        </Badge>
-        <Badge variant="outline">{item.category}</Badge>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      {/* Header */}
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <Badge variant="secondary" className="bg-primary/10 text-primary">
+            <Video className="size-3" />
+            Recording
+          </Badge>
 
-      <h1 className="text-2xl font-bold mb-2">{item.title}</h1>
-
-      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-6">
-        <span className="flex items-center gap-1">
-          <Eye className="size-4" />
-          {item.view_count} views
-        </span>
-
-        {item.read_time_minutes && (
-          <span className="flex items-center gap-1">
-            <Clock className="size-4" />
-            {item.read_time_minutes} min read
-          </span>
-        )}
-
-        {item.video_duration_minutes && (
-          <span>{item.video_duration_minutes} min video</span>
-        )}
-      </div>
-
-      {videoId && (
-        <div className="aspect-video rounded-lg overflow-hidden mb-6">
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}`}
-            title={item.title}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+          <Badge variant="outline">Breathwork</Badge>
         </div>
-      )}
 
-      {item.one_line_takeaway && (
-        <Card className="mb-6 border-primary/30 bg-primary/5">
-          <CardContent className="flex items-start gap-3 pt-0">
-            <Lightbulb className="size-5 text-primary mt-0.5 shrink-0" />
-            <p className="font-medium">{item.one_line_takeaway}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{item.title}</h1>
+
+        <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Eye className="size-4" />
+            {item.view_count} views
+          </span>
+
+          {item.video_duration_minutes && (
+            <span className="flex items-center gap-1">
+              <Clock className="size-4" />
+              {item.video_duration_minutes} min video
+            </span>
+          )}
+
+          {item.read_time_minutes && (
+            <span>{item.read_time_minutes} min read</span>
+          )}
+        </div>
+      </div>
+
+      {/* Video Card */}
+      {videoId && (
+        <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
+          <CardContent className="p-4 sm:p-5">
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,560px)_1fr] lg:items-center">
+              <div className="overflow-hidden rounded-2xl border border-border bg-black shadow-sm">
+                <div className="aspect-video">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&controls=1&fs=1&iv_load_policy=3&disablekb=1&playsinline=1`}
+                    title={item.title}
+                    className="h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-primary">
+                  Now Playing
+                </p>
+
+                <h2 className="text-xl font-semibold leading-tight">
+                  {item.title}
+                </h2>
+
+                {item.one_line_takeaway && (
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    {item.one_line_takeaway}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <span className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">
+                    Session Video
+                  </span>
+
+                  <span className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">
+                    Recordings
+                  </span>
+
+                  {item.video_duration_minutes && (
+                    <span className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">
+                      {item.video_duration_minutes} min
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Takeaway */}
+      {item.one_line_takeaway && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="flex items-start gap-3 p-4">
+            <Lightbulb className="mt-0.5 size-5 shrink-0 text-primary" />
+            <p className="text-sm font-medium leading-6">
+              {item.one_line_takeaway}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Key Points */}
       {item.key_points && item.key_points.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Key Points</h2>
-          <ul className="space-y-2">
-            {item.key_points.map((kp, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <CheckCircle className="size-4 text-green-500 mt-0.5 shrink-0" />
-                <span className="text-sm">
-                  {kp.point}
-                  {kp.timestamp && (
-                    <span className="text-muted-foreground ml-1">
-                      ({kp.timestamp})
+        <Card className="border-border/70 bg-card shadow-sm">
+          <CardContent className="p-5">
+            <h2 className="mb-4 text-lg font-semibold">Key Points</h2>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {item.key_points.map((kp, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl border border-border/70 bg-background/40 p-4"
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <CheckCircle className="size-4 shrink-0 text-primary" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Point {i + 1}
                     </span>
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+
+                    {kp.timestamp && (
+                      <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-[11px] text-muted-foreground">
+                        {kp.timestamp}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-sm leading-6 text-foreground/80">
+                    {kp.point}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
+      {/* Action Items */}
       {item.action_items && item.action_items.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Action Items</h2>
-          <ol className="space-y-2 list-decimal list-inside">
-            {item.action_items.map((action, i) => (
-              <li key={i} className="text-sm">
-                {action}
-              </li>
-            ))}
-          </ol>
-        </div>
+        <Card className="border-border/70 bg-card shadow-sm">
+          <CardContent className="p-5">
+            <h2 className="mb-4 text-lg font-semibold">Practice Actions</h2>
+
+            <div className="space-y-3">
+              {item.action_items.map((action, i) => (
+                <div
+                  key={i}
+                  className="flex gap-3 rounded-xl border border-border/70 bg-background/40 p-4"
+                >
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                    {i + 1}
+                  </div>
+
+                  <p className="text-sm leading-6 text-foreground/80">
+                    {action}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
+      {/* Summary */}
       {item.full_summary && (
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Full Summary</h2>
-          <div className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-            {item.full_summary}
-          </div>
-        </div>
-      )}
+        <Card className="border-border/70 bg-card shadow-sm">
+          <CardContent className="p-5">
+            <h2 className="mb-4 text-lg font-semibold">Summary</h2>
 
-      <a href={item.youtube_url} target="_blank" rel="noopener noreferrer">
-        <Button variant="outline">
-          <ExternalLink className="size-4 mr-2" />
-          Watch on YouTube
-        </Button>
-      </a>
+            <div className="whitespace-pre-line text-sm leading-7 text-muted-foreground">
+              {item.full_summary}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
