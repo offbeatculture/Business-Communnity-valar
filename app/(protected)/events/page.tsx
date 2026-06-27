@@ -174,7 +174,7 @@ export default async function EventsPage({ searchParams }: Props) {
         )}
       </section>
 
-      <section>
+      {/* <section>
         <h2 className="mb-4 border-l-2 border-[#6F7358]/40 pl-3 font-serif text-xl font-semibold text-[#4B3A25]">
           Past Sessions
         </h2>
@@ -221,7 +221,7 @@ export default async function EventsPage({ searchParams }: Props) {
             )}
           </div>
         )}
-      </section>
+      </section> */}
     </div>
   )
 }
