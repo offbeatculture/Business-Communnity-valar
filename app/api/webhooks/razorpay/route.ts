@@ -396,11 +396,12 @@ async function handleSubscriptionActivated(
     token: rawToken,
   })
 
-  sendWelcomeEmail({
+  await sendWelcomeEmail({
     to: email,
-  }).catch((err) => console.error("Welcome email error:", err))
+    token: rawToken,
+  })
 } catch (err) {
-  console.error("Magic link email error:", err)
+  console.error("Email sending error:", err)
 }
 
   // try {

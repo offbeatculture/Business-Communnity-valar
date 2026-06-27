@@ -257,14 +257,16 @@ ${COACH_NAME}`
 export async function sendWelcomeEmail({
   to,
   name,
+  token,
 }: {
   to: string
   name?: string
+  token: string
 }) {
   const greeting = name ? `Hi ${name}` : "Hi there"
 
+  const loginUrl = `${APP_URL}/auth/magic?token=${token}`
   const whatsappUrl = "https://chat.whatsapp.com/KTATwSgE2fsLdfh0jj7lPp"
-
   const zoomUrl =
     "https://zoom.us/j/93886940408?pwd=AFhvJOdgWMRMYoYiaOqtOyKb3yBXAB.1"
 
@@ -277,7 +279,7 @@ export async function sendWelcomeEmail({
 </head>
 
 <body style="margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background:${DARK_GREEN}; color:${CREAM}; padding:40px 20px;">
-  <div style="max-width:600px; margin:0 auto; background:${CARD_GREEN}; border:1px solid rgba(201,154,46,0.35); border-radius:18px; padding:32px;">
+  <div style="max-width:620px; margin:0 auto; background:${CARD_GREEN}; border:1px solid rgba(201,154,46,0.35); border-radius:18px; padding:32px;">
     
     <p style="margin:0 0 10px; color:${BRAND_COLOR}; font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;">
       ${BRAND_NAME}
@@ -291,18 +293,24 @@ export async function sendWelcomeEmail({
       ${greeting},
     </p>
 
-    <p style="margin:0 0 20px; color:#E7DDC8; font-size:15px; line-height:1.7;">
+    <p style="margin:0 0 22px; color:#E7DDC8; font-size:15px; line-height:1.7;">
       Congratulations on joining the <strong style="color:${CREAM};">Daily Breathwork Membership</strong>.
     </p>
 
     <div style="background:${DARK_GREEN}; border:1px solid rgba(201,154,46,0.25); border-radius:14px; padding:20px; margin:24px 0;">
       <h3 style="margin:0 0 12px; color:${CREAM}; font-size:18px;">
-        Join WhatsApp Community
+        1. Login to the Community
       </h3>
 
-      <p style="margin:0 0 18px; color:#E7DDC8; font-size:14px; line-height:1.6;">
-        Join the official WhatsApp community to receive session updates, reminders, and important announcements.
-      </p>
+      <a href="${loginUrl}" style="background:${BRAND_COLOR}; color:${DARK_GREEN}; padding:13px 24px; border-radius:999px; text-decoration:none; font-weight:700; display:inline-block;">
+        Login to Community
+      </a>
+    </div>
+
+    <div style="background:${DARK_GREEN}; border:1px solid rgba(201,154,46,0.25); border-radius:14px; padding:20px; margin:24px 0;">
+      <h3 style="margin:0 0 12px; color:${CREAM}; font-size:18px;">
+        2. Join WhatsApp Community
+      </h3>
 
       <a href="${whatsappUrl}" style="background:${BRAND_COLOR}; color:${DARK_GREEN}; padding:13px 24px; border-radius:999px; text-decoration:none; font-weight:700; display:inline-block;">
         Join WhatsApp Community
@@ -311,7 +319,7 @@ export async function sendWelcomeEmail({
 
     <div style="background:${DARK_GREEN}; border:1px solid rgba(201,154,46,0.25); border-radius:14px; padding:20px; margin:24px 0;">
       <h3 style="margin:0 0 12px; color:${CREAM}; font-size:18px;">
-        DAILY Morning LIVE Session
+        3. Daily Morning LIVE Session
       </h3>
 
       <p style="margin:0 0 10px; color:#E7DDC8; font-size:14px; line-height:1.6;">
@@ -327,19 +335,9 @@ export async function sendWelcomeEmail({
         6:45 AM to 7:15 AM IST — Breathwork Practice
       </p>
 
-      <p style="margin:0; color:#E7DDC8; font-size:14px; line-height:1.6;">
+      <p style="margin:0 0 18px; color:#E7DDC8; font-size:14px; line-height:1.6;">
         <strong style="color:${CREAM};">Wednesday & Friday:</strong><br />
         6:15 AM to 7:15 AM IST — Workout + Breathwork Practice
-      </p>
-    </div>
-
-    <div style="background:${DARK_GREEN}; border:1px solid rgba(201,154,46,0.25); border-radius:14px; padding:20px; margin:24px 0;">
-      <h3 style="margin:0 0 12px; color:${CREAM}; font-size:18px;">
-        Zoom Meeting Daily Link
-      </h3>
-
-      <p style="margin:0 0 16px; color:#E7DDC8; font-size:14px; line-height:1.6;">
-        Use the same Zoom link daily for the live session.
       </p>
 
       <a href="${zoomUrl}" style="background:${BRAND_COLOR}; color:${DARK_GREEN}; padding:13px 24px; border-radius:999px; text-decoration:none; font-weight:700; display:inline-block;">
@@ -356,7 +354,7 @@ export async function sendWelcomeEmail({
     </div>
 
     <p style="margin:24px 0 0; color:#CDBF9F; font-size:13px; line-height:1.6;">
-      Please save this email so you can easily access the WhatsApp community and daily Zoom session details.
+      Please save this email so you can easily access your community login, WhatsApp group, and daily Zoom session.
     </p>
 
     <hr style="border:none; border-top:1px solid rgba(201,154,46,0.25); margin:28px 0;" />
@@ -373,10 +371,13 @@ export async function sendWelcomeEmail({
 
 Congratulations on joining the Daily Breathwork Membership.
 
-Join Whatsapp Community here:
+1. Login to the community:
+${loginUrl}
+
+2. Join Whatsapp Community here:
 ${whatsappUrl}
 
-DAILY Morning LIVE Session - Daily Breathwork Practice + Workout with KRS
+3. DAILY Morning LIVE Session - Daily Breathwork Practice + Workout with KRS
 
 Day: Monday to Friday
 
@@ -393,7 +394,7 @@ ${zoomUrl}
 Meeting ID: 938 8694 0408
 Passcode: 123
 
-Please save this email so you can easily access the WhatsApp community and daily Zoom session details.
+Please save this email so you can easily access your community login, WhatsApp group, and daily Zoom session.
 
 ${BRAND_NAME}
 ${COACH_NAME}`
