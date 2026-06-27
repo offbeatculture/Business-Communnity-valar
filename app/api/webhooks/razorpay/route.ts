@@ -3,7 +3,7 @@ import crypto from "crypto"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { generateInvoice } from "@/lib/invoice"
 import { createMagicLoginToken } from "@/lib/magic-link"
-import { sendMagicLinkEmail, sendPaymentConfirmationEmail } from "@/lib/ses"
+import { sendMagicLinkEmail, sendPaymentConfirmationEmail,sendWelcomeEmail } from "@/lib/ses"
 import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
 
 const SINGLE_TIER: ProductTier = "membership"
@@ -388,16 +388,30 @@ async function handleSubscriptionActivated(
       })
       .eq("id", session.id)
   }
+ try {
+  const rawToken = await createMagicLoginToken(user.id)
 
-  try {
-    const rawToken = await createMagicLoginToken(user.id)
-    await sendMagicLinkEmail({
-      to: email,
-      token: rawToken,
-    })
-  } catch (err) {
-    console.error("Failed to send magic link email:", err)
-  }
+  await sendMagicLinkEmail({
+    to: email,
+    token: rawToken,
+  })
+
+  sendWelcomeEmail({
+    to: email,
+  }).catch((err) => console.error("Welcome email error:", err))
+} catch (err) {
+  console.error("Magic link email error:", err)
+}
+
+  // try {
+  //   const rawToken = await createMagicLoginToken(user.id)
+  //   await sendMagicLinkEmail({
+  //     to: email,
+  //     token: rawToken,
+  //   })
+  // } catch (err) {
+  //   console.error("Failed to send magic link email:", err)
+  // }
 
   const { data: profile } = await adminClient
     .from("profiles")
