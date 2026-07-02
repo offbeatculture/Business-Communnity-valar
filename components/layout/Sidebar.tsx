@@ -12,18 +12,16 @@ import {
   Lightbulb,
   Sparkles,
   ClipboardCheck,
-  FileQuestion,
   Calendar,
   CircleHelp,
   Leaf,
+  UploadCloud,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
   { label: "Recordings", href: "/content", icon: BookOpen },
-  // { label: "Practice Prompts", href: "/prompts", icon: Sparkles },
-  // { label: "Self Check-ins", href: "/assessment", icon: FileQuestion },
   { label: "Live Sessions", href: "/events", icon: Calendar },
   { label: "Breathwork Community", href: "/community", icon: MessageSquare },
   { label: "My Profile", href: "/profile", icon: User },
@@ -38,11 +36,15 @@ const adminItems = [
   { label: "Support Queries", href: "/admin/support", icon: CircleHelp },
 ]
 
+const recordingAdminItems = [
+  { label: "Upload Recording", href: "/upload-recording", icon: UploadCloud },
+]
+
 type SidebarProps = {
   profile: {
     full_name: string
     avatar_url: string | null
-    role: "member" | "admin"
+    role: "member" | "admin" | "recording_admin"
   } | null
 }
 
@@ -92,6 +94,42 @@ export function Sidebar({ profile }: SidebarProps) {
             </Link>
           )
         })}
+
+        {profile?.role === "recording_admin" && (
+          <>
+            <Separator className="my-4 bg-[#C89B3C]/20" />
+
+            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-[#D8B76A]">
+              Recording Access
+            </p>
+
+            {recordingAdminItems.map((item) => {
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/")
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "border-l-2 border-[#C89B3C] bg-[#F7F0E3] text-[#122015]"
+                      : "text-[#E8DDC8]/70 hover:bg-[#F7F0E3]/8 hover:text-[#F7F0E3]"
+                  )}
+                >
+                  <item.icon
+                    className={cn(
+                      "h-4 w-4",
+                      isActive ? "text-[#8A6A22]" : "text-[#E8DDC8]/60"
+                    )}
+                  />
+                  {item.label}
+                </Link>
+              )
+            })}
+          </>
+        )}
 
         {profile?.role === "admin" && (
           <>

@@ -16,7 +16,10 @@ function createSlug(name: string) {
     .replace(/^-+|-+$/g, "")
 }
 
-async function verifyAdmin() {
+// This allows both:
+// admin = full admin
+// recording_admin = restricted admin who can upload recordings
+async function verifyFolderAccess() {
   const supabase = await createClient()
 
   const {
@@ -33,16 +36,17 @@ async function verifyAdmin() {
     .eq("user_id", user.id)
     .single()
 
-  if (profile?.role !== "admin") {
+  if (profile?.role !== "admin" && profile?.role !== "recording_admin") {
     return { user: null, error: "Forbidden", status: 403 }
   }
 
   return { user, error: null, status: 200 }
 }
 
+// Used by upload form to get folder list
 export async function GET() {
   try {
-    const auth = await verifyAdmin()
+    const auth = await verifyFolderAccess()
 
     if (auth.error) {
       return NextResponse.json(
@@ -76,9 +80,10 @@ export async function GET() {
   }
 }
 
+// Used by upload form to create a new recording folder
 export async function POST(request: Request) {
   try {
-    const auth = await verifyAdmin()
+    const auth = await verifyFolderAccess()
 
     if (auth.error) {
       return NextResponse.json(
@@ -99,28 +104,28 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient()
 
-const folderName = parsed.data.name.trim()
-const baseSlug = createSlug(folderName)
+    const folderName = parsed.data.name.trim()
+    const baseSlug = createSlug(folderName)
 
-const { data: existingFolder } = await admin
-  .from("content_folders")
-  .select("id, name, slug, description, created_at")
-  .ilike("name", folderName)
-  .maybeSingle()
+    const { data: existingFolder } = await admin
+      .from("content_folders")
+      .select("id, name, slug, description, created_at")
+      .ilike("name", folderName)
+      .maybeSingle()
 
-if (existingFolder) {
-  return NextResponse.json({ data: existingFolder }, { status: 200 })
-}
+    if (existingFolder) {
+      return NextResponse.json({ data: existingFolder }, { status: 200 })
+    }
 
-const { data, error } = await admin
-  .from("content_folders")
-  .insert({
-    name: folderName,
-    slug: baseSlug,
-    description: parsed.data.description?.trim() || null,
-  })
-  .select("id, name, slug, description, created_at")
-  .single()
+    const { data, error } = await admin
+      .from("content_folders")
+      .insert({
+        name: folderName,
+        slug: baseSlug,
+        description: parsed.data.description?.trim() || null,
+      })
+      .select("id, name, slug, description, created_at")
+      .single()
 
     if (error) {
       console.error("Create folder error:", error)

@@ -27,9 +27,8 @@ import {
   MessageSquare,
   Shield,
   Lightbulb,
-  Sparkles,
-  FileQuestion,
   Calendar,
+  UploadCloud,
 } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationBell } from "@/components/notifications/NotificationBell"
@@ -39,15 +38,13 @@ type TopBarProps = {
   profile: {
     full_name: string
     avatar_url: string | null
-    role?: "member" | "admin"
+    role?: "member" | "admin" | "recording_admin"
   } | null
 }
 
 const mobileNavItems = [
-    { label: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Home", href: "/dashboard", icon: LayoutDashboard },
   { label: "Recordings", href: "/content", icon: BookOpen },
-  // { label: "Practice Prompts", href: "/prompts", icon: Sparkles },
-  // { label: "Self Check-ins", href: "/assessment", icon: FileQuestion },
   { label: "Live Sessions", href: "/events", icon: Calendar },
   { label: "Breathwork Community", href: "/community", icon: MessageSquare },
   { label: "My Profile", href: "/profile", icon: User },
@@ -56,6 +53,10 @@ const mobileNavItems = [
 const adminItems = [
   { label: "Admin Panel", href: "/admin", icon: Shield },
   { label: "Daily Practice Prompts", href: "/admin/prompts", icon: Lightbulb },
+]
+
+const recordingAdminItems = [
+  { label: "Upload Recording", href: "/upload-recording", icon: UploadCloud },
 ]
 
 export function TopBar({ profile }: TopBarProps) {
@@ -207,6 +208,43 @@ export function TopBar({ profile }: TopBarProps) {
             )
           })}
 
+          {profile?.role === "recording_admin" && (
+            <>
+              <div className="my-2 border-t border-[#C89B3C]/20" />
+
+              <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-[#D8B76A]">
+                Recording Access
+              </p>
+
+              {recordingAdminItems.map((item) => {
+                const isActive =
+                  pathname === item.href || pathname.startsWith(item.href + "/")
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                      isActive
+                        ? "border-l-2 border-[#C89B3C] bg-[#F7F0E3] text-[#122015]"
+                        : "text-[#E8DDC8]/70 hover:bg-[#F7F0E3]/8 hover:text-[#F7F0E3]"
+                    )}
+                  >
+                    <item.icon
+                      className={cn(
+                        "h-4 w-4",
+                        isActive ? "text-[#8A6A22]" : "text-[#E8DDC8]/60"
+                      )}
+                    />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </>
+          )}
+
           {profile?.role === "admin" && (
             <>
               <div className="my-2 border-t border-[#C89B3C]/20" />
@@ -251,13 +289,6 @@ export function TopBar({ profile }: TopBarProps) {
             </span>
             <SupportWidget />
           </div>
-
-          {/* <div className="flex items-center justify-between px-3 py-2.5">
-            <span className="text-sm font-medium text-[#E8DDC8]/70">
-              Dark Mode
-            </span>
-            <ThemeToggle />
-          </div> */}
 
           <div className="my-2 border-t border-[#C89B3C]/20" />
 
