@@ -30,7 +30,7 @@ import {
   Calendar,
   UploadCloud,
 } from "lucide-react"
-import { ThemeToggle } from "@/components/theme-toggle"
+// import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationBell } from "@/components/notifications/NotificationBell"
 import { SupportWidget } from "@/components/support/SupportWidget"
 
@@ -109,9 +109,9 @@ export function TopBar({ profile }: TopBarProps) {
           <NotificationBell />
           <SupportWidget />
 
-          <div className="hidden md:block">
+          {/* <div className="hidden md:block">
             <ThemeToggle />
-          </div>
+          </div> */}
 
           <DropdownMenu>
             <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2 outline-none">
