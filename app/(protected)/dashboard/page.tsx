@@ -465,18 +465,27 @@ function SectionHeader({
         <h2 className="border-l-2 border-primary pl-3 text-base font-semibold">
           {title}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-1 text-sm font-medium text-[#6B5B3E]">
+  {description}
+</p>
       </div>
 
       <Link href={href}>
-        <Button
+      <Button
+  size="sm"
+  className="bg-[#123F25] text-[#F7F0E3] hover:bg-[#0B2A18]"
+>
+  {action}
+  <ArrowRight className="ml-2 size-4" />
+</Button>
+        {/* <Button
           variant="outline"
           size="sm"
           className="border-primary/30 text-primary hover:bg-primary/10"
         >
           {action}
           <ArrowRight className="ml-1 size-4" />
-        </Button>
+        </Button> */}
       </Link>
     </div>
   )
