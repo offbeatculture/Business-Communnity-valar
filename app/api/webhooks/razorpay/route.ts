@@ -3,15 +3,163 @@ import crypto from "crypto"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { generateInvoice } from "@/lib/invoice"
 import { createMagicLoginToken } from "@/lib/magic-link"
-import { sendMagicLinkEmail, sendPaymentConfirmationEmail,sendWelcomeEmail } from "@/lib/ses"
+import {
+  sendMagicLinkEmail,
+  sendPaymentConfirmationEmail,
+  sendWelcomeEmail,
+} from "@/lib/ses"
 import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
 
+type AdminClient = ReturnType<typeof createAdminClient>
+
 const SINGLE_TIER: ProductTier = "membership"
+
+const DEFAULT_ALLOWED_RAZORPAY_PLAN_IDS = ["plan_T5PqUyQl2B5p4t"]
 
 function toNumber(value: unknown, fallback = 0) {
   if (typeof value === "number") return value
   if (typeof value === "string") return Number.parseInt(value, 10)
   return fallback
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object") {
+    return value as Record<string, unknown>
+  }
+
+  return {}
+}
+
+function getString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null
+}
+
+function getNotes(entity: Record<string, unknown>): Record<string, string> {
+  const notes = asRecord(entity.notes)
+  const result: Record<string, string> = {}
+
+  for (const [key, value] of Object.entries(notes)) {
+    if (typeof value === "string") {
+      result[key] = value
+    } else if (typeof value === "number") {
+      result[key] = String(value)
+    }
+  }
+
+  return result
+}
+
+function getAllowedPlanIds() {
+  const fromEnv = (process.env.RAZORPAY_ALLOWED_PLAN_IDS ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean)
+
+  return fromEnv.length > 0 ? fromEnv : DEFAULT_ALLOWED_RAZORPAY_PLAN_IDS
+}
+
+function getRazorpayPlanIdFromNotes(notes: Record<string, unknown>) {
+  const candidates = [
+    getString(notes.razorpay_plan_id),
+    getString(notes.rzp_plan_id),
+    getString(notes.plan_id),
+  ]
+
+  return (
+  candidates.find(
+    (value): value is string =>
+      typeof value === "string" && value.startsWith("plan_")
+  ) ?? null
+)
+}
+
+function isValidSignature({
+  expectedSignature,
+  receivedSignature,
+}: {
+  expectedSignature: string
+  receivedSignature: string
+}) {
+  const expectedBuffer = Buffer.from(expectedSignature)
+  const receivedBuffer = Buffer.from(receivedSignature)
+
+  if (expectedBuffer.length !== receivedBuffer.length) {
+    return false
+  }
+
+  return crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+}
+
+async function resolveWebhookPlanId(event: Record<string, unknown>) {
+  const payload = asRecord(event.payload)
+
+  const subscriptionEntity = asRecord(
+    asRecord(payload.subscription).entity
+  )
+
+  const directSubscriptionPlanId = getString(subscriptionEntity.plan_id)
+
+  if (directSubscriptionPlanId) {
+    return directSubscriptionPlanId
+  }
+
+  const paymentEntity = asRecord(asRecord(payload.payment).entity)
+
+  const paymentNotesPlanId = getRazorpayPlanIdFromNotes(
+    asRecord(paymentEntity.notes)
+  )
+
+  if (paymentNotesPlanId) {
+    return paymentNotesPlanId
+  }
+
+  const paymentSubscriptionId = getString(paymentEntity.subscription_id)
+
+  if (paymentSubscriptionId) {
+    try {
+      const { razorpay } = await import("@/lib/razorpay")
+      const subscription = await razorpay.subscriptions.fetch(
+        paymentSubscriptionId
+      )
+
+const fetchedPlanId = getString(
+  (subscription as unknown as Record<string, unknown>).plan_id
+)
+
+      if (fetchedPlanId) {
+        return fetchedPlanId
+      }
+    } catch (error) {
+      console.error(
+        "Failed to fetch Razorpay subscription for webhook plan filter:",
+        error
+      )
+    }
+  }
+
+  const orderId = getString(paymentEntity.order_id)
+
+  if (orderId) {
+    try {
+      const { razorpay } = await import("@/lib/razorpay")
+      const order = await razorpay.orders.fetch(orderId)
+
+  const orderNotesPlanId = getRazorpayPlanIdFromNotes(
+  asRecord((order as unknown as Record<string, unknown>).notes)
+)
+
+      if (orderNotesPlanId) {
+        return orderNotesPlanId
+      }
+    } catch (error) {
+      console.error(
+        "Failed to fetch Razorpay order for webhook plan filter:",
+        error
+      )
+    }
+  }
+
+  return null
 }
 
 export async function POST(request: Request) {
@@ -20,24 +168,74 @@ export async function POST(request: Request) {
     const signature = request.headers.get("x-razorpay-signature") ?? ""
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET ?? ""
 
+    if (!secret) {
+      return NextResponse.json(
+        { error: "Razorpay webhook secret is missing" },
+        { status: 500 }
+      )
+    }
+
     const expectedSignature = crypto
       .createHmac("sha256", secret)
       .update(body)
       .digest("hex")
 
-    if (expectedSignature !== signature) {
+    if (
+      !isValidSignature({
+        expectedSignature,
+        receivedSignature: signature,
+      })
+    ) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
     }
 
-    const event = JSON.parse(body)
-    const eventType = event.event as string
+    const event = JSON.parse(body) as Record<string, unknown>
+    const eventType = getString(event.event)
+
+    if (!eventType) {
+      return NextResponse.json({ error: "Missing event type" }, { status: 400 })
+    }
+
+    const allowedPlanIds = getAllowedPlanIds()
+    const resolvedPlanId = await resolveWebhookPlanId(event)
+
+    if (!resolvedPlanId || !allowedPlanIds.includes(resolvedPlanId)) {
+      console.warn("[Valar webhook] ignored event for different Razorpay plan", {
+        eventType,
+        resolvedPlanId,
+        allowedPlanIds,
+      })
+
+      return NextResponse.json({
+        message: "Event ignored for different Razorpay plan",
+        planId: resolvedPlanId,
+      })
+    }
 
     const adminClient = createAdminClient()
 
+    const payload = asRecord(event.payload)
+    const paymentEntity = asRecord(asRecord(payload.payment).entity)
+    const subscriptionEntity = asRecord(
+      asRecord(payload.subscription).entity
+    )
+
+    const paymentId = getString(paymentEntity.id)
+    const subscriptionId = getString(subscriptionEntity.id)
+    const headerEventId = getString(request.headers.get("x-razorpay-event-id"))
+    const bodyEventId = getString(event.id)
+
     const dedupeId =
-      eventType === "payment.captured"
-        ? `payment.captured:${event.payload?.payment?.entity?.id}`
-        : `${eventType}:${event.payload?.subscription?.entity?.id}`
+      headerEventId ??
+      bodyEventId ??
+      (paymentId
+        ? `${eventType}:${paymentId}`
+        : subscriptionId
+          ? `${eventType}:${subscriptionId}`
+          : `${eventType}:${crypto
+              .createHash("sha256")
+              .update(body)
+              .digest("hex")}`)
 
     const { error: dedupeError } = await adminClient
       .from("webhook_events")
@@ -86,24 +284,26 @@ export async function POST(request: Request) {
 
 async function handlePaymentCaptured(
   event: Record<string, unknown>,
-  adminClient: ReturnType<typeof createAdminClient>
+  adminClient: AdminClient
 ) {
-  const payment = (event.payload as Record<string, unknown>)
-    ?.payment as Record<string, unknown>
+  const payload = asRecord(event.payload)
+  const entity = asRecord(asRecord(payload.payment).entity)
 
-  const entity = payment?.entity as Record<string, unknown>
+  const razorpayPaymentId = getString(entity.id)
 
-  if (!entity) {
+  if (!razorpayPaymentId) {
     return NextResponse.json({ error: "Missing payment data" }, { status: 400 })
   }
 
-  let notes = (entity.notes ?? {}) as Record<string, string>
+  let notes = getNotes(entity)
 
-  if ((!notes.user_id || !notes.plan_id) && entity.order_id) {
+  const orderId = getString(entity.order_id)
+
+  if ((!notes.user_id || !notes.plan_id) && orderId) {
     try {
       const { razorpay } = await import("@/lib/razorpay")
-      const order = await razorpay.orders.fetch(entity.order_id as string)
-      notes = (order.notes ?? {}) as Record<string, string>
+      const order = await razorpay.orders.fetch(orderId)
+      notes = getNotes(order as unknown as Record<string, unknown>)
     } catch (err) {
       console.error("Failed to fetch Razorpay order notes:", err)
     }
@@ -112,11 +312,20 @@ async function handlePaymentCaptured(
   const userId = notes.user_id
 
   if (!userId) {
-    console.error("Webhook payment.captured: missing user_id in notes")
-    return NextResponse.json({ error: "Missing user_id" }, { status: 400 })
-  }
+    console.warn(
+      "Webhook payment.captured ignored because user_id is missing in notes",
+      {
+        razorpayPaymentId,
+        orderId,
+        subscriptionId: getString(entity.subscription_id),
+      }
+    )
 
-  const razorpayPaymentId = entity.id as string
+    return NextResponse.json({
+      message:
+        "Payment captured ignored because user_id was not available. Subscription event will handle access.",
+    })
+  }
 
   const { data: existing } = await adminClient
     .from("subscriptions")
@@ -152,7 +361,7 @@ async function handlePaymentCaptured(
       user_id: userId,
 
       razorpay_payment_id: razorpayPaymentId,
-      razorpay_order_id: entity.order_id as string,
+      razorpay_order_id: orderId,
       razorpay_subscription_id: null,
       razorpay_plan_id: null,
 
@@ -218,14 +427,13 @@ async function handlePaymentCaptured(
 
 async function handleSubscriptionActivated(
   event: Record<string, unknown>,
-  adminClient: ReturnType<typeof createAdminClient>
+  adminClient: AdminClient
 ) {
-  const payload = event.payload as Record<string, unknown>
+  const payload = asRecord(event.payload)
 
-  const subEntity = (payload?.subscription as Record<string, unknown>)
-    ?.entity as Record<string, unknown>
+  const subEntity = asRecord(asRecord(payload.subscription).entity)
 
-  if (!subEntity) {
+  if (!subEntity.id) {
     return NextResponse.json(
       { error: "Missing subscription data" },
       { status: 400 }
@@ -233,10 +441,10 @@ async function handleSubscriptionActivated(
   }
 
   const rzpSubscriptionId = subEntity.id as string
-  const notes = (subEntity.notes ?? {}) as Record<string, string>
+  const notes = getNotes(subEntity)
 
   const sessionId = notes.onboarding_session_id
-  const email = notes.email
+  const email = notes.email ?? notes.community_email
 
   if (!email) {
     console.error("Webhook subscription.activated: missing email in notes")
@@ -324,9 +532,6 @@ async function handleSubscriptionActivated(
   const razorpayPlanId =
     typeof subEntity.plan_id === "string" ? subEntity.plan_id : null
 
-  const planAmountFromRazorpay =
-    typeof subEntity.plan_amount === "number" ? subEntity.plan_amount : null
-
   const lockedPricePaise = SINGLE_PLAN.amountPaise
 
   const startsAt = new Date()
@@ -388,31 +593,22 @@ async function handleSubscriptionActivated(
       })
       .eq("id", session.id)
   }
- try {
-  const rawToken = await createMagicLoginToken(user.id)
 
-  await sendMagicLinkEmail({
-    to: email,
-    token: rawToken,
-  })
+  try {
+    const rawToken = await createMagicLoginToken(user.id)
 
-  await sendWelcomeEmail({
-    to: email,
-    token: rawToken,
-  })
-} catch (err) {
-  console.error("Email sending error:", err)
-}
+    await sendMagicLinkEmail({
+      to: email,
+      token: rawToken,
+    })
 
-  // try {
-  //   const rawToken = await createMagicLoginToken(user.id)
-  //   await sendMagicLinkEmail({
-  //     to: email,
-  //     token: rawToken,
-  //   })
-  // } catch (err) {
-  //   console.error("Failed to send magic link email:", err)
-  // }
+    await sendWelcomeEmail({
+      to: email,
+      token: rawToken,
+    })
+  } catch (err) {
+    console.error("Email sending error:", err)
+  }
 
   const { data: profile } = await adminClient
     .from("profiles")
@@ -453,14 +649,13 @@ async function handleSubscriptionActivated(
 
 async function handleSubscriptionCharged(
   event: Record<string, unknown>,
-  adminClient: ReturnType<typeof createAdminClient>
+  adminClient: AdminClient
 ) {
-  const payload = event.payload as Record<string, unknown>
+  const payload = asRecord(event.payload)
 
-  const subEntity = (payload?.subscription as Record<string, unknown>)
-    ?.entity as Record<string, unknown>
+  const subEntity = asRecord(asRecord(payload.subscription).entity)
 
-  if (!subEntity) {
+  if (!subEntity.id) {
     return NextResponse.json(
       { error: "Missing subscription data" },
       { status: 400 }
@@ -471,9 +666,7 @@ async function handleSubscriptionCharged(
 
   const { data: subscription } = await adminClient
     .from("subscriptions")
-    .select(
-      "id, user_id, plan_label, base_amount_paise, locked_price_paise"
-    )
+    .select("id, user_id, plan_label, base_amount_paise, locked_price_paise")
     .eq("razorpay_subscription_id", rzpSubscriptionId)
     .maybeSingle()
 
@@ -541,20 +734,19 @@ async function handleSubscriptionCharged(
 }
 
 // =============================================
-// Subscription cancelled
+// Subscription cancelled / completed status
 // =============================================
 
 async function handleSubscriptionStatusChange(
   event: Record<string, unknown>,
-  adminClient: ReturnType<typeof createAdminClient>,
+  adminClient: AdminClient,
   newStatus: "cancelled" | "completed"
 ) {
-  const payload = event.payload as Record<string, unknown>
+  const payload = asRecord(event.payload)
 
-  const subEntity = (payload?.subscription as Record<string, unknown>)
-    ?.entity as Record<string, unknown>
+  const subEntity = asRecord(asRecord(payload.subscription).entity)
 
-  if (!subEntity) {
+  if (!subEntity.id) {
     return NextResponse.json(
       { error: "Missing subscription data" },
       { status: 400 }
@@ -580,14 +772,13 @@ async function handleSubscriptionStatusChange(
 
 async function handleSubscriptionCompleted(
   event: Record<string, unknown>,
-  adminClient: ReturnType<typeof createAdminClient>
+  adminClient: AdminClient
 ) {
-  const payload = event.payload as Record<string, unknown>
+  const payload = asRecord(event.payload)
 
-  const subEntity = (payload?.subscription as Record<string, unknown>)
-    ?.entity as Record<string, unknown>
+  const subEntity = asRecord(asRecord(payload.subscription).entity)
 
-  if (!subEntity) {
+  if (!subEntity.id) {
     return NextResponse.json(
       { error: "Missing subscription data" },
       { status: 400 }
