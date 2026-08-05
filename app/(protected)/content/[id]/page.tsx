@@ -90,7 +90,7 @@ export default async function ContentDetailPage({ params }: Props) {
 
       <Link
         href="/content"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-[#6B4F16] hover:text-[#123F25]"
       >
         <ArrowLeft className="size-4" />
         Back to Library
@@ -243,14 +243,22 @@ function VideoSummaryDetail({
     <div className="mx-auto max-w-5xl space-y-6">
       {/* Header */}
       <div>
-        <div className="mb-3 flex items-center gap-2">
-          <Badge variant="secondary" className="bg-primary/10 text-primary">
-            <Video className="size-3" />
-            Recording
-          </Badge>
+  <div className="mb-3 flex items-center gap-2">
+    <Badge
+      variant="secondary"
+      className="bg-[#D4A936] text-[#122015] font-bold"
+    >
+      <Video className="size-3" />
+      Recording
+    </Badge>
 
-          <Badge variant="outline">Breathwork</Badge>
-        </div>
+    <Badge
+      variant="outline"
+      className="border-[#123F25] bg-[#F7F0E3] text-[#123F25] font-bold"
+    >
+      Breathwork
+    </Badge>
+  </div>
 
         <h1 className="text-2xl font-bold tracking-tight">{item.title}</h1>
 
