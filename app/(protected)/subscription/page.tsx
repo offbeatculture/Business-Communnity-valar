@@ -93,7 +93,7 @@ export default async function SubscriptionPage() {
         </h1>
 
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage your Breathwork Community Membership and payment history.
+          Manage your Lifinity Membership and payment history.
         </p>
       </div>
 

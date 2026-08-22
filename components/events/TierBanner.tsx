@@ -16,7 +16,7 @@ export function TierBanner({ userTier }: TierBannerProps) {
         <Sparkles className="size-4 shrink-0 text-primary" />
 
         <span className="text-foreground/90">
-          Join the Breathwork Community Membership to access live sessions,
+          Join the Lifinity Membership to access live sessions,
           recordings, and practice resources.
         </span>
       </div>

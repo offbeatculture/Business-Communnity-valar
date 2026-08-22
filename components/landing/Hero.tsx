@@ -60,7 +60,7 @@ export function Hero() {
           <div className="text-center lg:text-left">
             <div className="mb-5 inline-flex items-center justify-center gap-2 rounded-full border border-[#C89B3C]/30 bg-[#C89B3C]/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#D8B76A] lg:justify-start">
               <Leaf className="size-3.5" />
-              Daily Breathwork Membership
+              Lifinity Membership
             </div>
 
             <p className="mb-4 text-sm font-medium uppercase tracking-[0.28em] text-[#C89B3C]">
@@ -100,7 +100,7 @@ export function Hero() {
                 </p>
 
                 <h3 className="font-serif text-3xl font-semibold leading-tight">
-                  Daily Breathwork Membership
+                  Lifinity Membership
                 </h3>
 
                 <div className="mt-5 flex items-end justify-center gap-1">

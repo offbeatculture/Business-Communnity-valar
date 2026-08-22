@@ -21,8 +21,10 @@ export const SAC_CODE = "998431"
 
 export const SINGLE_PLAN = {
   id: "monthly",
-  name: "Breathwork Community Membership",
-  label: "Breathwork Community Membership",
+  // name: "Breathwork Community Membership",
+  name: "Lifinity Membership",
+  // label: "Breathwork Community Membership",
+  label: "Lifinity Membership",
   description: "Monthly access to Dr Valar's Breathwork Community.",
   amountPaise: 99900,
   amountRupees: 999,

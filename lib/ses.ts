@@ -16,7 +16,7 @@ const APP_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
   "http://localhost:3000"
 
-const BRAND_NAME = "Daily Breathwork Membership"
+const BRAND_NAME = " Lifinity Membership"
 const COACH_NAME = "Dr. Valarmathi Srinivasan"
 const BRAND_COLOR = "#C99A2E"
 const DARK_GREEN = "#102719"
@@ -121,7 +121,7 @@ export async function sendMagicLinkEmail({
     </p>
 
     <p style="margin:0 0 20px; color:#E7DDC8; font-size:15px; line-height:1.7;">
-      Your Daily Breathwork Membership access is ready. Click the button below to access your account and continue your setup.
+      Your  Lifinity Membership access is ready. Click the button below to access your account and continue your setup.
     </p>
 
     <div style="margin:28px 0;">
@@ -150,7 +150,7 @@ export async function sendMagicLinkEmail({
 
   const text = `${greeting},
 
-Your Daily Breathwork Membership access is ready.
+Your  Lifinity Membershipaccess is ready.
 
 Access your account here:
 ${magicUrl}
@@ -204,7 +204,7 @@ export async function sendPaymentConfirmationEmail({
     </p>
 
     <p style="margin:0 0 20px; color:#E7DDC8; font-size:15px; line-height:1.7;">
-      Thank you. Your payment for the Daily Breathwork Membership has been received successfully.
+      Thank you. Your payment for the  Lifinity Membership has been received successfully.
     </p>
 
     <div style="background:${DARK_GREEN}; border:1px solid rgba(201,154,46,0.25); border-radius:14px; padding:20px; margin:24px 0;">
@@ -286,7 +286,7 @@ export async function sendWelcomeEmail({
     </p>
 
     <h2 style="margin:0 0 18px; color:${CREAM}; font-size:28px; line-height:1.25;">
-      Welcome to the Daily Breathwork Membership
+      Welcome to the  Lifinity Membership
     </h2>
 
     <p style="margin:0 0 16px; color:${CREAM}; font-size:15px; line-height:1.7;">
@@ -294,7 +294,7 @@ export async function sendWelcomeEmail({
     </p>
 
     <p style="margin:0 0 22px; color:#E7DDC8; font-size:15px; line-height:1.7;">
-      Congratulations on joining the <strong style="color:${CREAM};">Daily Breathwork Membership</strong>.
+      Congratulations on joining the <strong style="color:${CREAM};"> Lifinity Membership</strong>.
     </p>
 
     <div style="background:${DARK_GREEN}; border:1px solid rgba(201,154,46,0.25); border-radius:14px; padding:20px; margin:24px 0;">
@@ -369,7 +369,7 @@ export async function sendWelcomeEmail({
 
   const text = `${greeting},
 
-Congratulations on joining the Daily Breathwork Membership.
+Congratulations on joining the  Lifinity Membership.
 
 1. Login to the community:
 ${loginUrl}
@@ -401,7 +401,7 @@ ${COACH_NAME}`
 
   return sendEmail({
     to,
-    subject: "Welcome to the Daily Breathwork Membership",
+    subject: "Welcome to the  Lifinity Membership",
     html,
     text,
   })

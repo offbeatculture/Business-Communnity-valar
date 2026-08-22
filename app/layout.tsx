@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Daily Breathwork Membership | Dr. Valarmathi Srinivasan",
+  title: " Lifinity Membership | Dr. Valarmathi Srinivasan",
   description:
     "Guided breathwork membership with Dr. Valarmathi Srinivasan for calmness, clarity, emotional balance, and daily wellbeing.",
 };

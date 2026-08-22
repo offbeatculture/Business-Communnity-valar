@@ -51,7 +51,7 @@ export default async function CommunityPage({ searchParams }: Props) {
       city ? ` from ${city}` : ""
     }.
 
-I joined this Daily Breathwork community because 
+I joined this Lifinity  community because 
 
 One thing I want to build consistency with is `
 
@@ -90,7 +90,7 @@ One thing I want to build consistency with is `
       <div className="mb-5">
         <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#C89B3C]/30 bg-[#F7F0E3] px-3 py-1 text-xs font-medium text-[#8A6A22]">
           <MessageSquare className="size-3.5" />
-          Daily Breathwork Community
+         Lifinity Community
         </div>
 
         <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#4B3A25] sm:text-4xl">

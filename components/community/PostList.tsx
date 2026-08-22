@@ -75,7 +75,7 @@ export function PostList({
         icon: <MessageSquare className="size-8 text-[#C89B3C]" />,
         title: "You have not shared yet",
         description:
-          "Share your first practice win, question, or reflection with the Daily Breathwork community.",
+          "Share your first practice win, question, or reflection with the Lifinity community.",
         ctaHref: "/community?compose=introduction",
         ctaLabel: "Create first reflection",
       }

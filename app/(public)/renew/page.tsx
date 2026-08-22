@@ -35,7 +35,7 @@ const plans: RenewPlan[] = [
     id: "ai_lab_monthly",
     tier: "ai_lab",
     tierLabel: "BREATHWORK MEMBERSHIP",
-    name: "Daily Breathwork Membership",
+    name: " Lifinity Membership",
     price: "₹999",
     description:
       "Guided breathwork practices, live sessions, recordings, and community support with Dr. Valarmathi Srinivasan.",
@@ -46,7 +46,7 @@ const plans: RenewPlan[] = [
     features: [
       "Guided breathwork sessions with Dr. Valarmathi Srinivasan",
       "Simple daily practices for calmness and emotional balance",
-      "Access to the Daily Breathwork community",
+      "Access to the Lifinity community",
       "Immediate access to session recordings",
       "Support to build consistency in your breathing practice",
     ],
@@ -120,7 +120,7 @@ export default function RenewPage() {
 
             <h1 className="max-w-xl text-4xl font-bold tracking-tight text-[#122015] sm:text-5xl">
               Renew your access to{" "}
-              <span className="text-[#C89B3C]">Daily Breathwork</span>
+              <span className="text-[#C89B3C]"> Daily Breathwork</span>
             </h1>
 
             <p className="mt-5 max-w-xl text-base leading-7 text-[#5D4B33]">
