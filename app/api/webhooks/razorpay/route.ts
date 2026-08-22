@@ -9,6 +9,7 @@ import {
   sendWelcomeEmail,
 } from "@/lib/ses"
 import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
+import { sendValarPaymentAlert } from "@/lib/slack"
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
@@ -66,11 +67,11 @@ function getRazorpayPlanIdFromNotes(notes: Record<string, unknown>) {
   ]
 
   return (
-  candidates.find(
-    (value): value is string =>
-      typeof value === "string" && value.startsWith("plan_")
-  ) ?? null
-)
+    candidates.find(
+      (value): value is string =>
+        typeof value === "string" && value.startsWith("plan_")
+    ) ?? null
+  )
 }
 
 function isValidSignature({
@@ -93,9 +94,7 @@ function isValidSignature({
 async function resolveWebhookPlanId(event: Record<string, unknown>) {
   const payload = asRecord(event.payload)
 
-  const subscriptionEntity = asRecord(
-    asRecord(payload.subscription).entity
-  )
+  const subscriptionEntity = asRecord(asRecord(payload.subscription).entity)
 
   const directSubscriptionPlanId = getString(subscriptionEntity.plan_id)
 
@@ -122,9 +121,9 @@ async function resolveWebhookPlanId(event: Record<string, unknown>) {
         paymentSubscriptionId
       )
 
-const fetchedPlanId = getString(
-  (subscription as unknown as Record<string, unknown>).plan_id
-)
+      const fetchedPlanId = getString(
+        (subscription as unknown as Record<string, unknown>).plan_id
+      )
 
       if (fetchedPlanId) {
         return fetchedPlanId
@@ -144,9 +143,9 @@ const fetchedPlanId = getString(
       const { razorpay } = await import("@/lib/razorpay")
       const order = await razorpay.orders.fetch(orderId)
 
-  const orderNotesPlanId = getRazorpayPlanIdFromNotes(
-  asRecord((order as unknown as Record<string, unknown>).notes)
-)
+      const orderNotesPlanId = getRazorpayPlanIdFromNotes(
+        asRecord((order as unknown as Record<string, unknown>).notes)
+      )
 
       if (orderNotesPlanId) {
         return orderNotesPlanId
@@ -216,9 +215,7 @@ export async function POST(request: Request) {
 
     const payload = asRecord(event.payload)
     const paymentEntity = asRecord(asRecord(payload.payment).entity)
-    const subscriptionEntity = asRecord(
-      asRecord(payload.subscription).entity
-    )
+    const subscriptionEntity = asRecord(asRecord(payload.subscription).entity)
 
     const paymentId = getString(paymentEntity.id)
     const subscriptionId = getString(subscriptionEntity.id)
@@ -401,7 +398,7 @@ async function handlePaymentCaptured(
 
   const { data: profile } = await adminClient
     .from("profiles")
-    .select("full_name, gstin, business_name")
+    .select("full_name, phone, gstin, business_name")
     .eq("user_id", userId)
     .single()
 
@@ -412,11 +409,21 @@ async function handlePaymentCaptured(
       planLabel: SINGLE_PLAN.name,
       basePaise: baseAmount,
       customerName: profile?.full_name ?? "Customer",
-      customerEmail: (entity.email as string) ?? "",
+      customerEmail: getString(entity.email) ?? "",
       customerGstin: profile?.gstin,
       customerBusinessName: profile?.business_name,
     }).catch((err) => console.error("Webhook invoice error:", err))
   }
+
+  sendValarPaymentAlert({
+    customerName: profile?.full_name ?? "Customer",
+    customerEmail: getString(entity.email) ?? "",
+    customerPhone: profile?.phone ?? getString(entity.contact),
+    amountPaise: amountPaid,
+    paymentType: "New Payment",
+    source: "Razorpay",
+    razorpayPaymentId,
+  }).catch((err) => console.error("Slack payment alert error:", err))
 
   return NextResponse.json({ message: "Payment recorded" })
 }
@@ -612,7 +619,7 @@ async function handleSubscriptionActivated(
 
   const { data: profile } = await adminClient
     .from("profiles")
-    .select("full_name, gstin, business_name")
+    .select("full_name, phone, gstin, business_name")
     .eq("user_id", user.id)
     .single()
 
@@ -636,6 +643,16 @@ async function handleSubscriptionActivated(
     amount: `₹${(lockedPricePaise / 100).toFixed(2)}`,
   }).catch((err) => console.error("Payment confirmation email error:", err))
 
+  sendValarPaymentAlert({
+    customerName: profile?.full_name ?? email,
+    customerEmail: email,
+    customerPhone: profile?.phone ?? notes.phone ?? null,
+    amountPaise: lockedPricePaise,
+    paymentType: "New Subscription",
+    source: "Razorpay",
+    razorpaySubscriptionId: rzpSubscriptionId,
+  }).catch((err) => console.error("Slack subscription alert error:", err))
+
   return NextResponse.json({
     message: "Subscription activated",
     planName: SINGLE_PLAN.name,
@@ -654,6 +671,8 @@ async function handleSubscriptionCharged(
   const payload = asRecord(event.payload)
 
   const subEntity = asRecord(asRecord(payload.subscription).entity)
+  const paymentEntity = asRecord(asRecord(payload.payment).entity)
+  const razorpayPaymentId = getString(paymentEntity.id)
 
   if (!subEntity.id) {
     return NextResponse.json(
@@ -666,7 +685,9 @@ async function handleSubscriptionCharged(
 
   const { data: subscription } = await adminClient
     .from("subscriptions")
-    .select("id, user_id, plan_label, base_amount_paise, locked_price_paise")
+    .select(
+      "id, user_id, plan_label, base_amount_paise, locked_price_paise, starts_at"
+    )
     .eq("razorpay_subscription_id", rzpSubscriptionId)
     .maybeSingle()
 
@@ -700,9 +721,11 @@ async function handleSubscriptionCharged(
     subscription.base_amount_paise ??
     SINGLE_PLAN.amountPaise
 
+  const chargedAmountPaise = toNumber(paymentEntity.amount, renewalPaise)
+
   const { data: profile } = await adminClient
     .from("profiles")
-    .select("full_name, gstin, business_name")
+    .select("full_name, phone, gstin, business_name")
     .eq("user_id", subscription.user_id)
     .single()
 
@@ -728,6 +751,26 @@ async function handleSubscriptionCharged(
       planLabel: subscription.plan_label ?? SINGLE_PLAN.name,
       amount: `₹${(renewalPaise / 100).toFixed(2)}`,
     }).catch((err) => console.error("Renewal email error:", err))
+  }
+
+  const subscriptionStartedAt = subscription.starts_at
+    ? new Date(subscription.starts_at).getTime()
+    : 0
+
+  const isLikelyRenewal =
+    subscriptionStartedAt < Date.now() - 6 * 60 * 60 * 1000
+
+  if (isLikelyRenewal && userData?.user?.email) {
+    sendValarPaymentAlert({
+      customerName: profile?.full_name ?? "Customer",
+      customerEmail: userData.user.email,
+      customerPhone: profile?.phone ?? userData.user.phone ?? null,
+      amountPaise: chargedAmountPaise,
+      paymentType: "Renewal",
+      source: "Razorpay",
+      razorpayPaymentId,
+      razorpaySubscriptionId: rzpSubscriptionId,
+    }).catch((err) => console.error("Slack renewal alert error:", err))
   }
 
   return NextResponse.json({ message: "Subscription renewed" })

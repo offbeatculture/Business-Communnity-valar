@@ -16,6 +16,9 @@ import {
   CircleHelp,
   Leaf,
   UploadCloud,
+  BarChart3,
+  KeyRound,
+  LifeBuoy,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
@@ -28,11 +31,14 @@ const navItems = [
 ]
 
 const adminItems = [
+  { label: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
   { label: "Admin Panel", href: "/admin", icon: Shield },
+  { label: "Temp Password", href: "/admin/temp-password", icon: KeyRound },
   { label: "Live Sessions", href: "/admin/events", icon: Calendar },
   { label: "Daily Practice Prompts", href: "/admin/prompts", icon: Lightbulb },
   { label: "Practice Prompt Library", href: "/admin/prompts-library", icon: Sparkles },
   { label: "Wellbeing Check-ins", href: "/admin/assessment", icon: ClipboardCheck },
+  { label: "Community Issues", href: "/admin/community-issues", icon: LifeBuoy },
   { label: "Support Queries", href: "/admin/support", icon: CircleHelp },
 ]
 
@@ -52,7 +58,7 @@ export function Sidebar({ profile }: SidebarProps) {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden border-r border-[#C89B3C]/20 bg-[#122015] text-[#F7F0E3] md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
+    <aside className="hidden overflow-hidden border-r border-[#C89B3C]/20 bg-[#122015] text-[#F7F0E3] md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
       <div className="flex items-center gap-3 border-b border-[#C89B3C]/20 px-6 py-5">
         <div className="flex size-9 items-center justify-center rounded-full bg-[#C89B3C]/12">
           <Leaf className="h-5 w-5 text-[#D8B76A]" />
@@ -68,7 +74,7 @@ export function Sidebar({ profile }: SidebarProps) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4 pb-24">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/")
