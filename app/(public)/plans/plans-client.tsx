@@ -94,7 +94,8 @@ export default function PlansClient({
 
     hasAutoStarted.current = true
     handleSubscribe()
-  }, [autoCheckout, loading])
+  // }, [autoCheckout, loading])
+    }, [autoCheckout])
 
   if (!sessionId) {
     return (

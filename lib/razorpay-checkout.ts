@@ -168,6 +168,10 @@ export async function openRazorpaySubscriptionCheckout(
       color: "#C99A2E",
     },
     handler: async (response: RazorpayResponse) => {
+      console.log("RZP subscription response:", response)
+
+      const subId = response.razorpay_subscription_id ?? params.subscriptionId
+
       try {
         const res = await fetch("/api/onboarding/verify", {
           method: "POST",
@@ -176,7 +180,7 @@ export async function openRazorpaySubscriptionCheckout(
           },
           body: JSON.stringify({
             razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_subscription_id: response.razorpay_subscription_id,
+            razorpay_subscription_id: subId,
             razorpay_signature: response.razorpay_signature,
             session_id: params.sessionId,
           }),
@@ -198,7 +202,7 @@ export async function openRazorpaySubscriptionCheckout(
       }
     },
     modal: {
-      ondismiss: () => onFailure("Payment cancelled"),
+      ondismiss: () => onFailure("Password cancelled"),
     },
   }
 
