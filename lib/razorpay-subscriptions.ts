@@ -6,7 +6,7 @@ import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
 // Razorpay subscription helpers — Single Plan
 //
 // Single active plan:
-// Breathwork Community Membership — ₹999/month
+// Breathwork Community Membership — ₹1499/month
 //
 // Required env:
 // RAZORPAY_PLAN_ID_MONTHLY=plan_xxxxxxxxxxxxx

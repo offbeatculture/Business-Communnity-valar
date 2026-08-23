@@ -36,7 +36,7 @@ const plans: RenewPlan[] = [
     tier: "ai_lab",
     tierLabel: "BREATHWORK MEMBERSHIP",
     name: " Lifinity Membership",
-    price: "₹999",
+    price: "₹1499",
     description:
       "Guided breathwork practices, live sessions, recordings, and community support with Dr. Valarmathi Srinivasan.",
     badge: "Recommended",

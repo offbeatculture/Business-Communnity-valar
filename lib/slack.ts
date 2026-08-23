@@ -9,7 +9,7 @@ type ValarPaymentAlertInput = {
   razorpaySubscriptionId?: string | null
 }
 
-const VALAR_PAYMENT_ALERT_AMOUNT_PAISE = 99900
+const VALAR_PAYMENT_ALERT_AMOUNT_PAISE = 149900
 
 function formatAmount(amountPaise: number) {
   return `₹${Math.round(amountPaise / 100).toLocaleString("en-IN")}`

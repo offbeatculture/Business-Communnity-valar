@@ -145,7 +145,7 @@ export function Hero() {
 
                 <div className="flex items-end justify-center gap-2">
                   <span className="text-5xl font-black tracking-tight text-[#F7F0E3]">
-                    ₹999
+                    ₹1499
                   </span>
                   <span className="pb-1.5 text-base text-[#E8DDC8]/65">
                     /month
@@ -159,7 +159,7 @@ export function Hero() {
               </div>
 
               <p className="mt-4 rounded-full bg-[#D8B76A]/10 px-4 py-2 text-sm font-semibold text-[#D8B76A]">
-                Stays ₹999 as long as you’re a member
+                Stays ₹1499 as long as you’re a member
               </p>
             </div>
 
@@ -178,7 +178,7 @@ export function Hero() {
                   You pay
                 </span>
                 <span className="text-2xl font-black text-[#F7F0E3]">
-                  ₹999/month
+                  ₹1499/month
                 </span>
               </div>
             </div>
