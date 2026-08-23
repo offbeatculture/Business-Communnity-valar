@@ -202,7 +202,7 @@ export async function openRazorpaySubscriptionCheckout(
       }
     },
     modal: {
-      ondismiss: () => onFailure("Password cancelled"),
+      ondismiss: () => onFailure("Payment cancelled"),
     },
   }
 
