@@ -51,7 +51,6 @@ export function Hero() {
 
   const features = [
     "4 live Kosha sessions every month",
-    "4 live Q&As with Dr. Valar",
     "Personal Kosha Scan every 25 days",
     "7-day Kosha challenge inside the app",
     "Valar Emotions AI for quick support",
@@ -89,20 +88,28 @@ export function Hero() {
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            {features.map((feature) => (
-              <div
-                key={feature}
-                className="flex items-start gap-3 rounded-2xl border border-[#C89B3C]/20 bg-[#1F2A1B]/60 px-4 py-3"
-              >
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#C89B3C]/15">
-                  <Check className="size-3.5 text-[#D8B76A]" />
-                </span>
+            {features.map((feature, index) => {
+              const isLast = index === features.length - 1
 
-                <span className="text-sm leading-6 text-[#E8DDC8]/75">
-                  {feature}
-                </span>
-              </div>
-            ))}
+              return (
+                <div
+                  key={feature}
+                  className={`flex items-start gap-3 rounded-2xl border border-[#C89B3C]/20 bg-[#1F2A1B]/60 px-4 py-3 ${
+                    isLast
+                      ? "sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.375rem)]"
+                      : ""
+                  }`}
+                >
+                  <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#C89B3C]/15">
+                    <Check className="size-3.5 text-[#D8B76A]" />
+                  </span>
+
+                  <span className="text-sm leading-6 text-[#E8DDC8]/75">
+                    {feature}
+                  </span>
+                </div>
+              )
+            })}
           </div>
 
           <p className="mt-6 text-sm text-[#E8DDC8]/65">
