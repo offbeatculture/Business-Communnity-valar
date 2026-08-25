@@ -218,7 +218,7 @@ export default async function CommunityIssuesPage() {
       <div className="mb-8">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#C89B3C]/25 bg-[#122015] px-4 py-2 text-sm font-semibold text-[#D8B76A]">
           <LifeBuoy className="h-4 w-4" />
-          Daily Breathwork Support
+         Lifinity Breathwork Support
         </div>
 
         <h1 className="text-3xl font-bold">Community Issues</h1>

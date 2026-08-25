@@ -132,7 +132,7 @@ export default async function EventsPage({ searchParams }: Props) {
     <div className="mx-auto max-w-5xl pb-10 text-[#4B3A25]">
       <div className="mb-5">
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#8A6A22]">
-          Daily Breathwork
+          Lifinity Breathwork
         </p>
 
         <h1 className="font-serif text-3xl font-semibold text-[#4B3A25] sm:text-4xl">

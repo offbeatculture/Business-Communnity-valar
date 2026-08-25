@@ -39,7 +39,7 @@ export function PricingSection() {
               </p>
 
               <p className="mb-1 text-5xl font-bold tracking-tight">
-                ₹999
+                ₹1499
                 <span className="ml-1 text-sm font-normal text-[#E8DDC8]/55">
                   /month
                 </span>

@@ -19,10 +19,20 @@ export default function ResetPasswordPage() {
     setError("")
     setLoading(true)
 
+    // const supabase = createClient()
+    // const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    //   // redirectTo: `${window.location.origin}/auth/confirm`,
+    //   redirectTo: `${window.location.origin}/auth/confirm?next=/set-password`,
+    // })
     const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/confirm`,
-    })
+
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+  window.location.origin
+
+const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: `${appUrl}/auth/confirm?next=/set-password`,
+})
 
     if (error) {
       setError(error.message)
