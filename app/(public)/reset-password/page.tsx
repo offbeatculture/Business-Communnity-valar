@@ -5,7 +5,13 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Users, ArrowLeft } from "lucide-react"
 
 export default function ResetPasswordPage() {
@@ -19,20 +25,15 @@ export default function ResetPasswordPage() {
     setError("")
     setLoading(true)
 
-    // const supabase = createClient()
-    // const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    //   // redirectTo: `${window.location.origin}/auth/confirm`,
-    //   redirectTo: `${window.location.origin}/auth/confirm?next=/set-password`,
-    // })
     const supabase = createClient()
 
-const appUrl =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-  window.location.origin
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+      window.location.origin
 
-const { error } = await supabase.auth.resetPasswordForEmail(email, {
-  redirectTo: `${appUrl}/auth/confirm?next=/set-password`,
-})
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${appUrl}/auth/confirm?next=/set-password`,
+    })
 
     if (error) {
       setError(error.message)
@@ -54,13 +55,16 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
               <span className="text-2xl font-bold">Community</span>
             </div>
           </div>
+
           <CardTitle className="text-xl">Reset password</CardTitle>
+
           <CardDescription>
             {success
               ? "Check your email for the reset link"
               : "Enter your email to receive a reset link"}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           {success ? (
             <div className="text-center space-y-4">
@@ -68,6 +72,7 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
                 We sent a password reset link to <strong>{email}</strong>.
                 Check your inbox and follow the link to reset your password.
               </p>
+
               <Link href="/login">
                 <Button variant="outline" className="w-full">
                   <ArrowLeft className="mr-2 h-4 w-4" />
@@ -81,6 +86,7 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
                 <label htmlFor="email" className="text-sm font-medium">
                   Email
                 </label>
+
                 <Input
                   id="email"
                   type="email"
@@ -91,15 +97,9 @@ const { error } = await supabase.auth.resetPasswordForEmail(email, {
                 />
               </div>
 
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="text-sm text-destructive">{error}</p>}
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Sending..." : "Send reset link"}
               </Button>
 
