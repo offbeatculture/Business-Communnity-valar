@@ -19,11 +19,14 @@ import {
   BarChart3,
   KeyRound,
   LifeBuoy,
+  CalendarCheck,
+  ListChecks,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { label: "My Practice", href: "/practice", icon: CalendarCheck },
   { label: "Recordings", href: "/content", icon: BookOpen },
   { label: "Live Sessions", href: "/events", icon: Calendar },
   { label: "Breathwork Community", href: "/community", icon: MessageSquare },
@@ -35,6 +38,8 @@ const adminItems = [
   { label: "Admin Panel", href: "/admin", icon: Shield },
   { label: "Temp Password", href: "/admin/temp-password", icon: KeyRound },
   { label: "Live Sessions", href: "/admin/events", icon: Calendar },
+  { label: "Practice Review", href: "/admin/practice-review", icon: CalendarCheck },
+  { label: "Check-in Questions", href: "/admin/checkin-questions", icon: ListChecks },
   { label: "Daily Practice Prompts", href: "/admin/prompts", icon: Lightbulb },
   { label: "Practice Prompt Library", href: "/admin/prompts-library", icon: Sparkles },
   { label: "Wellbeing Check-ins", href: "/admin/assessment", icon: ClipboardCheck },
