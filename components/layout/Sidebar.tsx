@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator"
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Kosha Scan", href: "/assessment", icon: ClipboardCheck },
   { label: "My Practice", href: "/practice", icon: CalendarCheck },
   { label: "Recordings", href: "/content", icon: BookOpen },
   { label: "Live Sessions", href: "/events", icon: Calendar },

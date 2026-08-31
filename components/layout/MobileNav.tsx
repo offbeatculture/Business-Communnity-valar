@@ -3,10 +3,17 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, BookOpen, MessageSquare, User } from "lucide-react"
+import {
+  LayoutDashboard,
+  ClipboardCheck,
+  BookOpen,
+  MessageSquare,
+  User,
+} from "lucide-react"
 
 const tabs = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Scan", href: "/assessment", icon: ClipboardCheck },
   { label: "Library", href: "/content", icon: BookOpen },
   { label: "Community", href: "/community", icon: MessageSquare },
   { label: "Profile", href: "/profile", icon: User },
