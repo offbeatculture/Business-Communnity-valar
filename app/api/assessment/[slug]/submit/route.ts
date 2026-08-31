@@ -5,6 +5,15 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { awardPoints } from "@/lib/engagement"
 import { GP_VALUES } from "@/lib/engagement-constants"
 import { calculateScaleCode, PILLAR_KEYS, type PillarScores } from "@/lib/scale-code"
+import {
+  buildScoreBlob,
+  emptyScores,
+  isKoshaKey,
+  scoreAnswer,
+  retakeStatus,
+  MAX_PER_KOSHA,
+  KOSHA_KEYS,
+} from "@/lib/kosha"
 import type { Assessment, AssessmentQuestion } from "@/types"
 
 const submitSchema = z.object({
@@ -39,17 +48,47 @@ export async function POST(
 
     const typedAssessment = assessment as Assessment
 
-    // Check if already completed
-    const { data: existing } = await supabase
+    // Most recent attempt, if any.
+    const { data: existing } = await admin
       .from("assessment_results")
-      .select("id")
+      .select("id, attempt_number, completed_at")
       .eq("user_id", user.id)
       .eq("assessment_id", typedAssessment.id)
+      .order("attempt_number", { ascending: false })
+      .limit(1)
       .maybeSingle()
 
+    const isKosha = typedAssessment.scoring_type === "kosha"
+
     if (existing) {
-      return NextResponse.json({ error: "Assessment already completed" }, { status: 409 })
+      // Non-kosha assessments stay single-shot, exactly as before.
+      if (!isKosha) {
+        return NextResponse.json({ error: "Assessment already completed" }, { status: 409 })
+      }
+
+      // The kosha scan is retakeable, but gated to the end of a cycle so
+      // the before/after comparison stays meaningful. Admins bypass it.
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle()
+
+      const isAdmin = profile?.role === "admin"
+      const status = retakeStatus(existing.completed_at as string)
+
+      if (!isAdmin && !status.eligible) {
+        return NextResponse.json(
+          {
+            error: `You can retake the scan in ${status.daysRemaining} day${status.daysRemaining === 1 ? "" : "s"}.`,
+            retakeAvailableOn: status.availableOn.toISOString(),
+          },
+          { status: 409 },
+        )
+      }
     }
+
+    const attemptNumber = ((existing?.attempt_number as number | undefined) ?? 0) + 1
 
     const body = await request.json()
     const parsed = submitSchema.safeParse(body)
@@ -108,6 +147,26 @@ export async function POST(
       scores = calculateScaleCode(pillarScores, stageIndex)
       totalScore = PILLAR_KEYS.reduce((sum, k) => sum + pillarScores[k], 0)
       maxPossibleScore = PILLAR_KEYS.length * 10
+    } else if (isKosha) {
+      // Panchakosha: sum each layer's 6 answers to a score out of 30,
+      // applying that layer's polarity (see lib/kosha.ts REVERSE-SCORING).
+      const koshaScores = emptyScores()
+
+      for (const q of typedQuestions) {
+        if (!isKoshaKey(q.category)) continue
+
+        const selectedValue = answers[q.id]
+        if (!selectedValue) continue
+
+        const option = q.options.find((o) => o.value === selectedValue)
+        if (!option) continue
+
+        koshaScores[q.category] += scoreAnswer(q.category, option.score)
+      }
+
+      scores = buildScoreBlob(koshaScores)
+      totalScore = KOSHA_KEYS.reduce((sum, k) => sum + koshaScores[k], 0)
+      maxPossibleScore = KOSHA_KEYS.length * MAX_PER_KOSHA
     } else {
       // Generic scoring: simple sum per category
       const categoryScores: Record<string, number> = {}
@@ -143,6 +202,7 @@ export async function POST(
         scores,
         total_score: totalScore,
         max_possible_score: maxPossibleScore,
+        attempt_number: attemptNumber,
         completed_at: new Date().toISOString(),
       })
       .select()

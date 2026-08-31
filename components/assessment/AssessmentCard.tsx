@@ -8,6 +8,7 @@ import {
   Gauge,
   Sparkles,
 } from "lucide-react"
+import { KOSHAS, MAX_PER_KOSHA, asKoshaScoreBlob, bandFor } from "@/lib/kosha"
 import type { Assessment, AssessmentResult } from "@/types"
 
 type Props = {
@@ -18,8 +19,16 @@ type Props = {
 export function AssessmentCard({ assessment, result }: Props) {
   const isCompleted = !!result
 
+  // A kosha result is not a grade — a higher total means MORE imbalance, so
+  // showing it as a "wellbeing score %" would read exactly backwards.
+  // Surface the primary layer instead.
+  const koshaScores =
+    result && assessment.scoring_type === "kosha"
+      ? asKoshaScoreBlob(result.scores)
+      : null
+
   const scorePercent =
-    result && result.max_possible_score > 0
+    !koshaScores && result && result.max_possible_score > 0
       ? Math.round((result.total_score / result.max_possible_score) * 100)
       : null
 
@@ -63,7 +72,42 @@ export function AssessmentCard({ assessment, result }: Props) {
           </p>
 
           <div className="mt-4 rounded-2xl border border-[#C89B3C]/20 bg-[#E8DDC8]/65 p-3">
-            {scorePercent !== null ? (
+            {koshaScores ? (
+              (() => {
+                const primary = KOSHAS[koshaScores.primary]
+                const score = koshaScores.koshas[koshaScores.primary] ?? 0
+                const band = bandFor(score)
+
+                return (
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-1.5 text-xs text-[#6F7358]">
+                        <Gauge className="size-3.5" />
+                        Primary layer
+                      </span>
+
+                      <span className="text-sm font-bold text-[#8A6A22]">
+                        {score}/{MAX_PER_KOSHA}
+                      </span>
+                    </div>
+
+                    <div className="mb-2 h-2 overflow-hidden rounded-full bg-[#F7F0E3]">
+                      <div
+                        className={`h-full rounded-full ${band.bar}`}
+                        style={{ width: `${(score / MAX_PER_KOSHA) * 100}%` }}
+                      />
+                    </div>
+
+                    <p className="text-xs font-medium text-[#4B3A25]">
+                      {primary.name}{" "}
+                      <span className="font-normal text-[#6F7358]">
+                        · {band.label}
+                      </span>
+                    </p>
+                  </div>
+                )
+              })()
+            ) : scorePercent !== null ? (
               <div>
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <span className="flex items-center gap-1.5 text-xs text-[#6F7358]">
