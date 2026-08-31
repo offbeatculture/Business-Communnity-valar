@@ -3,6 +3,14 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { fetchProfile, fetchProfileStats } from "@/lib/profile"
 import { fetchPosts, fetchUserInteractions } from "@/lib/community"
+import {
+  fetchCheckinQuestions,
+  fetchTodayCheckin,
+  fetchStreak,
+  fetchWeeklyLeaderboard,
+} from "@/lib/checkin-server"
+import { DailyCheckinCard } from "@/components/engagement/DailyCheckin"
+import { WeeklyLeaderboard } from "@/components/engagement/WeeklyLeaderboard"
 import { Card, CardContent } from "@/components/ui/card"
 import { DashboardPostActions } from "@/components/community/DashboardPostActions"
 import { Button } from "@/components/ui/button"
@@ -10,7 +18,6 @@ import {
   ArrowRight,
   MessageSquare,
   PlayCircle,
-  Trophy,
   Clock,
   // Heart,
   Video,
@@ -39,21 +46,6 @@ type ComingSoonRecording = {
 }
 
 type RecordingSlot = DashboardRecording | ComingSoonRecording
-type LeaderboardMember = {
-  rank: number
-  userId: string
-  name: string
-  label: string
-  points: number
-  streak: string
-}
-
-type LeaderboardStats = {
-  postCount: number
-  commentCount: number
-  likesReceived: number
-}
-
 export default async function DashboardPage() {
   const supabase = await createClient()
 
@@ -63,13 +55,24 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login")
 
-    const [profile, stats, { posts }, latestRecordings, leaderboard] =
-  await Promise.all([
+    const [
+    profile,
+    stats,
+    { posts },
+    latestRecordings,
+    checkinQuestions,
+    todayCheckin,
+    streak,
+    weekly,
+  ] = await Promise.all([
     fetchProfile(user.id),
     fetchProfileStats(user.id),
     fetchPosts({ page: 1, perPage: 4 }),
     fetchLatestRecordings(supabase),
-    fetchLeaderboard(supabase, user.id),
+    fetchCheckinQuestions(),
+    fetchTodayCheckin(user.id),
+    fetchStreak(user.id),
+    fetchWeeklyLeaderboard(user.id),
   ])
 
   // const [profile, stats, { posts }, latestRecordings] = await Promise.all([
@@ -157,6 +160,12 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <main className="space-y-6">
+          <DailyCheckinCard
+            questions={checkinQuestions}
+            today={todayCheckin}
+            streak={streak}
+          />
+
           <section>
             <SectionHeader
               title="Community Posts"
@@ -210,157 +219,24 @@ export default async function DashboardPage() {
         </main>
 
         <aside className="space-y-6 xl:sticky xl:top-20 xl:self-start">
-          <Card className="border-primary/15 bg-card shadow-sm">
-            <CardContent className="p-5">
-              <div className="mb-4 flex items-center gap-2">
-                <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
-                  <Trophy className="size-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="font-semibold">Leaderboard</h2>
-                  <p className="text-xs text-muted-foreground">
-                    Active members this week
-                  </p>
-                </div>
-              </div>
+          <WeeklyLeaderboard
+            rows={weekly.rows}
+            window={weekly.window}
+            currentUser={weekly.currentUser}
+          />
 
-              <div className="space-y-3">
-                {leaderboard.map((member) => (
-                  <div
-                    key={member.rank}
-                    className="flex items-center gap-3 rounded-xl border border-border/50 bg-background/40 p-3"
-                  >
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                      {member.rank}
-                    </div>
+          <Link href="/community" className="block">
+            <Button variant="outline" className="w-full">
+              Open Community
+            </Button>
+          </Link>
 
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {member.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {member.label} · {member.streak}
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="text-sm font-bold">{member.points}</p>
-                      <p className="text-[11px] text-muted-foreground">pts</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <Link href="/community" className="mt-4 block">
-                <Button variant="outline" className="w-full">
-                  Open Community
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
         </aside>
       </div>
     </div>
   )
 }
 
-async function fetchLeaderboard(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  currentUserId: string
-): Promise<LeaderboardMember[]> {
-  const [profilesRes, postsRes, commentsRes, likesRes] = await Promise.all([
-    supabase.from("profiles").select("user_id, full_name"),
-    supabase.from("posts").select("id, user_id"),
-    supabase.from("comments").select("id, user_id"),
-    supabase.from("likes").select("id, post_id"),
-  ])
-
-  if (profilesRes.error) console.error("Leaderboard profiles error:", profilesRes.error)
-  if (postsRes.error) console.error("Leaderboard posts error:", postsRes.error)
-  if (commentsRes.error) console.error("Leaderboard comments error:", commentsRes.error)
-  if (likesRes.error) console.error("Leaderboard likes error:", likesRes.error)
-
-  const profiles = profilesRes.data ?? []
-  const posts = postsRes.data ?? []
-  const comments = commentsRes.data ?? []
-  const likes = likesRes.data ?? []
-
-  const profileMap = new Map<string, string>()
-
-  profiles.forEach((profile) => {
-    if (profile.user_id) {
-      profileMap.set(profile.user_id, profile.full_name || "Member")
-    }
-  })
-
-  const postOwnerMap = new Map<string, string>()
-
-  posts.forEach((post) => {
-    if (post.id && post.user_id) {
-      postOwnerMap.set(post.id, post.user_id)
-    }
-  })
-
-  const statsMap = new Map<string, LeaderboardStats>()
-
-  function ensureStats(userId: string) {
-    if (!statsMap.has(userId)) {
-      statsMap.set(userId, {
-        postCount: 0,
-        commentCount: 0,
-        likesReceived: 0,
-      })
-    }
-
-    return statsMap.get(userId)!
-  }
-
-  posts.forEach((post) => {
-    if (post.user_id) {
-      ensureStats(post.user_id).postCount += 1
-    }
-  })
-
-  comments.forEach((comment) => {
-    if (comment.user_id) {
-      ensureStats(comment.user_id).commentCount += 1
-    }
-  })
-
-  likes.forEach((like) => {
-    if (!like.post_id) return
-
-    const postOwnerId = postOwnerMap.get(like.post_id)
-
-    if (postOwnerId) {
-      ensureStats(postOwnerId).likesReceived += 1
-    }
-  })
-
-  return Array.from(statsMap.entries())
-    .map(([userId, memberStats]) => {
-      const points =
-        memberStats.postCount * 10 +
-        memberStats.commentCount * 5 +
-        memberStats.likesReceived
-
-      return {
-        rank: 0,
-        userId,
-        name: profileMap.get(userId) || "Member",
-        label: userId === currentUserId ? "You" : "Member",
-        points,
-        streak: "Active",
-      }
-    })
-    .filter((member) => member.points > 0)
-    .sort((a, b) => b.points - a.points)
-    .slice(0, 4)
-    .map((member, index) => ({
-      ...member,
-      rank: index + 1,
-    }))
-}
 async function fetchLatestRecordings(
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<DashboardRecording[]> {
