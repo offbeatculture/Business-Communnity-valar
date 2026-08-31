@@ -21,12 +21,14 @@ import {
   LifeBuoy,
   CalendarCheck,
   ListChecks,
+  HeartHandshake,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
 const navItems = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
   { label: "Kosha Scan", href: "/assessment", icon: ClipboardCheck },
+  { label: "Mano Mitra", href: "/mano-mitra", icon: HeartHandshake },
   { label: "My Practice", href: "/practice", icon: CalendarCheck },
   { label: "Recordings", href: "/content", icon: BookOpen },
   { label: "Live Sessions", href: "/events", icon: Calendar },
