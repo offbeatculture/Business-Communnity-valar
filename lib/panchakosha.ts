@@ -22,8 +22,12 @@ export type KoshaWeek = {
   /** The live practice moment in the session. */
   practice: string
   activities: string[]
-  /** Served from public/panchakosha. */
-  videoUrl?: string
+  /**
+   * Object key inside the private `panchakosha` Supabase bucket.
+   * Not a URL — the page requests /api/panchakosha/video/[kosha], which
+   * checks access and redirects to a short-lived signed URL.
+   */
+  videoPath?: string
   /** The recording's own title, which differs from the kosha name. */
   videoTitle?: string
   durationMinutes: number
@@ -59,7 +63,7 @@ export const KOSHA_WEEKS: KoshaWeek[] = [
       "Body-scan journal — note where physical tightness shows up each day",
       "Balanced-plate check — protein and fibre at each main meal",
     ],
-    videoUrl: "/panchakosha/Kosha%201%20Annamaya_Kosha_-_From_Project_to_Partnership.mp4",
+    videoPath: "annamaya.mp4",
     videoTitle: "Annamaya Kosha - From Project to Partnership",
     durationMinutes: 10,
   },
@@ -92,7 +96,7 @@ export const KOSHA_WEEKS: KoshaWeek[] = [
       "Morning 3-minute breath reset before checking the phone",
       "Weekly self-check: note resting heart rate or BP before and after a 4-7-8 session",
     ],
-    videoUrl: "/panchakosha/Kosha%202%20Moving_Inward__The_Pranamaya_Kosha.mp4",
+    videoPath: "pranamaya.mp4",
     videoTitle: "Moving Inward The Pranamaya Kosha",
     durationMinutes: 10,
   },
@@ -125,7 +129,7 @@ export const KOSHA_WEEKS: KoshaWeek[] = [
       "Boundary practice — hold one small boundary this week and note how it felt",
       "Gratitude and release journaling before bed",
     ],
-    videoUrl: "/panchakosha/Kosha%203%20-%20The_Interpreter_Within.mp4",
+    videoPath: "manomaya.mp4",
     videoTitle: "The Interpreter Within",
     durationMinutes: 10,
   },
@@ -157,7 +161,7 @@ export const KOSHA_WEEKS: KoshaWeek[] = [
       "Weekly review — what shifted across the month's activities so far",
       "Identify and practise one small identity-level change this week",
     ],
-    videoUrl: "/panchakosha/Kosha%204%20-%20Soul-Conscious_Living.mp4",
+    videoPath: "vijnanamaya.mp4",
     videoTitle: "Soul-Conscious Living",
     durationMinutes: 10,
   },
@@ -189,7 +193,7 @@ export const KOSHA_WEEKS: KoshaWeek[] = [
       "Savouring practice — one meal eaten fully present, no distractions",
       "Month-end reflection and celebration ritual — review growth across all 5 weeks",
     ],
-    videoUrl: "/panchakosha/Kosha%205%20-%20The_Bliss_Sheath__Finding_Fulfillment_Beyond_Achievement.mp4",
+    videoPath: "anandamaya.mp4",
     videoTitle: "The Bliss Sheath Finding Fulfillment Beyond Achievement",
     durationMinutes: 10,
   },

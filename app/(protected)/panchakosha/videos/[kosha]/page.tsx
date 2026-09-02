@@ -55,16 +55,21 @@ export default async function KoshaVideoPage({ params }: Props) {
 
       {/* Video */}
       <div className="mb-6 overflow-hidden rounded-3xl border border-[#C89B3C]/25 bg-[#F7F0E3]">
-        {week.videoUrl ? (
-          <div className="aspect-video">
-            <iframe
-              src={week.videoUrl}
-              title={`${week.name} — ${week.durationMinutes} minute session`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="size-full"
+        {week.videoPath ? (
+          <video
+            controls
+            preload="metadata"
+            playsInline
+            controlsList="nodownload"
+            className="aspect-video w-full bg-black"
+          >
+            {/* API route: checks access, then 302s to a signed URL. */}
+            <source
+              src={`/api/panchakosha/video/${week.key}#t=0.1`}
+              type="video/mp4"
             />
-          </div>
+            Your browser cannot play this video.
+          </video>
         ) : (
           <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-[#E8DDC8]/50 px-6 text-center">
             <PlayCircle className="size-9 text-[#C89B3C]" />

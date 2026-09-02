@@ -35,13 +35,15 @@ export function VideoCard({ week, isPrimary }: Props) {
   return (
     <article className="overflow-hidden rounded-2xl border border-[#C89B3C]/25 bg-[#F7F0E3] transition-shadow hover:shadow-md hover:shadow-black/5">
       <div className="relative aspect-video bg-black">
-        {week.videoUrl ? (
+        {week.videoPath ? (
           <>
             <video
               ref={videoRef}
               // metadata only: five videos on one page is ~230 MB. The
               // #t=0.1 fragment nudges the browser to paint a real frame
               // instead of a black rectangle before playback.
+              // The src is an API route that checks access, then 302s to a
+              // short-lived signed URL from the private bucket.
               preload="metadata"
               playsInline
               controls={started}
@@ -49,7 +51,7 @@ export function VideoCard({ week, isPrimary }: Props) {
               onPlay={() => setStarted(true)}
               className="size-full"
             >
-              <source src={`${week.videoUrl}#t=0.1`} type="video/mp4" />
+              <source src={`/api/panchakosha/video/${week.key}#t=0.1`} type="video/mp4" />
               Your browser cannot play this video.
             </video>
 

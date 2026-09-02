@@ -58,3 +58,8 @@ next-env.d.ts
 *\ [0-9].ts
 *\ [0-9].tsx
 *\ [0-9].sql
+
+# Panchakosha session recordings live in Supabase Storage (private bucket),
+# not in the repo. 233 MB in git history is permanent and every clone pays
+# for it. See app/api/panchakosha/video/[kosha]/route.ts.
+/public/panchakosha/
