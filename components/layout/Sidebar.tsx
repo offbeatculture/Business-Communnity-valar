@@ -49,6 +49,12 @@ function isGroup(item: NavEntry): item is NavGroup {
   return "children" in item
 }
 
+function groupContainsRoute(group: NavGroup, pathname: string): boolean {
+  return group.match.some(
+    (m) => pathname === m || pathname.startsWith(m + "/")
+  )
+}
+
 const navItems: NavEntry[] = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
   {
@@ -117,7 +123,18 @@ export function Sidebar({ profile }: SidebarProps) {
       <nav className="no-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4 pb-24">
         {navItems.map((item) => {
           if (isGroup(item)) {
-            return <NavGroupItem key={item.label} group={item} pathname={pathname} />
+            const inside = groupContainsRoute(item, pathname)
+            // Keying on `inside` remounts the group when the route crosses
+            // its boundary, resetting a manual collapse so a member landing
+            // inside from elsewhere can see where they are. Moving BETWEEN
+            // children keeps `inside` true, so their choice survives.
+            return (
+              <NavGroupItem
+                key={`${item.label}-${inside}`}
+                group={item}
+                pathname={pathname}
+              />
+            )
           }
 
           const isActive =
@@ -236,20 +253,22 @@ function NavGroupItem({
   group: NavGroup
   pathname: string
 }) {
-  const containsRoute = group.match.some(
-    (m) => pathname === m || pathname.startsWith(m + "/")
-  )
-  const [open, setOpen] = useState(containsRoute)
+  const containsRoute = groupContainsRoute(group, pathname)
 
-  // The route can change without this component remounting (client-side
-  // navigation), so re-open on entry rather than relying on initial state.
-  const expanded = open || containsRoute
+  // null = follow the route; true/false = the member decided.
+  //
+  // An earlier version did `open || containsRoute`, which meant the group
+  // could never be collapsed while you were inside it — the arrow looked
+  // broken in precisely the situation you would use it. An explicit click
+  // has to win over the auto-open.
+  const [override, setOverride] = useState<boolean | null>(null)
+  const expanded = override ?? containsRoute
 
   return (
     <div>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOverride(!expanded)}
         aria-expanded={expanded}
         className={cn(
           "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
