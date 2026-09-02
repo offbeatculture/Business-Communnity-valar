@@ -11,166 +11,28 @@ import {
   type ConsoleRole,
 } from "@/lib/auth/console"
 import {
-  type LucideIcon,
-  LayoutDashboard,
-  BookOpen,
-  MessageSquare,
-  User,
-  Shield,
+  adminNav,
+  groupContainsRoute,
+  isGroup,
+  isItemActive,
+  memberNav,
+  recordingAdminNav,
+  type NavEntry,
+  type NavGroup,
+} from "@/lib/nav"
+import {
   ShieldCheck,
-  Lightbulb,
-  Sparkles,
-  ClipboardCheck,
-  Calendar,
-  CircleHelp,
   Leaf,
-  UploadCloud,
-  BarChart3,
-  KeyRound,
-  LifeBuoy,
-  CalendarCheck,
-  ListChecks,
-  HeartHandshake,
-  PlayCircle,
   ChevronDown,
-  Flower2,
-  Users,
-  UserPlus,
-  FileText,
-  Mail,
-  FolderOpen,
   ArrowLeft,
   ArrowRight,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 
-// ─── Member navigation ──────────────────────────────────────
-
-type NavLeaf = { label: string; href: string; icon: LucideIcon }
-
-type NavGroup = {
-  label: string
-  icon: LucideIcon
-  /** Any path under here keeps the group open and marks it active. */
-  match: string[]
-  children: NavLeaf[]
-}
-
-type NavEntry = NavLeaf | NavGroup
-
-function isGroup(item: NavEntry): item is NavGroup {
-  return "children" in item
-}
-
-function groupContainsRoute(group: NavGroup, pathname: string): boolean {
-  return group.match.some(
-    (m) => pathname === m || pathname.startsWith(m + "/")
-  )
-}
-
-const navItems: NavEntry[] = [
-  { label: "Home", href: "/dashboard", icon: LayoutDashboard },
-  {
-    label: "Panchakosha",
-    icon: Flower2,
-    match: ["/assessment", "/panchakosha"],
-    children: [
-      { label: "Kosha Scan", href: "/assessment", icon: ClipboardCheck },
-      { label: "Panchakosha Videos", href: "/panchakosha/videos", icon: PlayCircle },
-    ],
-  },
-  { label: "Mano Mitra", href: "/mano-mitra", icon: HeartHandshake },
-  { label: "My Practice", href: "/practice", icon: CalendarCheck },
-  { label: "Recordings", href: "/content", icon: BookOpen },
-  { label: "Live Sessions", href: "/events", icon: Calendar },
-  { label: "Breathwork Community", href: "/community", icon: MessageSquare },
-  { label: "My Profile", href: "/profile", icon: User },
-]
-
-// ─── Admin console navigation ───────────────────────────────
-// Grouped rather than a flat list of twenty items: the console is now a
-// place you work in, not a drawer hanging off the member nav.
-
-const adminNav: NavEntry[] = [
-  { label: "Overview", href: "/admin/staff", icon: LayoutDashboard },
-  { label: "Follow-ups", href: "/admin/tasks", icon: ListChecks },
-  { label: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
-  { label: "Admin Panel", href: "/admin", icon: Shield },
-  {
-    label: "Members",
-    icon: Users,
-    match: ["/admin/members", "/admin/temp-password"],
-    children: [
-      { label: "All Members", href: "/admin/members", icon: Users },
-      { label: "Add Member", href: "/admin/members/create", icon: UserPlus },
-      { label: "Temp Password", href: "/admin/temp-password", icon: KeyRound },
-    ],
-  },
-  {
-    label: "Practice",
-    icon: CalendarCheck,
-    match: [
-      "/admin/practice-review",
-      "/admin/checkin-questions",
-      "/admin/prompts",
-      "/admin/prompts-library",
-    ],
-    children: [
-      { label: "Practice Review", href: "/admin/practice-review", icon: CalendarCheck },
-      { label: "Check-in Questions", href: "/admin/checkin-questions", icon: ListChecks },
-      { label: "Daily Prompts", href: "/admin/prompts", icon: Lightbulb },
-      { label: "Prompt Library", href: "/admin/prompts-library", icon: Sparkles },
-    ],
-  },
-  {
-    label: "Assessments",
-    icon: ClipboardCheck,
-    match: [
-      "/admin/assessment",
-      "/admin/assessment-invites",
-      "/admin/assessment-reports",
-    ],
-    children: [
-      { label: "Wellbeing Check-ins", href: "/admin/assessment", icon: ClipboardCheck },
-      { label: "Invites", href: "/admin/assessment-invites", icon: Mail },
-      { label: "Reports", href: "/admin/assessment-reports", icon: FileText },
-    ],
-  },
-  {
-    label: "Content & Events",
-    icon: FolderOpen,
-    match: ["/admin/content", "/admin/events"],
-    children: [
-      { label: "Recordings", href: "/admin/content", icon: BookOpen },
-      { label: "Live Sessions", href: "/admin/events", icon: Calendar },
-    ],
-  },
-  {
-    label: "Support",
-    icon: LifeBuoy,
-    match: ["/admin/support", "/admin/community-issues"],
-    children: [
-      { label: "Support Queries", href: "/admin/support", icon: CircleHelp },
-      { label: "Community Issues", href: "/admin/community-issues", icon: LifeBuoy },
-    ],
-  },
-]
-
-const recordingAdminItems: NavLeaf[] = [
-  { label: "Upload Recording", href: "/upload-recording", icon: UploadCloud },
-]
-
 // ─── Shared styling ─────────────────────────────────────────
 
 const leafBase =
   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors"
-
-function isItemActive(pathname: string, href: string) {
-  // /admin is a page in its own right, so a prefix match would light it up
-  // on every console route.
-  if (href === "/admin") return pathname === "/admin"
-  return pathname === href || pathname.startsWith(href + "/")
-}
 
 type SidebarProps = {
   profile: {
@@ -244,7 +106,7 @@ export function Sidebar({ profile, variant = "member" }: SidebarProps) {
       </div>
 
       <nav className="no-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4 pb-24">
-        <NavList items={navItems} pathname={pathname} />
+        <NavList items={memberNav} pathname={pathname} />
 
         {profile?.role === "recording_admin" && (
           <>
@@ -252,7 +114,7 @@ export function Sidebar({ profile, variant = "member" }: SidebarProps) {
             <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-[#D8B76A]">
               Recording Access
             </p>
-            <NavList items={recordingAdminItems} pathname={pathname} />
+            <NavList items={recordingAdminNav} pathname={pathname} />
           </>
         )}
       </nav>
