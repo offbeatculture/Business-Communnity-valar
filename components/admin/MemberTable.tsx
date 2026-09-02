@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useCallback } from "react"
 import { format } from "date-fns"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -165,9 +166,12 @@ export function MemberTable({ initialMembers, initialHasMore }: Props) {
                         ) : null}
                         <AvatarFallback>{initials}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium truncate max-w-[150px]">
+                      <Link
+                        href={`/admin/members/${member.id}`}
+                        className="max-w-[150px] truncate font-medium hover:text-primary hover:underline"
+                      >
                         {member.full_name}
-                      </span>
+                      </Link>
                     </div>
                   </td>
                   <td className="py-3 hidden md:table-cell text-muted-foreground truncate max-w-[150px]">

@@ -30,6 +30,7 @@ import {
   ChevronDown,
   Flower2,
   Users,
+  UserPlus,
   FileText,
   Mail,
   FolderOpen,
@@ -94,6 +95,7 @@ const adminNav: NavEntry[] = [
     match: ["/admin/members", "/admin/temp-password"],
     children: [
       { label: "All Members", href: "/admin/members", icon: Users },
+      { label: "Add Member", href: "/admin/members/create", icon: UserPlus },
       { label: "Temp Password", href: "/admin/temp-password", icon: KeyRound },
     ],
   },
