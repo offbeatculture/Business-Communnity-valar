@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { BreathTimer } from "./BreathTimer"
+import { BodyMap } from "./BodyMap"
 import {
   ACTIVITIES, BODY_DISCLAIMER, BODY_PROMPT, BODY_ZONES, CHAKRA_DISCLAIMER,
   COMPLETION_CLOSING, COMPLETION_TITLE, CRISIS_RESOURCES, EMOTIONS,
@@ -129,19 +130,13 @@ export function ManoMitraFlow({ priorHighIntensity }: { priorHighIntensity: numb
     return (
       <Shell onBack={() => setStep("emotion")}>
         <Question text={BODY_PROMPT} />
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          {BODY_ZONES.map((z) => (
-            <Choice
-              key={z.id}
-              label={z.label}
-              selected={zone === z.id}
-              onClick={() => {
-                setZone(z.id)
-                setStep(needsMigraineTriage(z.id) ? "migraine" : "sensation")
-              }}
-            />
-          ))}
-        </div>
+        <BodyMap
+          selected={zone}
+          onSelect={(z) => {
+            setZone(z)
+            setStep(needsMigraineTriage(z) ? "migraine" : "sensation")
+          }}
+        />
         <Note>{BODY_DISCLAIMER}</Note>
       </Shell>
     )
