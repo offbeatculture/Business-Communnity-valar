@@ -166,3 +166,15 @@ body {
     -webkit-tap-highlight-color: transparent;
   }
 }
+/* Hide the scrollbar on a container that still scrolls.
+   Used on the sidebar nav — the list only just overflows, and a
+   permanent track running down the middle of the chrome is noise.
+   Wheel, trackpad, keyboard and touch scrolling are all unaffected. */
+.no-scrollbar {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* legacy Edge */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;                /* Chrome, Safari */
+}

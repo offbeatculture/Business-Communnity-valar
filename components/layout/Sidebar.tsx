@@ -114,7 +114,7 @@ export function Sidebar({ profile }: SidebarProps) {
         </div>
       </div>
 
-      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4 pb-24">
+      <nav className="no-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4 pb-24">
         {navItems.map((item) => {
           if (isGroup(item)) {
             return <NavGroupItem key={item.label} group={item} pathname={pathname} />
