@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { fetchAssessmentBySlug, fetchUserResult } from "@/lib/assessment"
 import { KOSHA_SCAN_SLUG, asKoshaScoreBlob } from "@/lib/kosha"
 import { KOSHA_WEEKS } from "@/lib/panchakosha"
+import { VideoCard } from "@/components/panchakosha/VideoCard"
 import { PlayCircle } from "lucide-react"
 
 export const metadata = { title: "Panchakosha Videos" }
@@ -24,7 +25,7 @@ export default async function PanchakoshaVideosPage() {
   const primary = scores?.primary ?? null
 
   return (
-    <div className="mx-auto w-full max-w-3xl pb-24 text-[#4B3A25] sm:pb-8">
+    <div className="mx-auto w-full max-w-5xl pb-24 text-[#4B3A25] sm:pb-8">
       <div className="mb-6">
         <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#C89B3C]/30 bg-[#F7F0E3] px-3 py-1 text-xs font-medium text-[#8A6A22]">
           <PlayCircle className="size-3.5" />
@@ -41,62 +42,13 @@ export default async function PanchakoshaVideosPage() {
         </p>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {KOSHA_WEEKS.map((week) => (
-          <section
+          <VideoCard
             key={week.key}
-            className="overflow-hidden rounded-3xl border border-[#C89B3C]/25 bg-[#F7F0E3]"
-          >
-            {week.videoUrl ? (
-              <video
-                controls
-                // metadata only: five videos on one page is ~230 MB, and
-                // preloading them all would burn a member's data before
-                // they press play on any of them.
-                preload="metadata"
-                playsInline
-                controlsList="nodownload"
-                className="aspect-video w-full bg-black"
-              >
-                <source src={week.videoUrl} type="video/mp4" />
-                Your browser cannot play this video.
-              </video>
-            ) : (
-              <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-[#E8DDC8]/50 px-6 text-center">
-                <PlayCircle className="size-9 text-[#C89B3C]" />
-                <p className="font-serif text-lg font-semibold">
-                  Recording coming soon
-                </p>
-              </div>
-            )}
-
-            <div className="p-5">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[#C89B3C]/15 px-2.5 py-0.5 text-xs font-bold text-[#8A6A22]">
-                  Week {week.week}
-                </span>
-
-                {primary === week.key && (
-                  <span className="rounded-full border border-[#B4532A]/35 bg-[#B4532A]/10 px-2.5 py-0.5 text-xs font-bold text-[#8E3F1F]">
-                    Your primary layer
-                  </span>
-                )}
-              </div>
-
-              <h2 className="mt-2 font-serif text-xl font-semibold">
-                {week.name}
-              </h2>
-              <p className="text-sm font-medium text-[#6F7358]">
-                {week.sheath}
-              </p>
-
-              {week.videoTitle && (
-                <p className="mt-2 text-sm font-medium leading-6 text-[#6F7358]">
-                  {week.videoTitle}
-                </p>
-              )}
-            </div>
-          </section>
+            week={week}
+            isPrimary={primary === week.key}
+          />
         ))}
       </div>
 
