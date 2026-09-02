@@ -4,7 +4,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { consoleEntry, COMMUNITY_HOME, type ConsoleRole } from "@/lib/auth/console"
+import {
+  canAccessPath,
+  consoleEntry,
+  COMMUNITY_HOME,
+  type ConsoleRole,
+} from "@/lib/auth/console"
 import {
   type LucideIcon,
   LayoutDashboard,
@@ -87,6 +92,8 @@ const navItems: NavEntry[] = [
 // place you work in, not a drawer hanging off the member nav.
 
 const adminNav: NavEntry[] = [
+  { label: "Overview", href: "/admin/staff", icon: LayoutDashboard },
+  { label: "Follow-ups", href: "/admin/tasks", icon: ListChecks },
   { label: "Dashboard", href: "/admin/dashboard", icon: BarChart3 },
   { label: "Admin Panel", href: "/admin", icon: Shield },
   {
@@ -196,7 +203,10 @@ export function Sidebar({ profile, variant = "member" }: SidebarProps) {
         </div>
 
         <nav className="no-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4">
-          <NavList items={adminNav} pathname={pathname} />
+          <NavList
+            items={filterNav(adminNav, profile?.role)}
+            pathname={pathname}
+          />
         </nav>
 
         <div className="shrink-0 border-t border-[#C89B3C]/20 p-3">
@@ -268,6 +278,25 @@ export function Sidebar({ profile, variant = "member" }: SidebarProps) {
       )}
     </aside>
   )
+}
+
+/**
+ * Drop anything this role may not open, and prune groups left empty.
+ *
+ * Presentation only — canAccessPath also runs in each page and route
+ * handler, because a hidden link is not a closed door.
+ */
+function filterNav(items: NavEntry[], role: string | null | undefined): NavEntry[] {
+  return items
+    .map((item) => {
+      if (!isGroup(item)) {
+        return canAccessPath(role, item.href) ? item : null
+      }
+
+      const children = item.children.filter((c) => canAccessPath(role, c.href))
+      return children.length > 0 ? { ...item, children } : null
+    })
+    .filter((item): item is NavEntry => item !== null)
 }
 
 // ─── Nav rendering ──────────────────────────────────────────
