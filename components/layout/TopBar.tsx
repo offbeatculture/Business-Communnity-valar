@@ -16,19 +16,23 @@ import {
 
 import { cn } from "@/lib/utils"
 import {
+  adminNav,
+  flattenNav,
+  isItemActive,
+  memberNav,
+  recordingAdminNav,
+} from "@/lib/nav"
+// The admin console sidebar is hidden below md, so on mobile this drawer
+// IS the console nav — hence the flattened admin list rather than a
+// switch link that would lead somewhere with no navigation.
+import { canAccessPath } from "@/lib/auth/console"
+import {
   User,
   CreditCard,
   LogOut,
   Search,
   Menu,
   X,
-  LayoutDashboard,
-  BookOpen,
-  MessageSquare,
-  Shield,
-  Lightbulb,
-  Calendar,
-  UploadCloud,
 } from "lucide-react"
 // import { ThemeToggle } from "@/components/theme-toggle"
 import { NotificationBell } from "@/components/notifications/NotificationBell"
@@ -38,26 +42,9 @@ type TopBarProps = {
   profile: {
     full_name: string
     avatar_url: string | null
-    role?: "member" | "admin" | "recording_admin"
+    role?: "member" | "staff" | "admin" | "recording_admin"
   } | null
 }
-
-const mobileNavItems = [
-  { label: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Recordings", href: "/content", icon: BookOpen },
-  { label: "Live Sessions", href: "/events", icon: Calendar },
-  { label: "Breathwork Community", href: "/community", icon: MessageSquare },
-  { label: "My Profile", href: "/profile", icon: User },
-]
-
-const adminItems = [
-  { label: "Admin Panel", href: "/admin", icon: Shield },
-  { label: "Daily Practice Prompts", href: "/admin/prompts", icon: Lightbulb },
-]
-
-const recordingAdminItems = [
-  { label: "Upload Recording", href: "/upload-recording", icon: UploadCloud },
-]
 
 export function TopBar({ profile }: TopBarProps) {
   const router = useRouter()
@@ -181,9 +168,8 @@ export function TopBar({ profile }: TopBarProps) {
             menuOpen ? "translate-y-0" : "-translate-y-4"
           )}
         >
-          {mobileNavItems.map((item) => {
-            const isActive =
-              pathname === item.href || pathname.startsWith(item.href + "/")
+          {flattenNav(memberNav).map((item) => {
+            const isActive = isItemActive(pathname, item.href)
 
             return (
               <Link
@@ -216,9 +202,8 @@ export function TopBar({ profile }: TopBarProps) {
                 Recording Access
               </p>
 
-              {recordingAdminItems.map((item) => {
-                const isActive =
-                  pathname === item.href || pathname.startsWith(item.href + "/")
+              {recordingAdminNav.map((item) => {
+                const isActive = isItemActive(pathname, item.href)
 
                 return (
                   <Link
@@ -245,7 +230,7 @@ export function TopBar({ profile }: TopBarProps) {
             </>
           )}
 
-          {profile?.role === "admin" && (
+          {(profile?.role === "admin" || profile?.role === "staff") && (
             <>
               <div className="my-2 border-t border-[#C89B3C]/20" />
 
@@ -253,8 +238,10 @@ export function TopBar({ profile }: TopBarProps) {
                 Admin
               </p>
 
-              {adminItems.map((item) => {
-                const isActive = pathname.startsWith(item.href)
+              {flattenNav(adminNav)
+            .filter((item) => canAccessPath(profile?.role, item.href))
+            .map((item) => {
+                const isActive = isItemActive(pathname, item.href)
 
                 return (
                   <Link

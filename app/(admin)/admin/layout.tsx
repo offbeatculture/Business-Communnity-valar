@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { TopBar } from "@/components/layout/TopBar"
-import { MobileNav } from "@/components/layout/MobileNav"
+import { canAccessConsole, isConsoleRole } from "@/lib/auth/console"
 
 export default async function AdminLayout({
   children,
@@ -25,20 +25,23 @@ export default async function AdminLayout({
     .eq("user_id", user.id)
     .single()
 
-  if (profile?.role !== "admin") {
+  // Staff get the console too, with a reduced nav. Per-page access is
+  // enforced in each page and route handler as well — this only decides
+  // who sees the shell at all.
+  const role = profile?.role
+  if (!isConsoleRole(role) || !canAccessConsole(role)) {
     redirect("/dashboard")
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} variant="admin" />
       <div className="md:pl-64 flex flex-col min-h-screen">
         <TopBar profile={profile} />
         <main className="flex-1 p-6 pb-20 md:pb-6">
           {children}
         </main>
       </div>
-      <MobileNav />
     </div>
   )
 }

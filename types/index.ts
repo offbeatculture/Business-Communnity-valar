@@ -355,7 +355,7 @@ export type Assessment = {
   title: string
   slug: string
   description: string
-  scoring_type: 'scale-code' | 'generic'
+  scoring_type: 'scale-code' | 'generic' | 'kosha'
   is_published: boolean
   created_at: string
   updated_at: string
@@ -386,6 +386,8 @@ export type AssessmentResult = {
   scores: Record<string, unknown>
   total_score: number
   max_possible_score: number
+  /** 1 = intake baseline. Increments on each retake. */
+  attempt_number: number
   completed_at: string
   created_at: string
 }

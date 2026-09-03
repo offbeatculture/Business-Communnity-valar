@@ -3,14 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, BookOpen, MessageSquare, User } from "lucide-react"
+import { mobileTabs } from "@/lib/nav"
 
-const tabs = [
-  { label: "Home", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Library", href: "/content", icon: BookOpen },
-  { label: "Community", href: "/community", icon: MessageSquare },
-  { label: "Profile", href: "/profile", icon: User },
-]
 
 export function MobileNav() {
   const pathname = usePathname()
@@ -18,7 +12,7 @@ export function MobileNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#C89B3C]/20 bg-[#122015] pb-[env(safe-area-inset-bottom)] text-[#E8DDC8] shadow-2xl shadow-black/30 md:hidden">
       <div className="flex h-14 items-center justify-around">
-        {tabs.map((tab) => {
+        {mobileTabs.map((tab) => {
           const isActive =
             pathname === tab.href || pathname.startsWith(tab.href + "/")
 
