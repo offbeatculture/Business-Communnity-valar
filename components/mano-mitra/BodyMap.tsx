@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { List, RotateCcw } from "lucide-react"
+import { Check, List, RotateCcw } from "lucide-react"
 import { BODY_ZONES, type BodyZoneId } from "@/lib/mano-mitra"
 
 type Props = {
@@ -62,20 +62,17 @@ const BACK_INERT = [
 export function BodyMap({ selected, onSelect }: Props) {
   const [hovered, setHovered] = useState<BodyZoneId | null>(null)
   const [showList, setShowList] = useState(false)
+  const [view, setView] = useState<"front" | "back">("front")
 
-  const activeLabel =
-    BODY_ZONES.find((z) => z.id === (hovered ?? selected))?.label ?? null
+  const activeLabel = BODY_ZONES.find((z) => z.id === hovered)?.label ?? null
+  const selectedLabel = BODY_ZONES.find((z) => z.id === selected)?.label ?? null
 
   function renderFigure(regions: Region[], inert: string[], title: string) {
     return (
       <div className="flex flex-1 flex-col items-center">
-        <p className="mb-1.5 text-xs font-bold uppercase tracking-widest text-[#8A6A22]">
-          {title}
-        </p>
-
         <svg
           viewBox="0 0 200 420"
-          className="h-64 w-auto sm:h-72"
+          className="h-auto w-full max-w-[280px] touch-manipulation sm:h-[440px] sm:w-auto sm:max-w-none"
           role="group"
           aria-label={`${title} body view`}
         >
@@ -109,17 +106,22 @@ export function BodyMap({ selected, onSelect }: Props) {
                     onSelect(r.id)
                   }
                 }}
-                onMouseEnter={() => setHovered(r.id)}
-                onMouseLeave={() => setHovered(null)}
+                // Pointer events, not mouse: these fire for touch too, so a
+                // tap paints the region immediately instead of waiting for a
+                // synthesised mouseenter. The selection below is what makes
+                // it persist once the finger lifts.
+                onPointerEnter={() => setHovered(r.id)}
+                onPointerLeave={() => setHovered(null)}
+                onPointerCancel={() => setHovered(null)}
                 onFocus={() => setHovered(r.id)}
                 onBlur={() => setHovered(null)}
                 fill={
                   isSelected ? "#C89B3C" : isHovered ? "#DFC489" : "#F0E6D2"
                 }
                 stroke={isSelected ? "#8A6A22" : "#C89B3C"}
-                strokeWidth={isSelected ? 2 : 1}
+                strokeWidth={isSelected ? 2.5 : 1}
                 strokeOpacity={isSelected ? 1 : 0.5}
-                className="cursor-pointer outline-none transition-colors focus-visible:stroke-[#4B3A25] focus-visible:stroke-[3]"
+                className="cursor-pointer touch-manipulation outline-none transition-colors focus-visible:stroke-[#4B3A25] focus-visible:stroke-[3]"
               />
             )
           })}
@@ -131,19 +133,43 @@ export function BodyMap({ selected, onSelect }: Props) {
   return (
     <div>
       <div className="rounded-3xl border border-[#C89B3C]/25 bg-[#F7F0E3] p-4">
-        <div className="flex gap-2">
-          {renderFigure(FRONT, [], "Front")}
-          {renderFigure(BACK, BACK_INERT, "Back")}
+        <div className="mb-3 flex justify-center gap-1 rounded-full border border-[#C89B3C]/25 bg-white/50 p-1">
+          {(["front", "back"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              aria-pressed={view === v}
+              className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold capitalize transition-colors ${
+                view === v
+                  ? "bg-[#C89B3C] text-white"
+                  : "text-[#6F7358] hover:bg-[#C89B3C]/10"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
         </div>
 
-        {/* Reserve the line so the layout does not jump on hover. */}
-        <p className="mt-2 min-h-6 text-center text-sm font-semibold text-[#4B3A25]">
-          {activeLabel ?? (
-            <span className="font-medium text-[#6F7358]">
-              Tap where you notice it
+        <div className="flex justify-center">
+          {view === "front"
+            ? renderFigure(FRONT, [], "Front")
+            : renderFigure(BACK, BACK_INERT, "Back")}
+        </div>
+
+        {/* Fixed height so the layout never jumps as the caption changes. */}
+        <div className="mt-3 flex min-h-11 items-center justify-center">
+          {selected ? (
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#C89B3C] bg-[#C89B3C]/15 px-3.5 py-1.5 text-sm font-semibold text-[#4B3A25]">
+              <Check className="size-4 text-[#8A6A22]" />
+              {selectedLabel}
+            </span>
+          ) : (
+            <span className="text-sm font-medium text-[#6F7358]">
+              {activeLabel ?? "Tap where you notice it"}
             </span>
           )}
-        </p>
+        </div>
       </div>
 
       {/* Neither of these is a place on the body. */}

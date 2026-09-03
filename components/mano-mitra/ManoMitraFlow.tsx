@@ -130,14 +130,24 @@ export function ManoMitraFlow({ priorHighIntensity }: { priorHighIntensity: numb
     return (
       <Shell onBack={() => setStep("emotion")}>
         <Question text={BODY_PROMPT} />
-        <BodyMap
-          selected={zone}
-          onSelect={(z) => {
-            setZone(z)
-            setStep(needsMigraineTriage(z) ? "migraine" : "sensation")
-          }}
-        />
+
+        {/* Selecting no longer jumps straight to the next step. On a
+            phone that meant the screen changed before you could see what
+            you had picked, with no way to check or correct it. */}
+        <BodyMap selected={zone} onSelect={setZone} />
+
         <Note>{BODY_DISCLAIMER}</Note>
+
+        <Button
+          onClick={() =>
+            setStep(needsMigraineTriage(zone) ? "migraine" : "sensation")
+          }
+          disabled={!zone}
+          className="mt-5 w-full bg-[#C89B3C] text-white hover:bg-[#B4882F]"
+        >
+          Continue
+          <ArrowRight className="ml-1 size-4" />
+        </Button>
       </Shell>
     )
   }
