@@ -65,8 +65,12 @@ export type VideoSummary = {
   key_points: { point: string; timestamp?: string }[] | null
   action_items: string[] | null
   full_summary: string | null
+  /** Plain-text session transcript. Null until someone transcribes the session. */
+  transcript: string | null
   view_count: number
   is_published: boolean
+  /** The recording's home monthly folder (September 2026, August Recording, ...). */
+  folder_id: string | null
   created_at: string
   updated_at: string
 }
@@ -185,6 +189,35 @@ export type ResourceDocument = {
 export type ContentItem =
   | (Resource & { content_type: 'resource'; documents?: ResourceDocument[] })
   | (VideoSummary & { content_type: 'video_summary' })
+
+// =============================================
+// Courses
+// =============================================
+// A course is a curated playlist of recordings. It sits alongside the monthly
+// folders rather than replacing them — a recording keeps its folder and can
+// also appear in any number of courses. See supabase/migrations/20260930_courses.sql
+
+export type Course = {
+  id: string
+  title: string
+  slug: string
+  description: string | null
+  thumbnail_url: string | null
+  sort_order: number
+  is_published: boolean
+  created_at: string
+  updated_at: string
+}
+
+/** A recording in the context of a course, carrying its position in the playlist. */
+export type CourseLesson = VideoSummary & {
+  /** Playback order within the course. Lower plays first. */
+  sort_order: number
+}
+
+export type CourseWithLessons = Course & {
+  lessons: CourseLesson[]
+}
 
 // =============================================
 // API Request/Response Types

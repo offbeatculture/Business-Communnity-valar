@@ -2,8 +2,10 @@ import Link from "next/link"
 import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { fetchCategories } from "@/lib/content"
+import { fetchCourses } from "@/lib/courses"
 import { ContentGrid } from "@/components/content/ContentGrid"
 import { ContentFilters } from "@/components/content/ContentFilters"
+import { CourseRow } from "@/components/courses/CourseRow"
 import { ArrowRight, Folder, Video } from "lucide-react"
 import type { ContentItem } from "@/types"
 
@@ -35,9 +37,10 @@ export default async function ContentPage({ searchParams }: Props) {
   const sort = params.sort ?? "newest"
   const q = params.q ?? ""
 
-  const [categories, folders, items] = await Promise.all([
+  const [categories, folders, courses, items] = await Promise.all([
     fetchCategories(),
     fetchFolders(),
+    fetchCourses(),
     folderId
       ? fetchContent({
           folderId,
@@ -89,7 +92,25 @@ export default async function ContentPage({ searchParams }: Props) {
             <ContentGrid items={items} />
           </div>
         ) : (
-          <FolderGrid folders={folders} />
+          <div className="space-y-10">
+            <CourseRow courses={courses} />
+
+            <section>
+              {courses.length > 0 && (
+                <div className="mb-4">
+                  <h2 className="font-serif text-xl font-semibold text-[#4B3A25]">
+                    Monthly recordings
+                  </h2>
+
+                  <p className="text-sm leading-6 text-[#6F7358]">
+                    Every session, grouped by the month it was recorded.
+                  </p>
+                </div>
+              )}
+
+              <FolderGrid folders={folders} />
+            </section>
+          </div>
         )}
       </div>
     </div>
