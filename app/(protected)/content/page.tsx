@@ -3,11 +3,12 @@ import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { fetchCategories } from "@/lib/content"
 import { fetchCourses } from "@/lib/courses"
-import { ContentGrid } from "@/components/content/ContentGrid"
 import { ContentFilters } from "@/components/content/ContentFilters"
+import { PlaylistPlayer } from "@/components/content/PlaylistPlayer"
+import { PlayerSkeleton } from "@/components/content/PlayerSkeleton"
 import { CourseRow } from "@/components/courses/CourseRow"
 import { ArrowRight, Folder, Video } from "lucide-react"
-import type { ContentItem } from "@/types"
+import type { ContentItem, VideoSummary } from "@/types"
 
 type Props = {
   searchParams: Promise<{
@@ -25,8 +26,11 @@ type ContentFolder = {
   name: string
   slug: string
   description: string | null
+  cover_image_url: string | null
   created_at: string
   videoCount: number
+  /** First recording in the folder, used as a cover fallback. */
+  firstVideoId: string | null
 }
 
 export default async function ContentPage({ searchParams }: Props) {
@@ -81,16 +85,16 @@ export default async function ContentPage({ searchParams }: Props) {
 
       <div className="mt-6">
         {folderId ? (
-          <div className="space-y-5">
-            <Link
-              href="/content"
-              className="inline-flex items-center text-sm font-medium text-[#8A6A22] hover:text-[#4B3A25]"
-            >
-              ← Back to folders
-            </Link>
-
-            <ContentGrid items={items} />
-          </div>
+          <Suspense fallback={<PlayerSkeleton />}>
+            <PlaylistPlayer
+              title={selectedFolder?.name ?? "Recordings"}
+              items={items as VideoSummary[]}
+              backHref="/content"
+              backLabel="Back to folders"
+              emptyTitle="No recordings in this folder"
+              emptyBody="Once videos are added to this folder from the admin panel, they will play here."
+            />
+          </Suspense>
         ) : (
           <div className="space-y-10">
             <CourseRow courses={courses} />
@@ -122,25 +126,35 @@ async function fetchFolders(): Promise<ContentFolder[]> {
 
   const { data: folders } = await supabase
     .from("content_folders")
-    .select("id, name, slug, description, created_at")
+    .select("id, name, slug, description, cover_image_url, created_at")
     .order("created_at", { ascending: false })
 
+  // Ordered newest first so the first video seen per folder is also the one
+  // whose thumbnail stands in when the folder has no cover image.
   const { data: videos } = await supabase
     .from("video_summaries")
-    .select("id, folder_id")
+    .select("id, folder_id, youtube_video_id, created_at")
     .eq("is_published", true)
     .not("folder_id", "is", null)
+    .order("created_at", { ascending: false })
 
   const countMap = new Map<string, number>()
+  const firstVideoMap = new Map<string, string | null>()
 
   ;(videos ?? []).forEach((video) => {
     if (!video.folder_id) return
+
     countMap.set(video.folder_id, (countMap.get(video.folder_id) ?? 0) + 1)
+
+    if (!firstVideoMap.has(video.folder_id)) {
+      firstVideoMap.set(video.folder_id, video.youtube_video_id)
+    }
   })
 
   return (folders ?? []).map((folder) => ({
     ...folder,
     videoCount: countMap.get(folder.id) ?? 0,
+    firstVideoId: firstVideoMap.get(folder.id) ?? null,
   }))
 }
 
@@ -218,7 +232,16 @@ function FolderGrid({ folders }: { folders: ContentFolder[] }) {
 
   return (
     <div className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 xl:grid-cols-3">
-      {folders.map((folder) => (
+      {folders.map((folder) => {
+        // An uploaded cover wins; otherwise fall back to the newest recording's
+        // YouTube thumbnail, and only then to the plain folder glyph.
+        const cover =
+          folder.cover_image_url ??
+          (folder.firstVideoId
+            ? `https://img.youtube.com/vi/${folder.firstVideoId}/hqdefault.jpg`
+            : null)
+
+        return (
         <Link
           key={folder.id}
           href={`/content?folder=${folder.id}`}
@@ -226,9 +249,17 @@ function FolderGrid({ folders }: { folders: ContentFolder[] }) {
         >
           <article className="space-y-3">
             <div className="relative aspect-video overflow-hidden rounded-2xl bg-[#F7F0E3] shadow-sm ring-1 ring-[#C89B3C]/15 transition group-hover:shadow-md">
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#F7F0E3] to-[#E8DDC8]">
-                <Folder className="size-14 text-[#8A6A22]" />
-              </div>
+              {cover ? (
+                <img
+                  src={cover}
+                  alt=""
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#F7F0E3] to-[#E8DDC8]">
+                  <Folder className="size-14 text-[#8A6A22]" />
+                </div>
+              )}
 
               <div className="absolute bottom-2 right-2 rounded-md bg-black/80 px-2 py-1 text-[11px] font-medium text-white">
                 {folder.videoCount} video{folder.videoCount === 1 ? "" : "s"}
@@ -255,7 +286,8 @@ function FolderGrid({ folders }: { folders: ContentFolder[] }) {
             </div>
           </article>
         </Link>
-      ))}
+        )
+      })}
     </div>
   )
 }

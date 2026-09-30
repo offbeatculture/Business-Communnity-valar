@@ -59,7 +59,7 @@ export async function GET() {
 
     const { data, error } = await admin
       .from("content_folders")
-      .select("id, name, slug, description, created_at")
+      .select("id, name, slug, description, cover_image_url, created_at")
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
 
     const { data: existingFolder } = await admin
       .from("content_folders")
-      .select("id, name, slug, description, created_at")
+      .select("id, name, slug, description, cover_image_url, created_at")
       .ilike("name", folderName)
       .maybeSingle()
 
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
         slug: baseSlug,
         description: parsed.data.description?.trim() || null,
       })
-      .select("id, name, slug, description, created_at")
+      .select("id, name, slug, description, cover_image_url, created_at")
       .single()
 
     if (error) {

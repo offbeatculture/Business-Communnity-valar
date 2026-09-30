@@ -3,9 +3,20 @@
 import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { VideoSummaryForm } from "@/components/admin/VideoSummaryForm"
+import { BulkVideoForm } from "@/components/admin/BulkVideoForm"
+import { FolderManager } from "@/components/admin/FolderManager"
 import { AdminContentTable } from "@/components/admin/AdminContentTable"
-import { Loader2, Video } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FolderCog, Loader2, Video } from "lucide-react"
 import type { ContentItem, Category } from "@/types"
+
+// /api/content returns a mixed list and has labelled the video kind three
+// different ways over time. This covers all three without reaching for `any`.
+type MaybeVideoItem = {
+  type?: string
+  content_type?: string
+  kind?: string
+}
 
 export default function AdminContentPage() {
   const [items, setItems] = useState<ContentItem[]>([])
@@ -19,7 +30,7 @@ export default function AdminContentPage() {
 
       const allItems = data.data ?? []
 
-      const videoItems = allItems.filter((item: any) => {
+      const videoItems = allItems.filter((item: MaybeVideoItem) => {
         return (
           item.type === "video_summary" ||
           item.content_type === "video_summary" ||
@@ -44,7 +55,7 @@ export default function AdminContentPage() {
         const contentData = await contentRes.json()
         const allItems = contentData.data ?? []
 
-        const videoItems = allItems.filter((item: any) => {
+        const videoItems = allItems.filter((item: MaybeVideoItem) => {
           return (
             item.type === "video_summary" ||
             item.content_type === "video_summary" ||
@@ -96,17 +107,56 @@ export default function AdminContentPage() {
             </div>
 
             <div>
-              <CardTitle>Create New Video</CardTitle>
+              <CardTitle>Add Videos</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                Add a YouTube URL, summary, key points, and assign the video to
-                a folder.
+                Add one video with a full AI summary, or paste a batch of
+                YouTube links to publish a whole month at once.
               </p>
             </div>
           </div>
         </CardHeader>
 
         <CardContent>
-          <VideoSummaryForm categories={categories} onSuccess={fetchItems} />
+          <Tabs defaultValue="single">
+            <TabsList className="mb-5">
+              <TabsTrigger value="single">One video</TabsTrigger>
+              <TabsTrigger value="bulk">Multiple videos</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="single">
+              <VideoSummaryForm
+                categories={categories}
+                onSuccess={fetchItems}
+              />
+            </TabsContent>
+
+            <TabsContent value="bulk">
+              <BulkVideoForm onSuccess={fetchItems} />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Folders and cover images */}
+      <Card className="border-border/70 bg-card shadow-sm">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+              <FolderCog className="size-5 text-primary" />
+            </div>
+
+            <div>
+              <CardTitle>Folders</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Rename a folder, write a description, and set the cover image
+                members see in the library.
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <FolderManager />
         </CardContent>
       </Card>
 

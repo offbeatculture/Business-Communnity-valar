@@ -2,7 +2,8 @@ import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 import { fetchCourseBySlug } from "@/lib/courses"
-import { CoursePlayer } from "@/components/courses/CoursePlayer"
+import { PlaylistPlayer } from "@/components/content/PlaylistPlayer"
+import { PlayerSkeleton } from "@/components/content/PlayerSkeleton"
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -34,24 +35,18 @@ export default async function CoursePage({ params }: Props) {
         </p>
       )}
 
-      {/* CoursePlayer reads ?v= via useSearchParams, so it needs a Suspense
+      {/* PlaylistPlayer reads ?v= via useSearchParams, so it needs a Suspense
           boundary to keep the rest of the route statically renderable. */}
       <Suspense fallback={<PlayerSkeleton />}>
-        <CoursePlayer course={course} />
+        <PlaylistPlayer
+          title={course.title}
+          items={course.lessons}
+          backHref="/content"
+          backLabel="Back to Breathwork Library"
+          emptyTitle="No sessions in this course yet"
+          emptyBody="Once sessions are added to this course, they will play here."
+        />
       </Suspense>
-    </div>
-  )
-}
-
-function PlayerSkeleton() {
-  return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="space-y-5">
-        <div className="aspect-video animate-pulse rounded-2xl bg-[#E8DDC8]" />
-        <div className="h-40 animate-pulse rounded-2xl bg-[#F7F0E3]" />
-      </div>
-
-      <div className="h-[28rem] animate-pulse rounded-2xl bg-[#F7F0E3]" />
     </div>
   )
 }

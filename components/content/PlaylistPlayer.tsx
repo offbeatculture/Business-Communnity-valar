@@ -14,7 +14,20 @@ import {
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
-import type { CourseWithLessons } from "@/types"
+import type { VideoSummary } from "@/types"
+
+type PlaylistPlayerProps = {
+  /** Playlist name, shown in the sidebar header and under the video title. */
+  title: string
+  /** Recordings in playback order. The list is treated as newest-first. */
+  items: VideoSummary[]
+  /** Where the "back" link goes, e.g. /content. */
+  backHref: string
+  backLabel: string
+  /** Wording for the empty state when the playlist has no recordings. */
+  emptyTitle?: string
+  emptyBody?: string
+}
 
 // These cards are hardcoded light (same as the rest of the library) while the
 // app's theme tokens are tuned for a dark background, so the `dark:` variants
@@ -34,11 +47,25 @@ function thumbnail(videoId: string | null) {
   return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
 }
 
-export function CoursePlayer({ course }: { course: CourseWithLessons }) {
+/**
+ * Video player with a playlist sidebar, About/Transcript tabs and
+ * newer/older navigation.
+ *
+ * Used for both a course (/courses/[slug]) and a library folder
+ * (/content?folder=...), so it knows nothing about either — it takes a title
+ * and a list of recordings.
+ */
+export function PlaylistPlayer({
+  title,
+  items: lessons,
+  backHref,
+  backLabel,
+  emptyTitle = "Nothing here yet",
+  emptyBody = "Once recordings are added, they will play here.",
+}: PlaylistPlayerProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { lessons } = course
 
   // The playing lesson is driven by ?v= so a lesson is linkable and the browser
   // back button steps through the playlist. An unknown or missing id falls back
@@ -59,10 +86,13 @@ export function CoursePlayer({ course }: { course: CourseWithLessons }) {
     fetch(`/api/content/${active.id}/view`, { method: "POST" }).catch(() => {})
   }, [active])
 
-  // Stay on whatever route mounted the player rather than assuming
-  // /courses/<slug>, so the component is reusable and never navigates away.
+  // Stay on whatever route mounted the player, and keep the other query params.
+  // The folder view lives at /content?folder=<id>, so dropping them would throw
+  // the viewer back out to the folder list mid-playlist.
   function select(lessonId: string) {
-    router.replace(`${pathname}?v=${lessonId}`, { scroll: false })
+    const next = new URLSearchParams(searchParams.toString())
+    next.set("v", lessonId)
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false })
   }
 
   if (!active) {
@@ -73,11 +103,11 @@ export function CoursePlayer({ course }: { course: CourseWithLessons }) {
         </div>
 
         <h2 className="font-serif text-xl font-semibold text-[#4B3A25]">
-          No sessions in this course yet
+          {emptyTitle}
         </h2>
 
         <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-[#6F7358]">
-          Once Sunday sessions are added to this course, they will play here.
+          {emptyBody}
         </p>
       </div>
     )
@@ -90,11 +120,11 @@ export function CoursePlayer({ course }: { course: CourseWithLessons }) {
   return (
     <div>
       <Link
-        href="/content"
+        href={backHref}
         className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[#8A6A22] transition hover:text-[#4B3A25]"
       >
         <ArrowLeft className="size-4" />
-        Back to Breathwork Library
+        {backLabel}
       </Link>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -127,7 +157,7 @@ export function CoursePlayer({ course }: { course: CourseWithLessons }) {
                 </h1>
 
                 <p className="mt-1 text-sm text-[#6F7358]">
-                  {course.title} · {lessons.length} session
+                  {title} · {lessons.length} session
                   {lessons.length === 1 ? "" : "s"}, newest first
                 </p>
               </div>
@@ -216,11 +246,16 @@ export function CoursePlayer({ course }: { course: CourseWithLessons }) {
         </div>
 
         {/* ── Playlist column ───────────────────────────────────────────── */}
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+        {/* Deliberately not sticky: the app sets overflow-x-hidden on <html>,
+            which makes html the scroll container and stops position:sticky
+            engaging for descendants. A sticky class here would silently do
+            nothing, so the playlist simply sits beside the video and scrolls
+            with it. */}
+        <aside className="lg:self-start">
           <div className="overflow-hidden rounded-2xl bg-[#F7F0E3] shadow-sm ring-1 ring-[#C89B3C]/15">
             <div className="border-b border-[#C89B3C]/20 px-4 py-4">
               <h2 className="font-serif text-base font-semibold text-[#2F271C]">
-                {course.title}
+                {title}
               </h2>
 
               <p className="mt-0.5 text-xs text-[#6F7358]">
@@ -300,7 +335,7 @@ export function CoursePlayer({ course }: { course: CourseWithLessons }) {
 function AboutTab({
   lesson,
 }: {
-  lesson: CourseWithLessons["lessons"][number]
+  lesson: VideoSummary
 }) {
   const hasKeyPoints = (lesson.key_points?.length ?? 0) > 0
   const hasActions = (lesson.action_items?.length ?? 0) > 0
