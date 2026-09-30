@@ -3,6 +3,7 @@ import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { fetchCategories } from "@/lib/content"
 import { fetchCourses } from "@/lib/courses"
+import { videoThumbnail } from "@/lib/thumbnails"
 import { ContentFilters } from "@/components/content/ContentFilters"
 import { PlaylistPlayer } from "@/components/content/PlaylistPlayer"
 import { PlayerSkeleton } from "@/components/content/PlayerSkeleton"
@@ -29,8 +30,8 @@ type ContentFolder = {
   cover_image_url: string | null
   created_at: string
   videoCount: number
-  /** First recording in the folder, used as a cover fallback. */
-  firstVideoId: string | null
+  /** Newest recording's thumbnail, used when the folder has no cover of its own. */
+  fallbackThumbnail: string | null
 }
 
 export default async function ContentPage({ searchParams }: Props) {
@@ -133,28 +134,28 @@ async function fetchFolders(): Promise<ContentFolder[]> {
   // whose thumbnail stands in when the folder has no cover image.
   const { data: videos } = await supabase
     .from("video_summaries")
-    .select("id, folder_id, youtube_video_id, created_at")
+    .select("id, folder_id, youtube_video_id, thumbnail_url, created_at")
     .eq("is_published", true)
     .not("folder_id", "is", null)
     .order("created_at", { ascending: false })
 
   const countMap = new Map<string, number>()
-  const firstVideoMap = new Map<string, string | null>()
+  const thumbnailMap = new Map<string, string | null>()
 
   ;(videos ?? []).forEach((video) => {
     if (!video.folder_id) return
 
     countMap.set(video.folder_id, (countMap.get(video.folder_id) ?? 0) + 1)
 
-    if (!firstVideoMap.has(video.folder_id)) {
-      firstVideoMap.set(video.folder_id, video.youtube_video_id)
+    if (!thumbnailMap.has(video.folder_id)) {
+      thumbnailMap.set(video.folder_id, videoThumbnail(video))
     }
   })
 
   return (folders ?? []).map((folder) => ({
     ...folder,
     videoCount: countMap.get(folder.id) ?? 0,
-    firstVideoId: firstVideoMap.get(folder.id) ?? null,
+    fallbackThumbnail: thumbnailMap.get(folder.id) ?? null,
   }))
 }
 
@@ -233,13 +234,9 @@ function FolderGrid({ folders }: { folders: ContentFolder[] }) {
   return (
     <div className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 xl:grid-cols-3">
       {folders.map((folder) => {
-        // An uploaded cover wins; otherwise fall back to the newest recording's
-        // YouTube thumbnail, and only then to the plain folder glyph.
-        const cover =
-          folder.cover_image_url ??
-          (folder.firstVideoId
-            ? `https://img.youtube.com/vi/${folder.firstVideoId}/hqdefault.jpg`
-            : null)
+        // The folder's own cover wins; otherwise fall back to the newest
+        // recording's thumbnail, and only then to the plain folder glyph.
+        const cover = folder.cover_image_url ?? folder.fallbackThumbnail
 
         return (
         <Link

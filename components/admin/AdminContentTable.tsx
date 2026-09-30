@@ -34,6 +34,7 @@ import {
   FileIcon,
 } from "lucide-react"
 import { toast } from "sonner"
+import { CoverImageField } from "@/components/admin/CoverImageField"
 import type { ContentItem, Category, ResourceDocument } from "@/types"
 
 type Props = {
@@ -59,6 +60,7 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
   // Video summary edit fields
   const [editYoutubeUrl, setEditYoutubeUrl] = useState("")
   const [editTakeaway, setEditTakeaway] = useState("")
+  const [editThumbnailUrl, setEditThumbnailUrl] = useState("")
   const [editKeyPoints, setEditKeyPoints] = useState<{ point: string; timestamp?: string }[]>([])
   const [editActionItems, setEditActionItems] = useState<string[]>([])
 
@@ -97,6 +99,7 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
       if (item.content_type === "video_summary") {
         setEditYoutubeUrl(item.youtube_url ?? "")
         setEditTakeaway(item.one_line_takeaway ?? "")
+        setEditThumbnailUrl(item.thumbnail_url ?? "")
         setEditKeyPoints(item.key_points ?? [])
         setEditActionItems(item.action_items ?? [])
       }
@@ -158,6 +161,7 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
         body.full_summary = editDescription || null
         body.youtube_url = editYoutubeUrl || undefined
         body.one_line_takeaway = editTakeaway || null
+        body.thumbnail_url = editThumbnailUrl.trim() || null
         body.key_points = editKeyPoints.length > 0 ? editKeyPoints : null
         body.action_items = editActionItems.length > 0 ? editActionItems : null
       }
@@ -370,6 +374,17 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
                     placeholder="https://www.youtube.com/watch?v=..."
                   />
                 </div>
+
+                <CoverImageField
+                  value={editThumbnailUrl}
+                  onChange={setEditThumbnailUrl}
+                  kind="video"
+                  fallbackUrl={
+                    editItem.youtube_video_id
+                      ? `https://img.youtube.com/vi/${editItem.youtube_video_id}/hqdefault.jpg`
+                      : null
+                  }
+                />
 
                 <div>
                   <label className="text-sm font-medium mb-1.5 block">

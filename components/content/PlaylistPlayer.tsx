@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
+import { videoThumbnail } from "@/lib/thumbnails"
 import type { VideoSummary } from "@/types"
 
 type PlaylistPlayerProps = {
@@ -42,10 +43,6 @@ const tabTriggerClass = cn(
   "after:bg-[#C89B3C]"
 )
 
-function thumbnail(videoId: string | null) {
-  if (!videoId) return null
-  return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
-}
 
 /**
  * Video player with a playlist sidebar, About/Transcript tabs and
@@ -266,7 +263,7 @@ export function PlaylistPlayer({
             <ol className="max-h-[32rem] overflow-y-auto p-2">
               {lessons.map((lesson, index) => {
                 const isActive = index === activeIndex
-                const thumb = thumbnail(lesson.youtube_video_id)
+                const thumb = videoThumbnail(lesson, "mq")
 
                 return (
                   <li key={lesson.id}>

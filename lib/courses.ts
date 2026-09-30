@@ -1,17 +1,12 @@
 import { createClient } from "@/lib/supabase/server"
+import { videoThumbnail } from "@/lib/thumbnails"
 import type { Course, CourseLesson, CourseWithLessons } from "@/types"
-
-/** Thumbnail for a recording, derived from its YouTube id — same rule as ContentCard. */
-export function courseThumbnail(videoId?: string | null) {
-  if (!videoId) return null
-  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-}
 
 /**
  * Published courses with a lesson count, for the card row on the library page.
  */
 export async function fetchCourses(): Promise<
-  (Course & { lessonCount: number; firstVideoId: string | null })[]
+  (Course & { lessonCount: number; fallbackThumbnail: string | null })[]
 > {
   const supabase = await createClient()
 
@@ -28,7 +23,9 @@ export async function fetchCourses(): Promise<
   // small (a handful of courses, tens of lessons) so this stays cheap.
   const { data: memberships } = await supabase
     .from("course_videos")
-    .select("course_id, sort_order, video:video_summaries (youtube_video_id, is_published)")
+    .select(
+      "course_id, sort_order, video:video_summaries (youtube_video_id, thumbnail_url, is_published)"
+    )
     .in(
       "course_id",
       courses.map((c) => c.id)
@@ -36,11 +33,15 @@ export async function fetchCourses(): Promise<
     .order("sort_order", { ascending: true })
 
   const counts = new Map<string, number>()
-  const firstVideo = new Map<string, string | null>()
+  const firstThumbnail = new Map<string, string | null>()
 
   for (const row of memberships ?? []) {
     const video = row.video as unknown as
-      | { youtube_video_id: string | null; is_published: boolean }
+      | {
+          youtube_video_id: string | null
+          thumbnail_url: string | null
+          is_published: boolean
+        }
       | null
 
     // A course row can outlive an unpublished recording. Don't count those.
@@ -48,15 +49,15 @@ export async function fetchCourses(): Promise<
 
     counts.set(row.course_id, (counts.get(row.course_id) ?? 0) + 1)
 
-    if (!firstVideo.has(row.course_id)) {
-      firstVideo.set(row.course_id, video.youtube_video_id)
+    if (!firstThumbnail.has(row.course_id)) {
+      firstThumbnail.set(row.course_id, videoThumbnail(video))
     }
   }
 
   return (courses as Course[]).map((course) => ({
     ...course,
     lessonCount: counts.get(course.id) ?? 0,
-    firstVideoId: firstVideo.get(course.id) ?? null,
+    fallbackThumbnail: firstThumbnail.get(course.id) ?? null,
   }))
 }
 

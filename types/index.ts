@@ -67,6 +67,8 @@ export type VideoSummary = {
   full_summary: string | null
   /** Plain-text session transcript. Null until someone transcribes the session. */
   transcript: string | null
+  /** Custom cover image. Null falls back to YouTube's own thumbnail. */
+  thumbnail_url: string | null
   view_count: number
   is_published: boolean
   /** The recording's home monthly folder (September 2026, August Recording, ...). */

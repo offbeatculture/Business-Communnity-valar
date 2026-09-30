@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
+import { videoThumbnail } from "@/lib/thumbnails"
 import { fetchProfile, fetchProfileStats } from "@/lib/profile"
 import { fetchPosts, fetchUserInteractions } from "@/lib/community"
 import {
@@ -243,7 +244,7 @@ async function fetchLatestRecordings(
   const { data, error } = await supabase
     .from("video_summaries")
     .select(
-      "id, title, youtube_video_id, youtube_url, video_duration_minutes, one_line_takeaway, full_summary, created_at"
+      "id, title, youtube_video_id, youtube_url, thumbnail_url, video_duration_minutes, one_line_takeaway, full_summary, created_at"
     )
     .eq("is_published", true)
     .order("created_at", { ascending: false })
@@ -269,9 +270,10 @@ async function fetchLatestRecordings(
         video.one_line_takeaway ||
         video.full_summary ||
         "Watch the latest guided breathwork session.",
-      thumbnail: videoId
-        ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-        : null,
+      thumbnail: videoThumbnail({
+        thumbnail_url: video.thumbnail_url,
+        youtube_video_id: videoId,
+      }),
       href: `/content/${video.id}`,
     }
   })

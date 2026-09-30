@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Clock, Eye, FileSpreadsheet, FileText, Folder, Video } from "lucide-react"
+import { videoThumbnail } from "@/lib/thumbnails"
 import type { ContentItem } from "@/types"
 
 const typeConfig = {
@@ -17,10 +18,8 @@ const typeConfig = {
   },
 } as const
 
-function getYouTubeThumbnail(videoId?: string | null) {
-  if (!videoId) return null
-  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-}
+// Thumbnail selection lives in lib/thumbnails so a custom cover and the
+// YouTube fallback behave identically everywhere a recording is shown.
 
 export function ContentCard({ item }: { item: ContentItem }) {
 const type =
@@ -36,9 +35,7 @@ const config = typeConfig[type]
 const Icon = config.icon
 
   const thumbnail =
-    item.content_type === "video_summary"
-      ? getYouTubeThumbnail(item.youtube_video_id)
-      : null
+    item.content_type === "video_summary" ? videoThumbnail(item) : null
 
   const metaLabel =
     item.content_type === "video_summary"

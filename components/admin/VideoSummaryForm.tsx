@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Sparkles, Save, Plus, X, FolderPlus } from "lucide-react"
+import { CoverImageField } from "@/components/admin/CoverImageField"
 import { toast } from "sonner"
 import type { Category } from "@/types"
 
@@ -96,6 +97,11 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
   const [actionItems, setActionItems] = useState<string[]>([])
   const [videoDuration, setVideoDuration] = useState("")
   const [readTime, setReadTime] = useState("")
+  const [thumbnailUrl, setThumbnailUrl] = useState("")
+
+  // Drives the "YouTube default" preview in the cover field, so an admin can
+  // see the stock thumbnail before deciding whether to replace it.
+  const previewVideoId = summary?.youtube_video_id ?? extractVideoId(youtubeUrl)
 
   useEffect(() => {
     fetchFolders()
@@ -133,6 +139,7 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
     setKeyPoints([])
     setActionItems([])
     setVideoDuration("")
+    setThumbnailUrl("")
     setReadTime("")
   }
 
@@ -286,6 +293,7 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
           key_points: keyPoints.length > 0 ? keyPoints : undefined,
           action_items: actionItems.length > 0 ? actionItems : undefined,
           full_summary: fullSummary.trim() || undefined,
+          thumbnail_url: thumbnailUrl.trim() || undefined,
           is_published: true,
         }),
       })
@@ -459,6 +467,17 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
               placeholder="Video title or summary headline"
             />
           </div>
+
+          <CoverImageField
+            value={thumbnailUrl}
+            onChange={setThumbnailUrl}
+            kind="video"
+            fallbackUrl={
+              previewVideoId
+                ? `https://img.youtube.com/vi/${previewVideoId}/hqdefault.jpg`
+                : null
+            }
+          />
 {/* 
           <div>
             <label className="mb-1.5 block text-sm font-medium">Category</label>

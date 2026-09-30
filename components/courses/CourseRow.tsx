@@ -4,7 +4,8 @@ import type { Course } from "@/types"
 
 type CourseCard = Course & {
   lessonCount: number
-  firstVideoId: string | null
+  /** First lesson's thumbnail, used when the course has no cover of its own. */
+  fallbackThumbnail: string | null
 }
 
 /**
@@ -30,11 +31,7 @@ export function CourseRow({ courses }: { courses: CourseCard[] }) {
 
       <div className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 xl:grid-cols-3">
         {courses.map((course) => {
-          const cover =
-            course.thumbnail_url ??
-            (course.firstVideoId
-              ? `https://img.youtube.com/vi/${course.firstVideoId}/hqdefault.jpg`
-              : null)
+          const cover = course.thumbnail_url ?? course.fallbackThumbnail
 
           return (
             <Link

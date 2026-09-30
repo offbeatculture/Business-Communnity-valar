@@ -54,6 +54,8 @@ const VideoSummarySchema = z.object({
     .nullable(),
   action_items: z.array(z.string()).optional().nullable(),
   full_summary: z.string().optional().nullable(),
+  // Custom cover. Null or absent means "use YouTube's own thumbnail".
+  thumbnail_url: z.string().url().optional().nullable(),
   is_published: z.boolean().default(true),
 })
 
