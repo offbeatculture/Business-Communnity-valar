@@ -7,8 +7,7 @@ import { videoThumbnail } from "@/lib/thumbnails"
 import { ContentFilters } from "@/components/content/ContentFilters"
 import { PlaylistPlayer } from "@/components/content/PlaylistPlayer"
 import { PlayerSkeleton } from "@/components/content/PlayerSkeleton"
-import { CourseRow } from "@/components/courses/CourseRow"
-import { ArrowRight, Folder, Video } from "lucide-react"
+import { LibraryGrid, type LibraryEntry } from "@/components/content/LibraryGrid"
 import type { ContentItem, VideoSummary } from "@/types"
 
 type Props = {
@@ -76,7 +75,7 @@ export default async function ContentPage({ searchParams }: Props) {
             ? `${selectedFolder.videoCount} recording${
                 selectedFolder.videoCount === 1 ? "" : "s"
               } inside this folder.`
-            : "Choose a folder to watch session recordings for your daily wellbeing practice."}
+            : "Open a collection to watch session recordings for your daily wellbeing practice."}
         </p>
       </div>
 
@@ -97,25 +96,7 @@ export default async function ContentPage({ searchParams }: Props) {
             />
           </Suspense>
         ) : (
-          <div className="space-y-10">
-            <CourseRow courses={courses} />
-
-            <section>
-              {courses.length > 0 && (
-                <div className="mb-4">
-                  <h2 className="font-serif text-xl font-semibold text-[#4B3A25]">
-                    Monthly recordings
-                  </h2>
-
-                  <p className="text-sm leading-6 text-[#6F7358]">
-                    Every session, grouped by the month it was recorded.
-                  </p>
-                </div>
-              )}
-
-              <FolderGrid folders={folders} />
-            </section>
-          </div>
+          <LibraryGrid entries={buildEntries(courses, folders)} />
         )}
       </div>
     </div>
@@ -212,79 +193,36 @@ async function fetchContent(filters: {
   return items
 }
 
-function FolderGrid({ folders }: { folders: ContentFolder[] }) {
-  if (folders.length === 0) {
-    return (
-      <div className="flex min-h-[38vh] flex-col items-center justify-center rounded-3xl border border-dashed border-[#C89B3C]/30 bg-[#F7F0E3]/70 px-6 py-12 text-center text-[#4B3A25]">
-        <div className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-[#C89B3C]/10">
-          <Folder className="size-8 text-[#C89B3C]" />
-        </div>
+/**
+ * Flattens courses and folders into one list of cards.
+ *
+ * Courses lead because they are curated sequences someone chose to build;
+ * the monthly folders follow, newest first, which is the order fetchFolders
+ * already returns them in.
+ */
+function buildEntries(
+  courses: Awaited<ReturnType<typeof fetchCourses>>,
+  folders: ContentFolder[]
+): LibraryEntry[] {
+  const courseEntries: LibraryEntry[] = courses.map((course) => ({
+    id: `course-${course.id}`,
+    href: `/courses/${course.slug}`,
+    title: course.title,
+    description: course.description,
+    cover: course.thumbnail_url ?? course.fallbackThumbnail,
+    videoCount: course.lessonCount,
+    kind: "course",
+  }))
 
-        <h3 className="font-serif text-xl font-semibold text-[#4B3A25]">
-          No folders found
-        </h3>
+  const folderEntries: LibraryEntry[] = folders.map((folder) => ({
+    id: `folder-${folder.id}`,
+    href: `/content?folder=${folder.id}`,
+    title: folder.name,
+    description: folder.description,
+    cover: folder.cover_image_url ?? folder.fallbackThumbnail,
+    videoCount: folder.videoCount,
+    kind: "folder",
+  }))
 
-        <p className="mt-1 max-w-xs text-sm leading-6 text-[#6F7358]">
-          Create folders from the admin panel and assign videos to them.
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 xl:grid-cols-3">
-      {folders.map((folder) => {
-        // The folder's own cover wins; otherwise fall back to the newest
-        // recording's thumbnail, and only then to the plain folder glyph.
-        const cover = folder.cover_image_url ?? folder.fallbackThumbnail
-
-        return (
-        <Link
-          key={folder.id}
-          href={`/content?folder=${folder.id}`}
-          className="group block"
-        >
-          <article className="space-y-3">
-            <div className="relative aspect-video overflow-hidden rounded-2xl bg-[#F7F0E3] shadow-sm ring-1 ring-[#C89B3C]/15 transition group-hover:shadow-md">
-              {cover ? (
-                <img
-                  src={cover}
-                  alt=""
-                  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#F7F0E3] to-[#E8DDC8]">
-                  <Folder className="size-14 text-[#8A6A22]" />
-                </div>
-              )}
-
-              <div className="absolute bottom-2 right-2 rounded-md bg-black/80 px-2 py-1 text-[11px] font-medium text-white">
-                {folder.videoCount} video{folder.videoCount === 1 ? "" : "s"}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-[#2F271C] group-hover:text-[#8A6A22]">
-                {folder.name}
-              </h3>
-
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-[#6F7358]">
-                <Video className="size-3.5 shrink-0" />
-                <span>
-                  {folder.videoCount} recording
-                  {folder.videoCount === 1 ? "" : "s"}
-                </span>
-              </div>
-
-              <div className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[#8A6A22]">
-                Open folder
-                <ArrowRight className="size-3.5" />
-              </div>
-            </div>
-          </article>
-        </Link>
-        )
-      })}
-    </div>
-  )
+  return [...courseEntries, ...folderEntries]
 }
