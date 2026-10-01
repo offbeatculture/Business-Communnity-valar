@@ -65,15 +65,33 @@ export function VideoResourceField({
         const body = new FormData()
         body.append("file", file)
 
-        const res = await fetch("/api/admin/resources/upload", {
-          method: "POST",
-          body,
-        })
+        let res: Response
 
-        const data = await res.json()
+        try {
+          res = await fetch("/api/admin/resources/upload", {
+            method: "POST",
+            body,
+          })
+        } catch {
+          // Network drop, or the host cut the request off mid-upload.
+          toast.error(`${file.name}: the upload did not reach the server`)
+          continue
+        }
 
-        if (!res.ok) {
-          toast.error(`${file.name}: ${data.error ?? "upload failed"}`)
+        // A host that refuses an oversized body answers with its own HTML error
+        // page, not our JSON, so parsing has to be allowed to fail.
+        const data = await res.json().catch(() => null)
+
+        if (!res.ok || !data) {
+          const reason =
+            data?.error ??
+            (res.status === 413
+              ? `the file is too large for the server to accept (${Math.round(
+                  file.size / 1024 / 1024
+                )}MB)`
+              : `upload failed (HTTP ${res.status})`)
+
+          toast.error(`${file.name}: ${reason}`)
           continue
         }
 

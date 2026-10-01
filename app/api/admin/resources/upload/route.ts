@@ -76,8 +76,13 @@ export async function POST(request: Request) {
 
     if (uploadError) {
       console.error("Resource upload error:", uploadError)
+
+      // This route is admin-only, and a generic message here just means the
+      // admin has to come and ask what went wrong. Pass the storage error
+      // through — "Bucket not found" or "mime type not supported" tells them
+      // exactly what to fix.
       return NextResponse.json(
-        { error: "Failed to upload the file" },
+        { error: `Storage rejected the file: ${uploadError.message}` },
         { status: 500 }
       )
     }
