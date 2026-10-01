@@ -105,11 +105,19 @@ export default async function ContentPage({ searchParams }: Props) {
 async function fetchFolders(): Promise<ContentFolder[]> {
   const supabase = await createClient()
 
-  const { data: folders } = await supabase
+  const { data: folders, error } = await supabase
     .from("content_folders")
     .select("id, name, slug, description, cover_image_url, sort_order, created_at")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
+
+  // Without this the page renders an empty library whether there genuinely are
+  // no folders or the query failed — for example because a migration adding a
+  // column has not been run yet. Those two look identical to a member and are
+  // very different to debug.
+  if (error) {
+    console.error("[library] Failed to load content folders:", error.message)
+  }
 
   // Only used for the recording count on each card. A folder with no cover of
   // its own shows no image — it never borrows a recording's thumbnail.

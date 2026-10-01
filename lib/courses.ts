@@ -9,12 +9,17 @@ export async function fetchCourses(): Promise<
 > {
   const supabase = await createClient()
 
-  const { data: courses } = await supabase
+  const { data: courses, error } = await supabase
     .from("courses")
     .select("*")
     .eq("is_published", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
+
+  // A failed query and an empty table both return nothing, so say which it was.
+  if (error) {
+    console.error("[library] Failed to load courses:", error.message)
+  }
 
   if (!courses || courses.length === 0) return []
 
