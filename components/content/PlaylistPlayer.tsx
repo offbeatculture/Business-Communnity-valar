@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
@@ -75,6 +75,17 @@ export function PlaylistPlayer({
   }, [lessons, requestedId])
 
   const active = lessons[activeIndex]
+  const poster = videoThumbnail(active, "hq")
+
+  // Each lesson starts on its cover. Keying off the lesson id resets this when
+  // someone picks a different session, so the new cover is shown rather than
+  // the previous video carrying straight on.
+  const [playingId, setPlayingId] = useState<string | null>(null)
+  const playing = Boolean(active) && playingId === active.id
+
+  function setPlaying(value: boolean) {
+    setPlayingId(value && active ? active.id : null)
+  }
 
   // Count a view the same way /content/[id] does, so a lesson watched inside the
   // course is not invisible in the stats.
@@ -129,19 +140,46 @@ export function PlaylistPlayer({
         <div className="space-y-5">
           <div className="overflow-hidden rounded-2xl bg-black shadow-sm ring-1 ring-[#C89B3C]/15">
             <div className="aspect-video">
-              {active.youtube_video_id ? (
+              {!active.youtube_video_id ? (
+                <div className="flex h-full w-full items-center justify-center text-sm text-white/60">
+                  This session has no video attached yet.
+                </div>
+              ) : playing ? (
                 <iframe
                   key={active.id}
-                  src={`https://www.youtube-nocookie.com/embed/${active.youtube_video_id}?rel=0&modestbranding=1&controls=1&fs=1&iv_load_policy=3&playsinline=1`}
+                  src={`https://www.youtube-nocookie.com/embed/${active.youtube_video_id}?autoplay=1&rel=0&modestbranding=1&controls=1&fs=1&iv_load_policy=3&playsinline=1`}
                   title={active.title}
                   className="h-full w-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm text-white/60">
-                  This session has no video attached yet.
-                </div>
+                // Cover-first: show the chosen cover image with a play button,
+                // and only load the YouTube embed once someone presses it. The
+                // custom cover is the point — embedding straight away would
+                // show YouTube's own poster frame instead.
+                <button
+                  type="button"
+                  onClick={() => setPlaying(true)}
+                  aria-label={`Play ${active.title}`}
+                  className="group/play relative h-full w-full"
+                >
+                  {poster ? (
+                    <img
+                      src={poster}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-[#102719]" />
+                  )}
+
+                  <span className="absolute inset-0 flex items-center justify-center bg-black/25 transition group-hover/play:bg-black/35">
+                    <span className="flex size-16 items-center justify-center rounded-full bg-[#D4A936] text-[#2F271C] shadow-lg transition group-hover/play:scale-105">
+                      <Play className="size-7 fill-current" />
+                    </span>
+                  </span>
+                </button>
               )}
             </div>
           </div>

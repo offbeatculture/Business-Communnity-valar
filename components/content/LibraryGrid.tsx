@@ -16,10 +16,16 @@ export type LibraryEntry = {
   href: string
   title: string
   description: string | null
-  /** Cover artwork, already resolved by the caller. Null draws a placeholder. */
+  /**
+   * The collection's own cover image. Null leaves the tile empty — a folder
+   * never borrows a recording's thumbnail, so an unset cover looks unset.
+   */
   cover: string | null
   videoCount: number
   kind: "course" | "folder"
+  /** Lower sorts first. */
+  sortOrder: number
+  createdAt: string
 }
 
 export function LibraryGrid({ entries }: { entries: LibraryEntry[] }) {
@@ -54,9 +60,8 @@ export function LibraryGrid({ entries }: { entries: LibraryEntry[] }) {
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#F7F0E3] to-[#E8DDC8]">
-                  <Folder className="size-14 text-[#8A6A22]" />
-                </div>
+                // No cover set: a plain tile, deliberately empty.
+                <div className="h-full w-full bg-gradient-to-br from-[#F7F0E3] to-[#E8DDC8]" />
               )}
 
               <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition group-hover:bg-black/15">
@@ -77,7 +82,7 @@ export function LibraryGrid({ entries }: { entries: LibraryEntry[] }) {
             </div>
 
             <div>
-              <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-[#2F271C] group-hover:text-[#8A6A22]">
+              <h3 className="line-clamp-2 font-serif text-xl font-bold leading-snug text-[#2F271C] group-hover:text-[#8A6A22]">
                 {entry.title}
               </h3>
 

@@ -12,6 +12,8 @@ const UpdateFolderSchema = z
     description: z.string().nullable().optional(),
     // An empty string clears the cover; a URL sets it.
     cover_image_url: z.union([z.string().url(), z.literal("")]).nullable().optional(),
+    // Lower sorts first in the library; negative pins above everything else.
+    sort_order: z.number().int().min(-999).max(999).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "Nothing to update",
@@ -38,7 +40,11 @@ export async function PATCH(request: Request, { params }: Params) {
       )
     }
 
-    const updates: Record<string, string | null> = {}
+    const updates: Record<string, string | number | null> = {}
+
+    if (parsed.data.sort_order !== undefined) {
+      updates.sort_order = parsed.data.sort_order
+    }
 
     if (parsed.data.name !== undefined) {
       updates.name = parsed.data.name.trim()
@@ -58,7 +64,7 @@ export async function PATCH(request: Request, { params }: Params) {
       .from("content_folders")
       .update(updates)
       .eq("id", id)
-      .select("id, name, slug, description, cover_image_url, created_at")
+      .select("id, name, slug, description, cover_image_url, sort_order, created_at")
       .single()
 
     if (error) {

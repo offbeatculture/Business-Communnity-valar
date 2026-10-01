@@ -1,12 +1,11 @@
 import { createClient } from "@/lib/supabase/server"
-import { videoThumbnail } from "@/lib/thumbnails"
 import type { Course, CourseLesson, CourseWithLessons } from "@/types"
 
 /**
  * Published courses with a lesson count, for the card row on the library page.
  */
 export async function fetchCourses(): Promise<
-  (Course & { lessonCount: number; fallbackThumbnail: string | null })[]
+  (Course & { lessonCount: number })[]
 > {
   const supabase = await createClient()
 
@@ -23,41 +22,26 @@ export async function fetchCourses(): Promise<
   // small (a handful of courses, tens of lessons) so this stays cheap.
   const { data: memberships } = await supabase
     .from("course_videos")
-    .select(
-      "course_id, sort_order, video:video_summaries (youtube_video_id, thumbnail_url, is_published)"
-    )
+    .select("course_id, video:video_summaries (is_published)")
     .in(
       "course_id",
       courses.map((c) => c.id)
     )
-    .order("sort_order", { ascending: true })
 
   const counts = new Map<string, number>()
-  const firstThumbnail = new Map<string, string | null>()
 
   for (const row of memberships ?? []) {
-    const video = row.video as unknown as
-      | {
-          youtube_video_id: string | null
-          thumbnail_url: string | null
-          is_published: boolean
-        }
-      | null
+    const video = row.video as unknown as { is_published: boolean } | null
 
     // A course row can outlive an unpublished recording. Don't count those.
     if (!video || !video.is_published) continue
 
     counts.set(row.course_id, (counts.get(row.course_id) ?? 0) + 1)
-
-    if (!firstThumbnail.has(row.course_id)) {
-      firstThumbnail.set(row.course_id, videoThumbnail(video))
-    }
   }
 
   return (courses as Course[]).map((course) => ({
     ...course,
     lessonCount: counts.get(course.id) ?? 0,
-    fallbackThumbnail: firstThumbnail.get(course.id) ?? null,
   }))
 }
 

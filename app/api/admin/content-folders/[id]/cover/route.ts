@@ -79,7 +79,7 @@ export async function POST(request: Request, { params }: Params) {
       .from("content_folders")
       .update({ cover_image_url })
       .eq("id", id)
-      .select("id, name, slug, description, cover_image_url, created_at")
+      .select("id, name, slug, description, cover_image_url, sort_order, created_at")
       .single()
 
     if (updateError) {

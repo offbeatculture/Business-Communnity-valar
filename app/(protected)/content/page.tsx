@@ -3,7 +3,6 @@ import { Suspense } from "react"
 import { createClient } from "@/lib/supabase/server"
 import { fetchCategories } from "@/lib/content"
 import { fetchCourses } from "@/lib/courses"
-import { videoThumbnail } from "@/lib/thumbnails"
 import { ContentFilters } from "@/components/content/ContentFilters"
 import { PlaylistPlayer } from "@/components/content/PlaylistPlayer"
 import { PlayerSkeleton } from "@/components/content/PlayerSkeleton"
@@ -27,10 +26,10 @@ type ContentFolder = {
   slug: string
   description: string | null
   cover_image_url: string | null
+  /** Library ordering. Lower sorts first; negative pins above everything else. */
+  sort_order: number
   created_at: string
   videoCount: number
-  /** Newest recording's thumbnail, used when the folder has no cover of its own. */
-  fallbackThumbnail: string | null
 }
 
 export default async function ContentPage({ searchParams }: Props) {
@@ -108,35 +107,28 @@ async function fetchFolders(): Promise<ContentFolder[]> {
 
   const { data: folders } = await supabase
     .from("content_folders")
-    .select("id, name, slug, description, cover_image_url, created_at")
+    .select("id, name, slug, description, cover_image_url, sort_order, created_at")
+    .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
 
-  // Ordered newest first so the first video seen per folder is also the one
-  // whose thumbnail stands in when the folder has no cover image.
+  // Only used for the recording count on each card. A folder with no cover of
+  // its own shows no image — it never borrows a recording's thumbnail.
   const { data: videos } = await supabase
     .from("video_summaries")
-    .select("id, folder_id, youtube_video_id, thumbnail_url, created_at")
+    .select("id, folder_id")
     .eq("is_published", true)
     .not("folder_id", "is", null)
-    .order("created_at", { ascending: false })
 
   const countMap = new Map<string, number>()
-  const thumbnailMap = new Map<string, string | null>()
 
   ;(videos ?? []).forEach((video) => {
     if (!video.folder_id) return
-
     countMap.set(video.folder_id, (countMap.get(video.folder_id) ?? 0) + 1)
-
-    if (!thumbnailMap.has(video.folder_id)) {
-      thumbnailMap.set(video.folder_id, videoThumbnail(video))
-    }
   })
 
   return (folders ?? []).map((folder) => ({
     ...folder,
     videoCount: countMap.get(folder.id) ?? 0,
-    fallbackThumbnail: thumbnailMap.get(folder.id) ?? null,
   }))
 }
 
@@ -209,9 +201,11 @@ function buildEntries(
     href: `/courses/${course.slug}`,
     title: course.title,
     description: course.description,
-    cover: course.thumbnail_url ?? course.fallbackThumbnail,
+    cover: course.thumbnail_url,
     videoCount: course.lessonCount,
     kind: "course",
+    sortOrder: course.sort_order,
+    createdAt: course.created_at,
   }))
 
   const folderEntries: LibraryEntry[] = folders.map((folder) => ({
@@ -219,10 +213,18 @@ function buildEntries(
     href: `/content?folder=${folder.id}`,
     title: folder.name,
     description: folder.description,
-    cover: folder.cover_image_url ?? folder.fallbackThumbnail,
+    cover: folder.cover_image_url,
     videoCount: folder.videoCount,
     kind: "folder",
+    sortOrder: folder.sort_order,
+    createdAt: folder.created_at,
   }))
 
-  return [...courseEntries, ...folderEntries]
+  // Courses and folders share one ordering so a pinned folder can genuinely
+  // lead the library. Lower sort_order first, then newest first within a tie.
+  return [...courseEntries, ...folderEntries].sort(
+    (a, b) =>
+      a.sortOrder - b.sortOrder ||
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
 }

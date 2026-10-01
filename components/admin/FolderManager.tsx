@@ -13,6 +13,7 @@ type ContentFolder = {
   slug: string
   description: string | null
   cover_image_url: string | null
+  sort_order: number
   created_at: string
 }
 
@@ -96,6 +97,7 @@ function FolderRow({
   const [name, setName] = useState(folder.name)
   const [description, setDescription] = useState(folder.description ?? "")
   const [coverUrl, setCoverUrl] = useState(folder.cover_image_url ?? "")
+  const [sortOrder, setSortOrder] = useState(String(folder.sort_order))
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -105,7 +107,8 @@ function FolderRow({
   const dirty =
     name !== folder.name ||
     description !== (folder.description ?? "") ||
-    coverUrl !== (folder.cover_image_url ?? "")
+    coverUrl !== (folder.cover_image_url ?? "") ||
+    sortOrder !== String(folder.sort_order)
 
   async function handleSave() {
     if (!name.trim()) {
@@ -123,6 +126,10 @@ function FolderRow({
           name: name.trim(),
           description: description.trim() || null,
           cover_image_url: coverUrl.trim(),
+          // A blank or non-numeric box means "leave it unordered".
+          sort_order: Number.isFinite(Number(sortOrder)) && sortOrder.trim()
+            ? Math.trunc(Number(sortOrder))
+            : 0,
         }),
       })
 
@@ -130,7 +137,9 @@ function FolderRow({
 
       if (!res.ok) throw new Error(data.error || "Failed to save")
 
-      onUpdated(data.data as ContentFolder)
+      const updated = data.data as ContentFolder
+      setSortOrder(String(updated.sort_order))
+      onUpdated(updated)
       toast.success("Folder updated")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save")
@@ -266,9 +275,21 @@ function FolderRow({
 
         {/* Fields */}
         <div className="min-w-0 flex-1 space-y-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium">Name</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <div className="flex gap-3">
+            <div className="min-w-0 flex-1">
+              <label className="mb-1 block text-xs font-medium">Name</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
+
+            <div className="w-24 shrink-0">
+              <label className="mb-1 block text-xs font-medium">Order</label>
+              <Input
+                type="number"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                title="Lower sorts first. Use a negative number to pin this folder to the top."
+              />
+            </div>
           </div>
 
           <div>
