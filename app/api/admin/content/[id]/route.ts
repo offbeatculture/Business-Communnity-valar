@@ -106,8 +106,61 @@ export async function PATCH(
       return NextResponse.json(updated)
     }
 
-    // Try video_summaries
-    const { content_type, ...updateData } = body
+    // Try video_summaries.
+    // `resources` and `remove_resources` live in video_resources, so they are
+    // pulled out before the rest is written to the recording row.
+    const { content_type, resources, remove_resources, ...updateData } = body
+
+    if (Array.isArray(remove_resources) && remove_resources.length > 0) {
+      const { data: toRemove } = await admin
+        .from("video_resources")
+        .select("id, file_url")
+        .eq("video_id", id)
+        .in("id", remove_resources)
+
+      if (toRemove && toRemove.length > 0) {
+        // Drop the stored files too, so detaching a resource does not leave
+        // the bucket growing with files nothing references.
+        await admin.storage
+          .from("resources")
+          .remove(toRemove.map((r: { file_url: string }) => r.file_url))
+          .catch(() => {})
+
+        await admin
+          .from("video_resources")
+          .delete()
+          .in(
+            "id",
+            toRemove.map((r: { id: string }) => r.id)
+          )
+      }
+    }
+
+    if (Array.isArray(resources) && resources.length > 0) {
+      const { data: existing } = await admin
+        .from("video_resources")
+        .select("sort_order")
+        .eq("video_id", id)
+        .order("sort_order", { ascending: false })
+        .limit(1)
+
+      const nextOrder = (existing?.[0]?.sort_order ?? -1) + 1
+
+      await admin.from("video_resources").insert(
+        resources.map(
+          (
+            resource: { label: string; file_url: string; sort_order?: number },
+            i: number
+          ) => ({
+            video_id: id,
+            label: resource.label,
+            file_url: resource.file_url,
+            sort_order: resource.sort_order ?? nextOrder + i,
+          })
+        )
+      )
+    }
+
     const { data: updated, error } = await admin
       .from("video_summaries")
       .update({ ...updateData, updated_at: new Date().toISOString() })

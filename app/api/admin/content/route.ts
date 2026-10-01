@@ -56,6 +56,17 @@ const VideoSummarySchema = z.object({
   full_summary: z.string().optional().nullable(),
   // Custom cover. Null or absent means "use YouTube's own thumbnail".
   thumbnail_url: z.string().url().optional().nullable(),
+  // Downloadable handouts. file_url is a path in the private resources bucket,
+  // returned by /api/admin/resources/upload.
+  resources: z
+    .array(
+      z.object({
+        label: z.string().min(1),
+        file_url: z.string().min(1),
+        sort_order: z.number().int().optional(),
+      })
+    )
+    .optional(),
   is_published: z.boolean().default(true),
 })
 
@@ -213,7 +224,8 @@ export async function POST(request: Request) {
     // admin and recording_admin can reach here
     // This inserts into video_summaries table
     // -----------------------------
-    const { content_type: _, ...videoData } = parsed.data
+    // `resources` is a separate table, so it must not reach the insert.
+    const { content_type: _, resources, ...videoData } = parsed.data
 
     const { data: created, error } = await admin
       .from("video_summaries")
@@ -230,6 +242,33 @@ export async function POST(request: Request) {
         { error: "Failed to create video summary" },
         { status: 500 }
       )
+    }
+
+    if (resources && resources.length > 0) {
+      const { error: resourceError } = await admin
+        .from("video_resources")
+        .insert(
+          resources.map((resource, i) => ({
+            video_id: created.id,
+            label: resource.label.trim(),
+            file_url: resource.file_url,
+            sort_order: resource.sort_order ?? i,
+          }))
+        )
+
+      // The recording itself saved. Say which half failed rather than implying
+      // nothing was created.
+      if (resourceError) {
+        console.error("Attach video resources error:", resourceError)
+        return NextResponse.json(
+          {
+            ...created,
+            warning:
+              "The recording was saved, but its resources could not be attached.",
+          },
+          { status: 201 }
+        )
+      }
     }
 
     return NextResponse.json(created, { status: 201 })

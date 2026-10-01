@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
   ArrowLeft,
   ArrowRight,
+  Download,
   Clock,
   Eye,
   FileText,
@@ -15,13 +16,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { videoThumbnail } from "@/lib/thumbnails"
-import type { VideoSummary } from "@/types"
+import type { VideoResource, VideoWithResources } from "@/types"
 
 type PlaylistPlayerProps = {
   /** Playlist name, shown in the sidebar header and under the video title. */
   title: string
   /** Recordings in playback order. The list is treated as newest-first. */
-  items: VideoSummary[]
+  items: VideoWithResources[]
   /** Where the "back" link goes, e.g. /content. */
   backHref: string
   backLabel: string
@@ -76,6 +77,12 @@ export function PlaylistPlayer({
 
   const active = lessons[activeIndex]
   const poster = videoThumbnail(active, "hq")
+
+  // Supabase returns an embedded relation unordered unless asked; sort here so
+  // the list matches the order the admin arranged.
+  const activeResources: VideoResource[] = [...(active?.resources ?? [])].sort(
+    (a, b) => a.sort_order - b.sort_order
+  )
 
   // Each lesson starts on its cover. Keying off the lesson id resets this when
   // someone picks a different session, so the new cover is shown rather than
@@ -259,6 +266,12 @@ export function PlaylistPlayer({
                 <TabsTrigger value="transcript" className={tabTriggerClass}>
                   Transcript
                 </TabsTrigger>
+
+                {activeResources.length > 0 && (
+                  <TabsTrigger value="resources" className={tabTriggerClass}>
+                    Resources ({activeResources.length})
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="about" className="pt-4">
@@ -276,6 +289,29 @@ export function PlaylistPlayer({
                   </EmptyNote>
                 )}
               </TabsContent>
+
+              {activeResources.length > 0 && (
+                <TabsContent value="resources" className="pt-4">
+                  <ul className="space-y-2">
+                    {activeResources.map((resource) => (
+                      <li key={resource.id}>
+                        <a
+                          href={`/api/content/${active.id}/resource/${resource.id}`}
+                          className="flex items-center gap-3 rounded-xl border border-[#C89B3C]/25 bg-white/40 px-4 py-3 transition hover:border-[#C89B3C]/50 hover:bg-white/70"
+                        >
+                          <FileText className="size-4 shrink-0 text-[#8A6A22]" />
+
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-[#2F271C]">
+                            {resource.label}
+                          </span>
+
+                          <Download className="size-4 shrink-0 text-[#8A6A22]" />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </TabsContent>
+              )}
             </Tabs>
           </div>
         </div>
@@ -354,6 +390,14 @@ export function PlaylistPlayer({
                             { day: "numeric", month: "short", year: "numeric" }
                           )}
                         </p>
+
+                        {(lesson.resources?.length ?? 0) > 0 && (
+                          <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-[#6F7358]">
+                            <FileText className="size-3 shrink-0" />
+                            {lesson.resources!.length} resource
+                            {lesson.resources!.length === 1 ? "" : "s"}
+                          </p>
+                        )}
                       </div>
                     </button>
                   </li>
@@ -370,7 +414,7 @@ export function PlaylistPlayer({
 function AboutTab({
   lesson,
 }: {
-  lesson: VideoSummary
+  lesson: VideoWithResources
 }) {
   const hasKeyPoints = (lesson.key_points?.length ?? 0) > 0
   const hasActions = (lesson.action_items?.length ?? 0) > 0

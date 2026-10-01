@@ -192,6 +192,18 @@ export type ContentItem =
   | (Resource & { content_type: 'resource'; documents?: ResourceDocument[] })
   | (VideoSummary & { content_type: 'video_summary' })
 
+/** A downloadable file attached to a recording. */
+export type VideoResource = {
+  id: string
+  label: string
+  sort_order: number
+}
+
+/** A recording together with the handouts attached to it. */
+export type VideoWithResources = VideoSummary & {
+  resources?: VideoResource[]
+}
+
 // =============================================
 // Courses
 // =============================================

@@ -157,6 +157,11 @@ async function fetchContent(filters: {
         id,
         name,
         slug
+      ),
+      resources:video_resources (
+        id,
+        label,
+        sort_order
       )
     `)
     .eq("is_published", true)

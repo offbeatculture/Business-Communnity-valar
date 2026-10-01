@@ -14,6 +14,10 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Sparkles, Save, Plus, X, FolderPlus } from "lucide-react"
 import { CoverImageField } from "@/components/admin/CoverImageField"
+import {
+  VideoResourceField,
+  type PendingResource,
+} from "@/components/admin/VideoResourceField"
 import { toast } from "sonner"
 import type { Category } from "@/types"
 
@@ -98,6 +102,7 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
   const [videoDuration, setVideoDuration] = useState("")
   const [readTime, setReadTime] = useState("")
   const [thumbnailUrl, setThumbnailUrl] = useState("")
+  const [resources, setResources] = useState<PendingResource[]>([])
 
   // Drives the "YouTube default" preview in the cover field, so an admin can
   // see the stock thumbnail before deciding whether to replace it.
@@ -140,6 +145,7 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
     setActionItems([])
     setVideoDuration("")
     setThumbnailUrl("")
+    setResources([])
     setReadTime("")
   }
 
@@ -294,6 +300,14 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
           action_items: actionItems.length > 0 ? actionItems : undefined,
           full_summary: fullSummary.trim() || undefined,
           thumbnail_url: thumbnailUrl.trim() || undefined,
+          resources:
+            resources.length > 0
+              ? resources.map((resource, i) => ({
+                  label: resource.label.trim() || resource.fileName,
+                  file_url: resource.file_url,
+                  sort_order: i,
+                }))
+              : undefined,
           is_published: true,
         }),
       })
@@ -477,6 +491,11 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
                 ? `https://img.youtube.com/vi/${previewVideoId}/hqdefault.jpg`
                 : null
             }
+          />
+
+          <VideoResourceField
+            pending={resources}
+            onPendingChange={setResources}
           />
 {/* 
           <div>

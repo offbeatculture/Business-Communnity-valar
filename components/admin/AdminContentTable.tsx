@@ -35,6 +35,11 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { CoverImageField } from "@/components/admin/CoverImageField"
+import {
+  VideoResourceField,
+  type PendingResource,
+  type SavedResource,
+} from "@/components/admin/VideoResourceField"
 import type { ContentItem, Category, ResourceDocument } from "@/types"
 
 type Props = {
@@ -61,6 +66,9 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
   const [editYoutubeUrl, setEditYoutubeUrl] = useState("")
   const [editTakeaway, setEditTakeaway] = useState("")
   const [editThumbnailUrl, setEditThumbnailUrl] = useState("")
+  const [savedResources, setSavedResources] = useState<SavedResource[]>([])
+  const [newResources, setNewResources] = useState<PendingResource[]>([])
+  const [resourcesToRemove, setResourcesToRemove] = useState<string[]>([])
   const [editKeyPoints, setEditKeyPoints] = useState<{ point: string; timestamp?: string }[]>([])
   const [editActionItems, setEditActionItems] = useState<string[]>([])
 
@@ -75,6 +83,9 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
     setEditCategory(item.category)
     setEditPublished(item.is_published)
     setDocsToRemove([])
+    setSavedResources([])
+    setNewResources([])
+    setResourcesToRemove([])
     setNewDocs([])
 
     // Fetch existing documents for resources
@@ -102,6 +113,14 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
         setEditThumbnailUrl(item.thumbnail_url ?? "")
         setEditKeyPoints(item.key_points ?? [])
         setEditActionItems(item.action_items ?? [])
+
+        try {
+          const res = await fetch(`/api/admin/content/${item.id}/resources`)
+          const data = res.ok ? await res.json() : { data: [] }
+          setSavedResources(data.data ?? [])
+        } catch {
+          setSavedResources([])
+        }
       }
     }
   }
@@ -162,6 +181,17 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
         body.youtube_url = editYoutubeUrl || undefined
         body.one_line_takeaway = editTakeaway || null
         body.thumbnail_url = editThumbnailUrl.trim() || null
+
+        if (resourcesToRemove.length > 0) {
+          body.remove_resources = resourcesToRemove
+        }
+
+        if (newResources.length > 0) {
+          body.resources = newResources.map((resource) => ({
+            label: resource.label.trim() || resource.fileName,
+            file_url: resource.file_url,
+          }))
+        }
         body.key_points = editKeyPoints.length > 0 ? editKeyPoints : null
         body.action_items = editActionItems.length > 0 ? editActionItems : null
       }
@@ -315,13 +345,17 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
 
       {/* Edit Dialog */}
       <Dialog open={!!editItem} onOpenChange={() => setEditItem(null)}>
-        <DialogContent>
+        {/* The default dialog is a narrow, fixed-height box, so this form ran
+            off the bottom with no way to reach the rest. Wider, capped to the
+            viewport, with the fields scrolling between a pinned header and
+            footer. */}
+        <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Edit Content</DialogTitle>
             <DialogDescription>Update the content details below.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="-mr-2 flex-1 space-y-4 overflow-y-auto pr-2">
             <div>
               <label className="text-sm font-medium mb-1.5 block">Title</label>
               <Input
@@ -384,6 +418,20 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
                       ? `https://img.youtube.com/vi/${editItem.youtube_video_id}/hqdefault.jpg`
                       : null
                   }
+                />
+
+                <VideoResourceField
+                  saved={savedResources}
+                  removedIds={resourcesToRemove}
+                  onToggleRemove={(id) =>
+                    setResourcesToRemove((current) =>
+                      current.includes(id)
+                        ? current.filter((item) => item !== id)
+                        : [...current, id]
+                    )
+                  }
+                  pending={newResources}
+                  onPendingChange={setNewResources}
                 />
 
                 <div>

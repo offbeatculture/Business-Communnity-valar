@@ -72,7 +72,9 @@ export async function fetchCourseBySlug(
 
   const { data: rows } = await supabase
     .from("course_videos")
-    .select("sort_order, video:video_summaries (*)")
+    .select(
+      "sort_order, video:video_summaries (*, resources:video_resources (id, label, sort_order))"
+    )
     .eq("course_id", course.id)
     .order("sort_order", { ascending: true })
 
