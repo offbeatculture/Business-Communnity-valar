@@ -7,6 +7,8 @@ import { ContentFilters } from "@/components/content/ContentFilters"
 import { PlaylistPlayer } from "@/components/content/PlaylistPlayer"
 import { PlayerSkeleton } from "@/components/content/PlayerSkeleton"
 import { LibraryGrid, type LibraryEntry } from "@/components/content/LibraryGrid"
+import { childrenOf, descendantIds, folderPath } from "@/lib/folder-tree"
+import { ArrowLeft } from "lucide-react"
 import type { ContentItem, VideoSummary } from "@/types"
 
 type Props = {
@@ -28,8 +30,13 @@ type ContentFolder = {
   cover_image_url: string | null
   /** Library ordering. Lower sorts first; negative pins above everything else. */
   sort_order: number
+  /** The folder this one sits inside. Null = top level of the library. */
+  parent_id: string | null
   created_at: string
+  /** Recordings directly in this folder. */
   videoCount: number
+  /** Recordings in this folder and every subfolder below it — what the card shows. */
+  totalVideoCount: number
 }
 
 export default async function ContentPage({ searchParams }: Props) {
@@ -58,11 +65,31 @@ export default async function ContentPage({ searchParams }: Props) {
     ? folders.find((folder) => folder.id === folderId)
     : null
 
+  // Only the folders at this level: the top level on the library home,
+  // or the direct subfolders when a folder is open.
+  const subfolders = childrenOf(folders, selectedFolder?.id ?? null)
+
+  // Where "back" goes: the parent folder, or the library home from a
+  // top-level folder.
+  const path = selectedFolder ? folderPath(folders, selectedFolder.id) : []
+  const parent = path.length > 1 ? path[path.length - 2] : null
+  const backHref = parent ? `/content?folder=${parent.id}` : "/content"
+  const backLabel = parent ? `Back to ${parent.name}` : "Back to folders"
+
+  // A folder that only holds subfolders shows just the grid. A folder with
+  // recordings, or an empty one, shows the player (with its empty state).
+  const showPlayer = items.length > 0 || subfolders.length === 0
+
   return (
     <div>
       <div className="mb-6 text-[#4B3A25]">
         <p className="text-sm font-medium text-[#8A6A22]">
-          Daily Breathwork
+          {path.length > 1
+            ? path
+                .slice(0, -1)
+                .map((f) => f.name)
+                .join(" › ")
+            : "Daily Breathwork"}
         </p>
 
         <h1 className="mb-1 font-serif text-3xl font-semibold text-[#4B3A25]">
@@ -71,9 +98,7 @@ export default async function ContentPage({ searchParams }: Props) {
 
         <p className="text-sm font-medium leading-6 text-[#6F7358]">
           {selectedFolder
-            ? `${selectedFolder.videoCount} recording${
-                selectedFolder.videoCount === 1 ? "" : "s"
-              } inside this folder.`
+            ? describeFolder(subfolders.length, selectedFolder.videoCount)
             : "Open a collection to watch session recordings for your daily wellbeing practice."}
         </p>
       </div>
@@ -82,24 +107,53 @@ export default async function ContentPage({ searchParams }: Props) {
         <ContentFilters categories={categories} />
       </Suspense>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-10">
         {folderId ? (
-          <Suspense fallback={<PlayerSkeleton />}>
-            <PlaylistPlayer
-              title={selectedFolder?.name ?? "Recordings"}
-              items={items as VideoSummary[]}
-              backHref="/content"
-              backLabel="Back to folders"
-              emptyTitle="No recordings in this folder"
-              emptyBody="Once videos are added to this folder from the admin panel, they will play here."
-            />
-          </Suspense>
+          <>
+            {!showPlayer && (
+              <Link
+                href={backHref}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#8A6A22] hover:underline"
+              >
+                <ArrowLeft className="size-4" />
+                {backLabel}
+              </Link>
+            )}
+
+            {subfolders.length > 0 && (
+              <LibraryGrid entries={buildEntries([], subfolders)} />
+            )}
+
+            {showPlayer && (
+              <Suspense fallback={<PlayerSkeleton />}>
+                <PlaylistPlayer
+                  title={selectedFolder?.name ?? "Recordings"}
+                  items={items as VideoSummary[]}
+                  backHref={backHref}
+                  backLabel={backLabel}
+                  emptyTitle="No recordings in this folder"
+                  emptyBody="Once videos are added to this folder from the admin panel, they will play here."
+                />
+              </Suspense>
+            )}
+          </>
         ) : (
-          <LibraryGrid entries={buildEntries(courses, folders)} />
+          <LibraryGrid entries={buildEntries(courses, subfolders)} />
         )}
       </div>
     </div>
   )
+}
+
+function describeFolder(folderCount: number, videoCount: number) {
+  const parts: string[] = []
+  if (folderCount > 0) {
+    parts.push(`${folderCount} folder${folderCount === 1 ? "" : "s"}`)
+  }
+  if (videoCount > 0 || folderCount === 0) {
+    parts.push(`${videoCount} recording${videoCount === 1 ? "" : "s"}`)
+  }
+  return `${parts.join(" and ")} inside this folder.`
 }
 
 async function fetchFolders(): Promise<ContentFolder[]> {
@@ -107,7 +161,7 @@ async function fetchFolders(): Promise<ContentFolder[]> {
 
   const { data: folders, error } = await supabase
     .from("content_folders")
-    .select("id, name, slug, description, cover_image_url, sort_order, created_at")
+    .select("id, name, slug, description, cover_image_url, sort_order, parent_id, created_at")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
 
@@ -134,10 +188,20 @@ async function fetchFolders(): Promise<ContentFolder[]> {
     countMap.set(video.folder_id, (countMap.get(video.folder_id) ?? 0) + 1)
   })
 
-  return (folders ?? []).map((folder) => ({
+  const withCounts = (folders ?? []).map((folder) => ({
     ...folder,
     videoCount: countMap.get(folder.id) ?? 0,
   }))
+
+  // A parent's card counts everything inside it, subfolders included —
+  // otherwise a "2026" folder holding twelve months reads "0 videos".
+  return withCounts.map((folder) => {
+    let total = folder.videoCount
+    for (const id of descendantIds(withCounts, folder.id)) {
+      total += countMap.get(id) ?? 0
+    }
+    return { ...folder, totalVideoCount: total }
+  })
 }
 
 async function fetchContent(filters: {
@@ -227,7 +291,7 @@ function buildEntries(
     title: folder.name,
     description: folder.description,
     cover: folder.cover_image_url,
-    videoCount: folder.videoCount,
+    videoCount: folder.totalVideoCount,
     kind: "folder",
     sortOrder: folder.sort_order,
     createdAt: folder.created_at,

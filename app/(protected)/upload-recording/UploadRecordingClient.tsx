@@ -4,14 +4,30 @@ import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { VideoSummaryForm } from "@/components/admin/VideoSummaryForm"
 import { BulkVideoForm } from "@/components/admin/BulkVideoForm"
-import { FolderManager } from "@/components/admin/FolderManager"
+import {
+  FolderManager,
+  type ContentFolder,
+} from "@/components/admin/FolderManager"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FolderCog, Loader2, Video } from "lucide-react"
+import { toast } from "sonner"
 import type { Category } from "@/types"
 
 export function UploadRecordingClient() {
   const [categories, setCategories] = useState<Category[]>([])
+  const [folders, setFolders] = useState<ContentFolder[]>([])
   const [loading, setLoading] = useState(true)
+
+  const fetchFolders = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/content-folders")
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setFolders(data.data ?? [])
+    } catch {
+      toast.error("Failed to load folders")
+    }
+  }, [])
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -28,12 +44,12 @@ export function UploadRecordingClient() {
 
   useEffect(() => {
     async function loadAll() {
-      await fetchCategories()
+      await Promise.all([fetchCategories(), fetchFolders()])
       setLoading(false)
     }
 
     loadAll()
-  }, [fetchCategories])
+  }, [fetchCategories, fetchFolders])
 
   if (loading) {
     return (
@@ -70,14 +86,18 @@ export function UploadRecordingClient() {
             </TabsList>
 
             <TabsContent value="single">
+              {/* Either form can create a folder, so the list below refreshes. */}
               <VideoSummaryForm
                 categories={categories}
-                onSuccess={fetchCategories}
+                onSuccess={() => {
+                  fetchCategories()
+                  fetchFolders()
+                }}
               />
             </TabsContent>
 
             <TabsContent value="bulk">
-              <BulkVideoForm />
+              <BulkVideoForm onSuccess={fetchFolders} />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -101,7 +121,7 @@ export function UploadRecordingClient() {
         </CardHeader>
 
         <CardContent>
-          <FolderManager />
+          <FolderManager folders={folders} onChange={fetchFolders} />
         </CardContent>
       </Card>
     </div>

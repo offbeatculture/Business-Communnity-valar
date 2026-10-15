@@ -64,7 +64,7 @@ export async function PATCH(request: Request, { params }: Params) {
       .from("content_folders")
       .update(updates)
       .eq("id", id)
-      .select("id, name, slug, description, cover_image_url, sort_order, created_at")
+      .select("id, name, slug, description, cover_image_url, sort_order, parent_id, created_at")
       .single()
 
     if (error) {
@@ -109,6 +109,24 @@ export async function DELETE(_request: Request, { params }: Params) {
           error: `This folder still has ${count} recording${
             count === 1 ? "" : "s"
           }. Move or delete them first.`,
+        },
+        { status: 409 }
+      )
+    }
+
+    // Same for subfolders. The foreign key refuses this too (ON DELETE
+    // RESTRICT); checking first gives a message instead of a 500.
+    const { count: childCount } = await admin
+      .from("content_folders")
+      .select("id", { count: "exact", head: true })
+      .eq("parent_id", id)
+
+    if ((childCount ?? 0) > 0) {
+      return NextResponse.json(
+        {
+          error: `This folder still has ${childCount} subfolder${
+            childCount === 1 ? "" : "s"
+          }. Move them out first.`,
         },
         { status: 409 }
       )

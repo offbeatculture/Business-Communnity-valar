@@ -4,66 +4,61 @@ import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { VideoSummaryForm } from "@/components/admin/VideoSummaryForm"
 import { BulkVideoForm } from "@/components/admin/BulkVideoForm"
-import { FolderManager } from "@/components/admin/FolderManager"
+import {
+  FolderManager,
+  type ContentFolder,
+} from "@/components/admin/FolderManager"
 import { AdminContentTable } from "@/components/admin/AdminContentTable"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FolderCog, Loader2, Video } from "lucide-react"
+import { toast } from "sonner"
 import type { ContentItem, Category } from "@/types"
-
-// /api/content returns a mixed list and has labelled the video kind three
-// different ways over time. This covers all three without reaching for `any`.
-type MaybeVideoItem = {
-  type?: string
-  content_type?: string
-  kind?: string
-}
 
 export default function AdminContentPage() {
   const [items, setItems] = useState<ContentItem[]>([])
+  const [folders, setFolders] = useState<ContentFolder[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Every recording, drafts included. This used to read /api/content — the
+  // member list — which is published-only and capped at 12 per page, so the
+  // table only ever showed the 12 newest.
   const fetchItems = useCallback(async () => {
     try {
-      const res = await fetch("/api/content")
+      const res = await fetch("/api/admin/content/videos")
+      if (!res.ok) throw new Error()
       const data = await res.json()
-
-      const allItems = data.data ?? []
-
-      const videoItems = allItems.filter((item: MaybeVideoItem) => {
-        return (
-          item.type === "video_summary" ||
-          item.content_type === "video_summary" ||
-          item.kind === "video_summary"
-        )
-      })
-
-      setItems(videoItems)
+      setItems(data.data ?? [])
     } catch {
-      console.error("Failed to fetch video content")
+      toast.error("Failed to load recordings")
     }
   }, [])
+
+  // One folder list for the folder manager and the video table's
+  // "Move to folder" picker, so they never disagree.
+  const fetchFolders = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/content-folders")
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setFolders(data.data ?? [])
+    } catch {
+      toast.error("Failed to load folders")
+    }
+  }, [])
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([fetchItems(), fetchFolders()])
+  }, [fetchItems, fetchFolders])
 
   useEffect(() => {
     async function loadAll() {
       try {
-        const [contentRes, catRes] = await Promise.all([
-          fetch("/api/content"),
+        const [catRes] = await Promise.all([
           fetch("/api/categories"),
+          fetchItems(),
+          fetchFolders(),
         ])
-
-        const contentData = await contentRes.json()
-        const allItems = contentData.data ?? []
-
-        const videoItems = allItems.filter((item: MaybeVideoItem) => {
-          return (
-            item.type === "video_summary" ||
-            item.content_type === "video_summary" ||
-            item.kind === "video_summary"
-          )
-        })
-
-        setItems(videoItems)
 
         if (catRes.ok) {
           const catData = await catRes.json()
@@ -77,7 +72,7 @@ export default function AdminContentPage() {
     }
 
     loadAll()
-  }, [])
+  }, [fetchItems, fetchFolders])
 
   if (loading) {
     return (
@@ -124,14 +119,15 @@ export default function AdminContentPage() {
             </TabsList>
 
             <TabsContent value="single">
+              {/* Both forms can create a folder on the way, so refresh both. */}
               <VideoSummaryForm
                 categories={categories}
-                onSuccess={fetchItems}
+                onSuccess={refreshAll}
               />
             </TabsContent>
 
             <TabsContent value="bulk">
-              <BulkVideoForm onSuccess={fetchItems} />
+              <BulkVideoForm onSuccess={refreshAll} />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -146,17 +142,17 @@ export default function AdminContentPage() {
             </div>
 
             <div>
-              <CardTitle>Folders</CardTitle>
+              <CardTitle>Folders ({folders.length})</CardTitle>
               <p className="mt-1 text-sm text-muted-foreground">
-                Rename a folder, write a description, and set the cover image
-                members see in the library.
+                Rename a folder, set its cover, or tick several and move them
+                inside another folder.
               </p>
             </div>
           </div>
         </CardHeader>
 
         <CardContent>
-          <FolderManager />
+          <FolderManager folders={folders} onChange={refreshAll} />
         </CardContent>
       </Card>
 
@@ -170,7 +166,8 @@ export default function AdminContentPage() {
           <AdminContentTable
             items={items}
             categories={categories}
-            onRefresh={fetchItems}
+            folders={folders}
+            onRefresh={refreshAll}
           />
         </CardContent>
       </Card>

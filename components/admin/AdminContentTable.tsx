@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -32,9 +32,14 @@ import {
   Plus,
   X,
   FileIcon,
+  FolderInput,
+  AlertTriangle,
 } from "lucide-react"
 import { toast } from "sonner"
 import { CoverImageField } from "@/components/admin/CoverImageField"
+import { FolderPicker } from "@/components/admin/FolderPicker"
+import type { ContentFolder } from "@/components/admin/FolderManager"
+import { flattenTree, folderPathLabel } from "@/lib/folder-tree"
 import {
   VideoResourceField,
   type PendingResource,
@@ -45,10 +50,91 @@ import type { ContentItem, Category, ResourceDocument } from "@/types"
 type Props = {
   items: ContentItem[]
   categories: Category[]
-  onRefresh: () => void
+  folders: ContentFolder[]
+  onRefresh: () => void | Promise<void>
 }
 
-export function AdminContentTable({ items, categories, onRefresh }: Props) {
+// Folder filter values. Radix Select reserves "", so these stand in.
+const ALL_FOLDERS = "__all__"
+const NO_FOLDER = "__none__"
+
+function folderIdOf(item: ContentItem): string | null {
+  return item.content_type === "video_summary" ? item.folder_id : null
+}
+
+export function AdminContentTable({ items, categories, folders, onRefresh }: Props) {
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [moveTarget, setMoveTarget] = useState<string | null | undefined>(undefined)
+  const [moving, setMoving] = useState(false)
+  const [folderFilter, setFolderFilter] = useState(ALL_FOLDERS)
+
+  const visibleItems = useMemo(() => {
+    if (folderFilter === ALL_FOLDERS) return items
+    if (folderFilter === NO_FOLDER) return items.filter((item) => !folderIdOf(item))
+    return items.filter((item) => folderIdOf(item) === folderFilter)
+  }, [items, folderFilter])
+
+  // Only count what is on screen and still exists after a refresh.
+  const visibleSelected = visibleItems.filter((item) => selected.has(item.id))
+  const allVisibleSelected =
+    visibleItems.length > 0 && visibleSelected.length === visibleItems.length
+
+  const unfiledCount = items.filter((item) => !folderIdOf(item)).length
+
+  function toggleOne(id: string) {
+    setSelected((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAllVisible() {
+    setSelected((current) => {
+      const next = new Set(current)
+      if (allVisibleSelected) visibleItems.forEach((item) => next.delete(item.id))
+      else visibleItems.forEach((item) => next.add(item.id))
+      return next
+    })
+  }
+
+  function clearSelection() {
+    setSelected(new Set())
+    setMoveTarget(undefined)
+  }
+
+  async function handleMove() {
+    const ids = visibleSelected.map((item) => item.id)
+    if (ids.length === 0 || !moveTarget) return
+
+    setMoving(true)
+
+    try {
+      const res = await fetch("/api/admin/content/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ video_ids: ids, folder_id: moveTarget }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to move recordings")
+
+      toast.success(
+        `Moved ${data.moved} recording${data.moved === 1 ? "" : "s"} to "${folderPathLabel(
+          folders,
+          moveTarget
+        )}"`
+      )
+      clearSelection()
+      await onRefresh()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to move recordings")
+    } finally {
+      setMoving(false)
+    }
+  }
+
   const [editItem, setEditItem] = useState<ContentItem | null>(null)
   const [deleteItem, setDeleteItem] = useState<ContentItem | null>(null)
   const [editTitle, setEditTitle] = useState("")
@@ -258,15 +344,99 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
 
   return (
     <>
+      {/* Filter + bulk move */}
+      <div className="mb-4 space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">Show</span>
+          <Select value={folderFilter} onValueChange={setFolderFilter}>
+            <SelectTrigger className="w-full sm:w-72">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-80">
+              <SelectItem value={ALL_FOLDERS}>All folders ({items.length})</SelectItem>
+              {unfiledCount > 0 && (
+                <SelectItem value={NO_FOLDER}>
+                  Not in any folder ({unfiledCount})
+                </SelectItem>
+              )}
+              {flattenTree(folders).map(({ folder, depth }) => (
+                <SelectItem
+                  key={folder.id}
+                  value={folder.id}
+                  style={{ paddingLeft: 8 + depth * 16 }}
+                >
+                  {depth > 0 && (
+                    <span aria-hidden className="text-muted-foreground">
+                      ↳
+                    </span>
+                  )}
+                  {folder.name} (
+                  {items.filter((item) => folderIdOf(item) === folder.id).length})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {visibleSelected.length > 0 && (
+          <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-primary/40 bg-card p-3 shadow-md">
+            <span className="text-sm font-medium">
+              {visibleSelected.length} recording
+              {visibleSelected.length === 1 ? "" : "s"} selected
+            </span>
+
+            <span className="text-sm text-muted-foreground">Move to</span>
+
+            <FolderPicker
+              folders={folders}
+              value={moveTarget}
+              onChange={setMoveTarget}
+              placeholder="Choose a folder"
+              className="w-full sm:w-64"
+            />
+
+            <Button
+              size="sm"
+              onClick={handleMove}
+              disabled={moving || !moveTarget}
+            >
+              {moving ? (
+                <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+              ) : (
+                <FolderInput className="mr-1.5 size-3.5" />
+              )}
+              Move
+            </Button>
+
+            <Button size="sm" variant="ghost" onClick={clearSelection}>
+              <X className="mr-1 size-3.5" />
+              Clear
+            </Button>
+          </div>
+        )}
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b">
+              <th className="w-8 py-2 text-left">
+                <input
+                  type="checkbox"
+                  aria-label="Select all recordings shown"
+                  checked={allVisibleSelected}
+                  onChange={toggleAllVisible}
+                  className="size-4 cursor-pointer accent-primary"
+                />
+              </th>
               <th className="text-left py-2 text-muted-foreground font-medium">
                 Type
               </th>
               <th className="text-left py-2 text-muted-foreground font-medium">
                 Title
+              </th>
+              <th className="text-left py-2 text-muted-foreground font-medium hidden md:table-cell">
+                Folder
               </th>
               <th className="text-left py-2 text-muted-foreground font-medium hidden sm:table-cell">
                 Category
@@ -283,20 +453,59 @@ export function AdminContentTable({ items, categories, onRefresh }: Props) {
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => {
+            {visibleItems.length === 0 && (
+              <tr>
+                <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                  No recordings in this folder.
+                </td>
+              </tr>
+            )}
+
+            {visibleItems.map((item) => {
               const type =
                 item.content_type === "resource"
                   ? item.type
                   : "video_summary"
               const Icon = typeIcons[type]
+              const folderId = folderIdOf(item)
+              const isSelected = selected.has(item.id)
 
               return (
-                <tr key={item.id} className="border-b last:border-0">
+                <tr
+                  key={item.id}
+                  className={`border-b last:border-0 ${isSelected ? "bg-primary/5" : ""}`}
+                >
+                  <td className="py-3">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${item.title}`}
+                      checked={isSelected}
+                      onChange={() => toggleOne(item.id)}
+                      className="size-4 cursor-pointer accent-primary"
+                    />
+                  </td>
                   <td className="py-3">
                     <Icon className="size-4 text-muted-foreground" />
                   </td>
                   <td className="py-3 max-w-[200px] truncate font-medium">
                     {item.title}
+                  </td>
+                  <td className="py-3 hidden max-w-[220px] md:table-cell">
+                    {folderId && folders.some((f) => f.id === folderId) ? (
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {folderPathLabel(folders, folderId)}
+                      </span>
+                    ) : (
+                      // Members only reach recordings through a folder, so
+                      // one with none is invisible to them.
+                      <span
+                        className="inline-flex items-center gap-1 text-xs text-amber-600"
+                        title="Members can't see recordings that aren't in a folder"
+                      >
+                        <AlertTriangle className="size-3.5" />
+                        No folder
+                      </span>
+                    )}
                   </td>
                   <td className="py-3 hidden sm:table-cell">
                     <Badge variant="outline" className="text-xs">
