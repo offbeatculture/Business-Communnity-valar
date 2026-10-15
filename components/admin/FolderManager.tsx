@@ -137,40 +137,54 @@ export function FolderManager({
   return (
     <div className="space-y-4">
       {liveSelected.size > 0 && (
-        <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-primary/40 bg-card p-3 shadow-md">
-          <span className="text-sm font-medium">
-            {liveSelected.size} folder{liveSelected.size === 1 ? "" : "s"} selected
-          </span>
+        <div className="sticky top-2 z-10 space-y-2 rounded-xl border border-primary/40 bg-card p-3 shadow-md">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Name what is moving. "1 folder selected" didn't make it obvious
+                that a ticked folder is the one going somewhere — people ticked
+                the destination and then found it greyed out. */}
+            <span className="text-sm">
+              Moving{" "}
+              <span className="font-semibold">{selectedNames(folders, liveSelected)}</span>
+            </span>
 
-          <span className="text-sm text-muted-foreground">Move into</span>
+            <span className="text-sm text-muted-foreground">into</span>
 
-          <FolderPicker
-            folders={folders}
-            value={target}
-            onChange={setTarget}
-            allowTopLevel
-            disabledIds={blockedTargets}
-            placeholder="Choose a parent folder"
-            className="w-full sm:w-64"
-          />
+            <FolderPicker
+              folders={folders}
+              value={target}
+              onChange={setTarget}
+              allowTopLevel
+              disabledIds={blockedTargets}
+              disabledHint={(id) =>
+                liveSelected.has(id) ? "being moved" : "inside a folder being moved"
+              }
+              placeholder="Choose a parent folder"
+              className="w-full sm:w-64"
+            />
 
-          <Button
-            size="sm"
-            onClick={handleMove}
-            disabled={moving || target === undefined}
-          >
-            {moving ? (
-              <Loader2 className="mr-1.5 size-3.5 animate-spin" />
-            ) : (
-              <FolderInput className="mr-1.5 size-3.5" />
-            )}
-            Move
-          </Button>
+            <Button
+              size="sm"
+              onClick={handleMove}
+              disabled={moving || target === undefined}
+            >
+              {moving ? (
+                <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+              ) : (
+                <FolderInput className="mr-1.5 size-3.5" />
+              )}
+              Move
+            </Button>
 
-          <Button size="sm" variant="ghost" onClick={clearSelection}>
-            <X className="mr-1 size-3.5" />
-            Clear
-          </Button>
+            <Button size="sm" variant="ghost" onClick={clearSelection}>
+              <X className="mr-1 size-3.5" />
+              Clear
+            </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Tick the folders to move, then pick where they go. To put{" "}
+            <em>videos</em> into a folder, use the All Videos table below.
+          </p>
         </div>
       )}
 
@@ -194,6 +208,13 @@ export function FolderManager({
       ))}
     </div>
   )
+}
+
+/** "June Recordings", "June and July", or "June, July and 3 more". */
+function selectedNames(folders: ContentFolder[], ids: Set<string>) {
+  const names = folders.filter((f) => ids.has(f.id)).map((f) => f.name)
+  if (names.length <= 2) return names.join(" and ")
+  return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`
 }
 
 function FolderRow({

@@ -24,6 +24,11 @@ type Props = {
   allowTopLevel?: boolean
   /** Shown but not selectable — e.g. the folders being moved and their subfolders. */
   disabledIds?: Set<string>
+  /**
+   * Why a disabled folder can't be picked, shown beside it. Without this a
+   * greyed-out option just looks broken.
+   */
+  disabledHint?: (folderId: string) => string
   className?: string
 }
 
@@ -39,6 +44,7 @@ export function FolderPicker({
   placeholder = "Choose a folder",
   allowTopLevel = false,
   disabledIds,
+  disabledHint,
   className,
 }: Props) {
   const selectValue =
@@ -60,22 +66,29 @@ export function FolderPicker({
           </SelectItem>
         )}
 
-        {flattenTree(folders).map(({ folder, depth }) => (
-          <SelectItem
-            key={folder.id}
-            value={folder.id}
-            disabled={disabledIds?.has(folder.id)}
-            // Indent by depth. Inline because the step is computed.
-            style={{ paddingLeft: 8 + depth * 16 }}
-          >
-            {depth > 0 && (
-              <span aria-hidden className="text-muted-foreground">
-                ↳
-              </span>
-            )}
-            {folder.name}
-          </SelectItem>
-        ))}
+        {flattenTree(folders).map(({ folder, depth }) => {
+          const disabled = disabledIds?.has(folder.id) ?? false
+
+          return (
+            <SelectItem
+              key={folder.id}
+              value={folder.id}
+              disabled={disabled}
+              // Indent by depth. Inline because the step is computed.
+              style={{ paddingLeft: 8 + depth * 16 }}
+            >
+              {depth > 0 && (
+                <span aria-hidden className="text-muted-foreground">
+                  ↳
+                </span>
+              )}
+              {folder.name}
+              {disabled && disabledHint && (
+                <span className="text-xs italic">— {disabledHint(folder.id)}</span>
+              )}
+            </SelectItem>
+          )
+        })}
       </SelectContent>
     </Select>
   )
