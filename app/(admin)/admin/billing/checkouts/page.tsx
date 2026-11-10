@@ -3,6 +3,8 @@ import { requireBillingAdmin } from "@/lib/billing/page-guard"
 import { loadBillingData } from "@/lib/billing/data"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { fmt, rupees } from "@/lib/billing/reconcile"
+import { CircleAlert, ExternalLink, ShoppingCart, UserCheck } from "lucide-react"
+import { DataTable, PageHeader, Panel, Pill, StatCard, StatGrid } from "@/components/admin/billing/ui"
 
 export const dynamic = "force-dynamic"
 
@@ -63,97 +65,91 @@ export default async function BillingCheckoutsPage() {
 
   const stillOpen = abandoned.filter((a) => a.nowMember !== "active")
 
-  return (
-    <div className="space-y-8">
-      <div>
-        <p className="text-sm font-medium text-primary">Billing</p>
-        <h1 className="mt-1 text-2xl font-bold">Unfinished Checkouts</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          People who started paying for Lifinity and didn&apos;t get all the way through — for follow-up. Each
-          unfinished Razorpay checkout has its own payment link they can use to finish.
-        </p>
-      </div>
+  const accessPill = (email: string) => {
+    const a = accessByEmail.get(email.toLowerCase())
+    if (!a) return <Pill tone="bad">No account</Pill>
+    return <Pill tone={a === "active" ? "good" : "warn"}>{a === "active" ? "Has access" : a === "lapsed" ? "Account, lapsed" : "Account, no access"}</Pill>
+  }
+  const paidStillMissing = paidNoAccount.filter((s) => accessByEmail.get(s.email.toLowerCase()) !== "active").length
 
-      <section>
-        <h2 className="text-base font-semibold">Paid, but their account was never set up ({paidNoAccount.length})</h2>
-        <p className="mb-2 text-sm text-muted-foreground">
-          The checkout reached “paid” but stopped before the account was created. Check these first — they may have
-          paid and received nothing.
-        </p>
-        <Table
-          head={["Started", "Email", "Account now?", "Razorpay subscription"]}
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Unfinished Checkouts"
+        description="People who started paying for Lifinity but didn't get all the way through, so you can follow up."
+      />
+
+      <StatGrid cols={3}>
+        <StatCard
+          icon={CircleAlert}
+          label="Paid, setup unfinished"
+          value={paidNoAccount.length}
+          tone={paidStillMissing ? "bad" : "good"}
+          hint={paidStillMissing ? `${paidStillMissing} still without access` : "All have access now"}
+        />
+        <StatCard icon={ShoppingCart} label="Started, never paid" value={stillOpen.length} tone={stillOpen.length ? "warn" : "neutral"} />
+        <StatCard
+          icon={UserCheck}
+          label="Came back and joined later"
+          value={abandoned.length - stillOpen.length}
+          tone="good"
+        />
+      </StatGrid>
+
+      <Panel
+        flush
+        title="Paid, but their account was never set up"
+        description="The checkout reached “paid” but stopped before the account was created. Check these first: they may have paid and got nothing."
+      >
+        <DataTable
+          emptyIcon={UserCheck}
+          empty="None. Every paid checkout became an account."
+          head={["Started", "Email", "Account now", "Razorpay subscription"]}
           rows={paidNoAccount.map((s) => [
-            fmt(s.created_at),
-            s.email,
-            accessByEmail.has(s.email.toLowerCase())
-              ? `Yes — ${accessByEmail.get(s.email.toLowerCase())}`
-              : "No account",
+            <span key="d" className="whitespace-nowrap">{fmt(s.created_at)}</span>,
+            <span key="e" className="font-medium">{s.email}</span>,
+            accessPill(s.email),
             s.razorpay_subscription_id ? (
-              <Link key="l" href={`/admin/billing/lookup?q=${s.razorpay_subscription_id}`} className="font-mono text-primary hover:underline">
+              <Link key="l" href={`/admin/billing/lookup?q=${s.razorpay_subscription_id}`} className="font-mono text-xs text-primary hover:underline">
                 {s.razorpay_subscription_id}
               </Link>
             ) : (
-              "—"
+              <span key="l" className="text-muted-foreground">—</span>
             ),
           ])}
-          empty="None — every paid checkout became an account."
         />
-      </section>
+      </Panel>
 
-      <section>
-        <h2 className="text-base font-semibold">Started, never paid ({stillOpen.length})</h2>
-        <p className="mb-2 text-sm text-muted-foreground">
-          Opened a Lifinity checkout but never completed it, and aren&apos;t an active member now.
-          {abandoned.length > stillOpen.length && ` (${abandoned.length - stillOpen.length} more later joined and are hidden.)`}
-        </p>
-        <Table
+      <Panel
+        flush
+        title="Started, never paid"
+        description="Opened a Lifinity checkout, never finished, and aren't an active member now. Each has a Razorpay link they can use to finish paying."
+      >
+        <DataTable
+          emptyIcon={ShoppingCart}
+          empty="No unfinished checkouts."
           head={["Started", "Email", "Name / phone", "Plan", "Payment link"]}
           rows={stillOpen.map((a) => [
-            fmt(a.created),
-            a.email ?? "unknown",
-            [a.name, a.phone].filter(Boolean).join(" · ") || "—",
-            a.plan ? `${a.plan.name} (${rupees(a.plan.amount)})` : "—",
-            a.link ? (
-              <a key="l" href={a.link} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                Open link
-              </a>
+            <span key="d" className="whitespace-nowrap">{fmt(a.created)}</span>,
+            <span key="e" className="font-medium">{a.email ?? "unknown"}</span>,
+            <span key="n" className="text-muted-foreground">{[a.name, a.phone].filter(Boolean).join(" · ") || "—"}</span>,
+            a.plan ? (
+              <span key="p" className="whitespace-nowrap">
+                {a.plan.name} <span className="text-muted-foreground">· {rupees(a.plan.amount)}</span>
+              </span>
             ) : (
               "—"
             ),
+            a.link ? (
+              <a key="l" href={a.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
+                Open <ExternalLink className="size-3" />
+              </a>
+            ) : (
+              <span key="l" className="text-muted-foreground">—</span>
+            ),
           ])}
-          empty="No unfinished checkouts. (Press Sync now on Reconciliation if this looks wrong.)"
         />
-      </section>
-    </div>
-  )
-}
-
-function Table({ head, rows, empty }: { head: string[]; rows: React.ReactNode[][]; empty: string }) {
-  if (!rows.length) return <p className="rounded-xl border border-dashed border-border/70 p-6 text-center text-sm text-muted-foreground">{empty}</p>
-  return (
-    <div className="overflow-x-auto rounded-xl border border-border/70">
-      <table className="w-full text-sm">
-        <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
-          <tr>
-            {head.map((h) => (
-              <th key={h} className="p-2 font-medium">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className="border-t border-border/60">
-              {r.map((c, j) => (
-                <td key={j} className="p-2">
-                  {c}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      </Panel>
     </div>
   )
 }

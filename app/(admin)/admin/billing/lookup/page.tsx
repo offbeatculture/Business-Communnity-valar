@@ -7,7 +7,8 @@ import { normalisePhone } from "@/lib/billing/razorpay-api"
 import { CATEGORY_LABELS, FLAG_LABELS, fmt, rupees, type ReconRow } from "@/lib/billing/reconcile"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search } from "lucide-react"
+import { ArrowRight, CreditCard, History, Receipt, Search, SearchX, Webhook } from "lucide-react"
+import { DataTable, EmptyState, KeyValues, Mono, PageHeader, Panel, Pill } from "@/components/admin/billing/ui"
 
 export const dynamic = "force-dynamic"
 
@@ -41,29 +42,41 @@ export default async function BillingLookupPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-primary">Billing</p>
-        <h1 className="mt-1 text-2xl font-bold">Member Lookup</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Everything about one person: their memberships, Razorpay subscription and payments, the webhook events
-          about them, and every change an admin has made. Phone search finds people who paid under a different email.
-        </p>
-      </div>
+      <PageHeader
+        title="Member Lookup"
+        description="Everything about one person: memberships, Razorpay subscription and payments, webhook messages, and every admin change. Searching by phone finds people who paid with a different email."
+      />
 
-      <form method="get" className="flex max-w-xl gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input name="q" defaultValue={q} placeholder="Email, name, phone, pay_… or sub_…" className="pl-9" autoFocus />
-        </div>
-        <Button type="submit">Search</Button>
-      </form>
+      <Panel>
+        <form method="get" className="flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input name="q" defaultValue={q} placeholder="Email, name, phone, pay_… or sub_…" className="h-10 pl-9" autoFocus />
+          </div>
+          <Button type="submit" className="h-10 px-6">
+            Search
+          </Button>
+        </form>
+        {q && q.length < 3 && <p className="mt-2 text-sm text-muted-foreground">Type at least 3 characters.</p>}
+      </Panel>
 
-      {q && q.length < 3 && <p className="text-sm text-muted-foreground">Type at least 3 characters.</p>}
-      {q.length >= 3 && results.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Nobody matches “{q}”. If they paid recently, press Sync now on the Reconciliation page first.
-        </p>
+      {!q && (
+        <Panel>
+          <EmptyState icon={Search} title="Search for a member">
+            Paste an email, a phone number, or a Razorpay <code>pay_</code> / <code>sub_</code> ID.
+          </EmptyState>
+        </Panel>
       )}
+
+      {q.length >= 3 && results.length === 0 && (
+        <Panel>
+          <EmptyState icon={SearchX} title={`Nobody matches “${q}”`}>
+            If they paid recently, press Sync now on the Reconciliation tab first.
+          </EmptyState>
+        </Panel>
+      )}
+
+      {results.length > 1 && <p className="text-sm text-muted-foreground">{results.length} people match.</p>}
 
       {results.map((r) => (
         <PersonCard key={r.key} row={r} />
@@ -93,112 +106,177 @@ async function PersonCard({ row }: { row: ReconRow }) {
   ])
 
   const m = row.member
+  const name = m?.name || row.rzpSub?.customer_name || "No account"
+  const initials = name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+  const access = ACCESS[row.access]
+
   return (
-    <div className="space-y-4 rounded-2xl border border-border/70 bg-card p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{m?.name || row.rzpSub?.customer_name || "No account"}</h2>
-          <p className="text-sm text-muted-foreground">
-            {m?.email ?? row.rzpSub?.email ?? "—"}
-            {(m?.phone ?? row.rzpSub?.contact) && ` · ${m?.phone ?? row.rzpSub?.contact}`}
-          </p>
-          {m && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {m.role ?? "member"} · joined {fmt(m.joinedAt)} · last login {fmt(m.lastSignIn)}
-            </p>
-          )}
-        </div>
-        <div className="text-right text-sm">
-          <div className="font-medium">{CATEGORY_LABELS[row.category]}</div>
-          <div className="text-xs text-muted-foreground">
-            Access: {row.access} {row.dbExpires && `· ends ${fmt(row.dbExpires)}`}
+    <div className="space-y-4">
+      {/* Who they are */}
+      <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/15 text-base font-semibold text-primary">
+              {initials || "?"}
+            </div>
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-semibold">{name}</h2>
+              <p className="truncate text-sm text-muted-foreground">
+                {m?.email ?? row.rzpSub?.email ?? "—"}
+                {(m?.phone ?? row.rzpSub?.contact) && ` · ${m?.phone ?? row.rzpSub?.contact}`}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <Pill tone={access.tone}>{access.label}</Pill>
+                <Pill tone="brand">{CATEGORY_LABELS[row.category]}</Pill>
+                {m?.role && m.role !== "member" && <Pill>{m.role}</Pill>}
+              </div>
+            </div>
           </div>
           {profile?.id && (
-            <Link href={`/admin/members/${profile.id}`} className="text-xs text-primary hover:underline">
-              Member page →
-            </Link>
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/admin/members/${profile.id}`}>
+                Member page <ArrowRight />
+              </Link>
+            </Button>
           )}
         </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-4 border-t pt-4 text-sm md:grid-cols-4">
+          <Fact label="Access ends" value={fmt(row.dbExpires)} />
+          <Fact label="Razorpay paid until" value={fmt(row.rzpPaidUntil)} />
+          <Fact label="Joined" value={fmt(m?.joinedAt)} />
+          <Fact label="Last login" value={fmt(m?.lastSignIn)} />
+        </div>
+
+        {row.flags.length > 0 && (
+          <ul className="mt-4 space-y-1.5 rounded-lg border bg-muted/30 p-3 text-sm">
+            {row.flags.map((f) => (
+              <li key={f.code} className="flex gap-2">
+                <span className="shrink-0">
+                  <Pill tone={f.severity === "high" ? "bad" : f.severity === "medium" ? "warn" : "neutral"}>{FLAG_LABELS[f.code]}</Pill>
+                </span>
+                <span className="text-muted-foreground">
+                  {f.message}
+                  {f.fix && " Fix it on the Reconciliation tab."}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
-      {row.flags.length > 0 && (
-        <ul className="space-y-1 rounded-lg bg-muted/40 p-3 text-sm">
-          {row.flags.map((f) => (
-            <li key={f.code}>
-              <span className="font-medium">{FLAG_LABELS[f.code]}:</span> {f.message}
-              {f.fix && <span className="text-muted-foreground"> — fix on the Reconciliation page</span>}
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel flush title="Memberships" description={`${memberships?.length ?? 0} on record`}>
+          <DataTable
+            emptyIcon={CreditCard}
+            empty="No memberships."
+            head={["Plan", "Amount", "Status", "Period"]}
+            rows={(memberships ?? []).map((s) => [
+              <div key="p">
+                <div className="font-medium">{String(s.plan_label ?? "—")}</div>
+                <div className="text-xs text-muted-foreground">{String(s.tier ?? "")} tier</div>
+              </div>,
+              <span key="a" className="tabular-nums">{rupees(s.amount_paid as number)}</span>,
+              <Pill key="s" tone={s.status === "active" ? "good" : s.status === "expired" ? "neutral" : "warn"}>{String(s.status ?? "—")}</Pill>,
+              <span key="d" className="whitespace-nowrap text-xs">
+                {fmt(s.starts_at as string)} → {fmt(s.expires_at as string)}
+              </span>,
+            ])}
+          />
+        </Panel>
 
-      <Section title={`Memberships (${memberships?.length ?? 0})`}>
-        <SimpleTable
-          head={["Plan", "Amount", "Tier", "Status", "Period", "Razorpay link"]}
-          rows={(memberships ?? []).map((s) => [
-            String(s.plan_label ?? "—"),
-            rupees(s.amount_paid as number),
-            String(s.tier ?? "—"),
-            String(s.status ?? "—"),
-            `${fmt(s.starts_at as string)} → ${fmt(s.expires_at as string)}`,
-            String(s.razorpay_subscription_id ?? s.razorpay_payment_id ?? "—"),
-          ])}
-          empty="No memberships."
-        />
-      </Section>
+        <Panel title="Razorpay subscription">
+          {row.rzpSub ? (
+            <KeyValues
+              items={[
+                ["ID", <Mono key="id">{row.rzpSub.id}</Mono>],
+                ["Status", <Pill key="s" tone={["active", "authenticated", "completed"].includes(row.rzpSub.status ?? "") ? "good" : "warn"}>{row.rzpSub.status ?? "unknown"}</Pill>],
+                ["Payments made", String(row.rzpSub.paid_count ?? 0)],
+                ["Current cycle", `${fmt(row.rzpSub.current_start)} → ${fmt(row.rzpSub.current_end)}`],
+                ["Next charge", fmt(row.rzpSub.charge_at)],
+              ]}
+            />
+          ) : (
+            <EmptyState icon={CreditCard} title="No Lifinity subscription in Razorpay" />
+          )}
+        </Panel>
+      </div>
 
-      <Section title="Razorpay subscription">
-        {row.rzpSub ? (
-          <p className="text-sm">
-            <span className="font-mono text-xs">{row.rzpSub.id}</span> · {row.rzpSub.status} · {row.rzpSub.paid_count ?? 0}{" "}
-            paid · cycle {fmt(row.rzpSub.current_start)} → {fmt(row.rzpSub.current_end)} · next charge {fmt(row.rzpSub.charge_at)}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">No Lifinity subscription in Razorpay.</p>
-        )}
-      </Section>
-
-      <Section title={`Payments (${row.payments.length})`}>
-        <SimpleTable
-          head={["Date", "Amount", "What", "Status", "Method", "Payment ID"]}
-          rows={row.payments.map((p) => [
-            fmt(p.created_at),
-            rupees(p.amount),
-            p.productLabel,
-            p.status + (p.amount_refunded ? ` (refunded ${rupees(p.amount_refunded)})` : ""),
-            p.method ?? "—",
-            p.id,
-          ])}
+      <Panel flush title="Payments" description={`${row.payments.length} found under this email or phone since 1 June`}>
+        <DataTable
+          emptyIcon={Receipt}
           empty="No Razorpay payments under this email or phone since 1 June."
-        />
-      </Section>
-
-      <Section title={`Webhook events (${events.length})`}>
-        <SimpleTable
-          head={["Received", "Event", "Outcome", "Detail"]}
-          rows={events.map((e) => [
-            fmt(e.created_at),
-            e.event_type,
-            e.outcome ?? "recorded",
-            e.error ?? "",
+          head={["Date", "Amount", "For", "Status", "Method", "Payment ID"]}
+          rows={row.payments.map((p) => [
+            <span key="d" className="whitespace-nowrap">{fmt(p.created_at)}</span>,
+            <span key="a" className="font-medium tabular-nums">{rupees(p.amount)}</span>,
+            p.productLabel,
+            <Pill key="s" tone={p.status === "captured" ? (p.amount_refunded ? "warn" : "good") : "neutral"}>
+              {p.amount_refunded ? `refunded ${rupees(p.amount_refunded)}` : p.status}
+            </Pill>,
+            <span key="m" className="text-muted-foreground">{p.method ?? "—"}</span>,
+            <Mono key="i">{p.id}</Mono>,
           ])}
-          empty="No webhook events found for this person."
         />
-      </Section>
+      </Panel>
 
-      <Section title={`Admin changes (${actions.length})`}>
-        <SimpleTable
-          head={["When", "Action", "By"]}
-          rows={actions.map((a) => [
-            fmt(a.created_at as string),
-            String(a.action),
-            String(a.admin_email ?? "—"),
-          ])}
-          empty="No admin changes recorded."
-        />
-      </Section>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel flush title="Webhook messages" description="What Razorpay told the site about them">
+          <DataTable
+            emptyIcon={Webhook}
+            empty="No webhook messages for this person."
+            head={["Received", "Event", "Outcome"]}
+            rows={events.map((e) => [
+              <span key="d" className="whitespace-nowrap">{fmt(e.created_at)}</span>,
+              <div key="t">
+                <Mono>{e.event_type}</Mono>
+                {e.error && <div className="mt-0.5 text-xs text-muted-foreground">{e.error}</div>}
+              </div>,
+              <Pill
+                key="o"
+                tone={!e.outcome || e.outcome === "processed" ? "good" : e.outcome === "ignored" ? "warn" : "bad"}
+              >
+                {e.outcome ?? "recorded"}
+              </Pill>,
+            ])}
+          />
+        </Panel>
+
+        <Panel flush title="Admin changes" description="Every change an admin made to them">
+          <DataTable
+            emptyIcon={History}
+            empty="No admin changes recorded."
+            head={["When", "Change", "By"]}
+            rows={actions.map((a) => [
+              <span key="d" className="whitespace-nowrap">{fmt(a.created_at as string)}</span>,
+              String(a.action),
+              <span key="b" className="text-muted-foreground">{String(a.admin_email ?? "—")}</span>,
+            ])}
+          />
+        </Panel>
+      </div>
     </div>
   )
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-0.5 font-medium">{value}</p>
+    </div>
+  )
+}
+
+const ACCESS: Record<ReconRow["access"], { tone: "good" | "warn" | "neutral"; label: string }> = {
+  active: { tone: "good", label: "Has access" },
+  lapsed: { tone: "warn", label: "Lapsed" },
+  none: { tone: "neutral", label: "No membership" },
 }
 
 async function loadEvents(row: ReconRow) {
@@ -224,43 +302,4 @@ async function loadEvents(row: ReconRow) {
     .order("created_at", { ascending: false })
     .limit(30)
   return (data ?? []) as { created_at: string; event_type: string; outcome: string | null; error: string | null }[]
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h3 className="mb-1.5 text-sm font-semibold">{title}</h3>
-      {children}
-    </div>
-  )
-}
-
-function SimpleTable({ head, rows, empty }: { head: string[]; rows: string[][]; empty: string }) {
-  if (!rows.length) return <p className="text-sm text-muted-foreground">{empty}</p>
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-xs">
-        <thead>
-          <tr className="text-left text-muted-foreground">
-            {head.map((h) => (
-              <th key={h} className="py-1 pr-3 font-medium">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className="border-t border-border/40">
-              {r.map((c, j) => (
-                <td key={j} className="py-1 pr-3">
-                  {c}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
 }

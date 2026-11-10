@@ -6,6 +6,7 @@ import { allowedPlanIdsSource, getAllowedPlanIds } from "@/lib/billing/config"
 import { readSyncState } from "@/lib/billing/sync"
 import { fmt, rupees } from "@/lib/billing/reconcile"
 import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react"
+import { PageHeader, Panel, Pill, StatCard, StatGrid, type Tone } from "@/components/admin/billing/ui"
 
 export const dynamic = "force-dynamic"
 
@@ -102,7 +103,7 @@ export default async function BillingHealthPage() {
         <>
           Allowed {source === "env" ? "(from RAZORPAY_ALLOWED_PLAN_IDS)" : "(built-in default — RAZORPAY_ALLOWED_PLAN_IDS is not set)"}:{" "}
           <code>{allowed.join(", ")}</code>
-          <ul className="mt-2 space-y-0.5">
+          <ul className="mt-2 space-y-1">
             {lifinityPlans.map((p) => (
               <li key={p.id as string}>
                 {allowed.includes(p.id as string) ? "✓" : "✗"} {p.name as string} — {rupees(p.amount as number)}/{p.period as string}{" "}
@@ -206,46 +207,55 @@ export default async function BillingHealthPage() {
   const order: Record<Status, number> = { fail: 0, warn: 1, ok: 2 }
   checks.sort((a, b) => order[a.status] - order[b.status])
   const fails = checks.filter((c) => c.status === "fail").length
+  const warns = checks.filter((c) => c.status === "warn").length
+  const passes = checks.length - fails - warns
+
+  const TONE: Record<Status, Tone> = { ok: "good", warn: "warn", fail: "bad" }
+  const ICON = { ok: CheckCircle2, warn: AlertTriangle, fail: XCircle }
+  const LABEL: Record<Status, string> = { ok: "Passing", warn: "Check", fail: "Needs fixing" }
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-primary">Billing</p>
-        <h1 className="mt-1 text-2xl font-bold">Health Check</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Whether payments and renewals can work end to end. Each red item says exactly what to change.
-        </p>
-      </div>
+      <PageHeader
+        title="Health Check"
+        description="Whether payments and renewals work from start to finish. Anything red tells you exactly what to change."
+      />
 
-      <div
-        className={`rounded-xl border p-4 text-sm font-medium ${fails ? "border-red-500/40 bg-red-500/5 text-red-700 dark:text-red-400" : "border-green-500/40 bg-green-500/5 text-green-700 dark:text-green-400"}`}
-      >
-        {fails ? `${fails} problem${fails === 1 ? "" : "s"} need fixing.` : "Everything checks out."}
-      </div>
+      <StatGrid cols={3}>
+        <StatCard icon={CheckCircle2} label="Passing" value={passes} tone="good" />
+        <StatCard icon={AlertTriangle} label="Need a look" value={warns} tone={warns ? "warn" : "neutral"} />
+        <StatCard icon={XCircle} label="Need fixing" value={fails} tone={fails ? "bad" : "neutral"} />
+      </StatGrid>
 
-      <div className="space-y-3">
-        {checks.map((c) => (
-          <div key={c.title} className="flex gap-3 rounded-xl border border-border/70 p-4">
-            {c.status === "ok" ? (
-              <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-green-600" />
-            ) : c.status === "warn" ? (
-              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-500" />
-            ) : (
-              <XCircle className="mt-0.5 size-5 shrink-0 text-red-600" />
-            )}
-            <div className="min-w-0 text-sm">
-              <div className="font-semibold">{c.title}</div>
-              <div className="mt-0.5 text-muted-foreground [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:text-xs">{c.detail}</div>
-              {c.fix && c.status !== "ok" && (
-                <div className="mt-2 rounded-lg bg-muted/50 p-2 text-xs [&_code]:rounded [&_code]:bg-background [&_code]:px-1">
-                  <span className="font-medium">Fix: </span>
-                  {c.fix}
+      <Panel flush title="Checks" description={fails ? `${fails} problem${fails === 1 ? "" : "s"} to fix. They're listed first.` : "Everything checks out."}>
+        <ul className="divide-y">
+          {checks.map((c) => {
+            const Icon = ICON[c.status]
+            return (
+              <li key={c.title} className="flex gap-4 px-5 py-4">
+                <div className={`h-fit rounded-lg p-2 ${c.status === "ok" ? "bg-emerald-600/10 text-emerald-700 dark:text-emerald-300" : c.status === "warn" ? "bg-amber-500/10 text-amber-700 dark:text-amber-300" : "bg-destructive/10 text-destructive"}`}>
+                  <Icon className="size-4" />
                 </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+                <div className="min-w-0 flex-1 text-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold">{c.title}</p>
+                    <Pill tone={TONE[c.status]}>{LABEL[c.status]}</Pill>
+                  </div>
+                  <div className="mt-1 text-muted-foreground [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-xs [&_code]:text-foreground">
+                    {c.detail}
+                  </div>
+                  {c.fix && c.status !== "ok" && (
+                    <div className="mt-3 rounded-lg border border-primary/25 bg-primary/5 px-3 py-2 text-xs [&_code]:break-all [&_code]:rounded [&_code]:bg-background [&_code]:px-1 [&_code]:py-0.5">
+                      <span className="font-semibold text-primary">How to fix: </span>
+                      {c.fix}
+                    </div>
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      </Panel>
     </div>
   )
 }

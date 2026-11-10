@@ -2,6 +2,8 @@ import Link from "next/link"
 import { requireBillingAdmin } from "@/lib/billing/page-guard"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { fmt } from "@/lib/billing/reconcile"
+import { Activity, CircleAlert, Inbox, Info, Repeat, Users } from "lucide-react"
+import { Callout, DataTable, Mono, PageHeader, Panel, Pill, StatCard, StatGrid, TONE_TEXT, type Tone } from "@/components/admin/billing/ui"
 
 export const dynamic = "force-dynamic"
 
@@ -17,12 +19,12 @@ type Ev = {
 }
 
 const OUTCOMES = ["processed", "failed", "ignored", "rejected"] as const
-const OUTCOME_STYLE: Record<string, string> = {
-  processed: "text-green-600 dark:text-green-400",
-  recorded: "text-green-600 dark:text-green-400",
-  failed: "text-red-600 dark:text-red-400",
-  rejected: "text-red-600 dark:text-red-400",
-  ignored: "text-amber-600 dark:text-amber-400",
+const OUTCOME_TONE: Record<string, Tone> = {
+  processed: "good",
+  recorded: "good",
+  failed: "bad",
+  rejected: "bad",
+  ignored: "warn",
 }
 
 const DAY = 24 * 3600 * 1000
@@ -127,150 +129,112 @@ export default async function BillingWebhooksPage({ searchParams }: Props) {
     })
   }
 
+  const fmtTime = (iso: string) =>
+    new Date(iso).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })
+
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm font-medium text-primary">Billing</p>
-        <h1 className="mt-1 text-2xl font-bold">Webhooks</h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Every message Razorpay sends to the site, what the site did with it, and why. Ignored and rejected messages
-          used to leave no trace — they now show here.
-        </p>
-      </div>
+      <PageHeader
+        title="Webhooks"
+        description="Every message Razorpay sends to the site, what the site did with it, and why."
+      />
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Stat label="Last message received" value={lastAny ? fmt(lastAny) : "never"} />
-        <Stat
+      <StatGrid>
+        <StatCard icon={Inbox} label="Last message received" value={lastAny ? fmt(lastAny) : "Never"} tone="neutral" />
+        <StatCard
+          icon={Repeat}
           label="Last renewal recorded"
-          value={lastRenewal ? fmt(lastRenewal) : "never"}
-          tone={daysSinceRenewal !== null && daysSinceRenewal > 35 ? "red" : undefined}
+          value={lastRenewal ? fmt(lastRenewal) : "Never"}
+          tone={daysSinceRenewal === null || daysSinceRenewal > 35 ? "bad" : "good"}
+          hint={daysSinceRenewal !== null ? `${daysSinceRenewal} days ago` : undefined}
         />
-        <Stat label="Live Lifinity subscriptions" value={String(liveLifinitySubs)} />
-        <Stat label="Messages, last 30 days" value={String(recent.length)} />
-      </div>
+        <StatCard icon={Users} label="Live Lifinity subscriptions" value={liveLifinitySubs} tone="brand" />
+        <StatCard
+          icon={Activity}
+          label="Messages, last 30 days"
+          value={recent.length}
+          tone={(byOutcome.get("failed") ?? 0) + (byOutcome.get("rejected") ?? 0) ? "warn" : "neutral"}
+          hint={`${(byOutcome.get("processed") ?? 0) + (byOutcome.get("recorded") ?? 0)} processed · ${byOutcome.get("ignored") ?? 0} ignored`}
+        />
+      </StatGrid>
 
       {alerts.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {alerts.map((a, i) => (
-            <div
-              key={i}
-              className={`rounded-xl border p-3 text-sm ${a.level === "red" ? "border-red-500/40 bg-red-500/5" : "border-amber-500/40 bg-amber-500/5"}`}
-            >
-              {a.text}
-            </div>
+            <Callout key={i} tone={a.level === "red" ? "bad" : "warn"} icon={a.level === "red" ? CircleAlert : Info} title={a.text} />
           ))}
         </div>
       )}
 
-      <div>
-        <h2 className="mb-2 text-sm font-semibold">By event type — last 30 days</h2>
-        <div className="overflow-x-auto rounded-xl border border-border/70">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
-              <tr>
-                <th className="p-2 font-medium">Event</th>
-                <th className="p-2 font-medium">Received</th>
-                <th className="p-2 font-medium">Processed</th>
-                <th className="p-2 font-medium">Ignored</th>
-                <th className="p-2 font-medium">Failed / rejected</th>
-                <th className="p-2 font-medium">Last</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...byType.entries()]
-                .sort((a, b) => b[1].total - a[1].total)
-                .map(([type, t]) => (
-                  <tr key={type} className="border-t border-border/60">
-                    <td className="p-2 font-mono text-xs">{type}</td>
-                    <td className="p-2">{t.total}</td>
-                    <td className="p-2 text-green-600 dark:text-green-400">{t.processed}</td>
-                    <td className={`p-2 ${t.ignored ? "text-amber-600" : ""}`}>{t.ignored}</td>
-                    <td className={`p-2 ${t.failed ? "text-red-600" : ""}`}>{t.failed}</td>
-                    <td className="p-2 text-xs text-muted-foreground">{fmt(t.last)}</td>
-                  </tr>
-                ))}
-              {byType.size === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-6 text-center text-muted-foreground">
-                    No webhook messages in the last 30 days.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Panel flush title="By event type" description="Last 30 days">
+        <DataTable
+          emptyIcon={Inbox}
+          empty="No webhook messages in the last 30 days."
+          head={["Event", "Received", "Processed", "Ignored", "Failed / rejected", "Last"]}
+          rows={[...byType.entries()]
+            .sort((a, b) => b[1].total - a[1].total)
+            .map(([type, t]) => [
+              <Mono key="t">{type}</Mono>,
+              <span key="n" className="tabular-nums">{t.total}</span>,
+              <span key="p" className={`tabular-nums ${TONE_TEXT.good}`}>{t.processed}</span>,
+              <span key="i" className={`tabular-nums ${t.ignored ? TONE_TEXT.warn : "text-muted-foreground"}`}>{t.ignored}</span>,
+              <span key="f" className={`tabular-nums ${t.failed ? TONE_TEXT.bad : "text-muted-foreground"}`}>{t.failed}</span>,
+              <span key="l" className="text-muted-foreground">{fmt(t.last)}</span>,
+            ])}
+        />
+      </Panel>
 
-      <div>
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold">Latest messages</h2>
-          {["all", ...OUTCOMES].map((o) => (
-            <Link
-              key={o}
-              href={o === "all" ? "/admin/billing/webhooks" : `/admin/billing/webhooks?outcome=${o}`}
-              className={`rounded-full border px-2.5 py-0.5 text-xs ${(outcomeFilter ?? "all") === o ? "border-primary bg-primary/10" : "border-border/70 hover:border-primary/50"}`}
-            >
-              {o}
-            </Link>
-          ))}
-        </div>
-        <div className="overflow-x-auto rounded-xl border border-border/70">
-          <table className="w-full text-xs">
-            <thead className="bg-muted/40 text-left text-muted-foreground">
-              <tr>
-                <th className="p-2 font-medium">Received</th>
-                <th className="p-2 font-medium">Event</th>
-                <th className="p-2 font-medium">Outcome</th>
-                <th className="p-2 font-medium">Plan</th>
-                <th className="p-2 font-medium">Payment / subscription</th>
-                <th className="p-2 font-medium">Why</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((e, i) => {
-                const o = e.outcome ?? "recorded"
-                const plan = e.plan_id ? plans.get(e.plan_id) : null
-                return (
-                  <tr key={i} className="border-t border-border/60 align-top">
-                    <td className="whitespace-nowrap p-2">
-                      {new Date(e.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })}
-                    </td>
-                    <td className="p-2 font-mono">{e.event_type}</td>
-                    <td className={`p-2 font-medium ${OUTCOME_STYLE[o] ?? ""}`}>{o}</td>
-                    <td className="p-2">{plan ? `${plan.name}${plan.is_lifinity ? "" : " (not Lifinity)"}` : e.plan_id ?? "—"}</td>
-                    <td className="p-2 font-mono text-[10px]">
-                      {e.entity_id ? (
-                        <Link href={`/admin/billing/lookup?q=${e.entity_id}`} className="text-primary hover:underline">
-                          {e.entity_id}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td className="p-2 text-muted-foreground">{e.error ?? ""}</td>
-                  </tr>
-                )
-              })}
-              {list.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-6 text-center text-muted-foreground">
-                    Nothing to show.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "red" }) {
-  return (
-    <div className="rounded-xl border border-border/70 p-3">
-      <div className={`text-lg font-bold ${tone === "red" ? "text-red-600 dark:text-red-400" : ""}`}>{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <Panel
+        flush
+        title="Latest messages"
+        description="Newest first, up to 150"
+        actions={
+          <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
+            {["all", ...OUTCOMES].map((o) => (
+              <Link
+                key={o}
+                href={o === "all" ? "/admin/billing/webhooks" : `/admin/billing/webhooks?outcome=${o}`}
+                className={`rounded-md px-3 py-1 text-xs font-medium capitalize transition-colors ${(outcomeFilter ?? "all") === o ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {o}
+              </Link>
+            ))}
+          </div>
+        }
+      >
+        <DataTable
+          emptyIcon={Inbox}
+          empty="Nothing to show."
+          head={["Received", "Event", "Outcome", "Plan", "Payment / subscription", "Why"]}
+          rows={list.map((e) => {
+            const o = e.outcome ?? "recorded"
+            const plan = e.plan_id ? plans.get(e.plan_id) : null
+            return [
+              <span key="d" className="whitespace-nowrap">{fmtTime(e.created_at)}</span>,
+              <Mono key="t">{e.event_type}</Mono>,
+              <Pill key="o" tone={OUTCOME_TONE[o] ?? "neutral"}>{o}</Pill>,
+              <span key="p" className="text-xs">
+                {plan ? (
+                  <>
+                    {plan.name}
+                    {!plan.is_lifinity && <span className="text-muted-foreground"> (not Lifinity)</span>}
+                  </>
+                ) : (
+                  e.plan_id ?? "—"
+                )}
+              </span>,
+              e.entity_id ? (
+                <Link key="e" href={`/admin/billing/lookup?q=${e.entity_id}`} className="font-mono text-xs text-primary hover:underline">
+                  {e.entity_id}
+                </Link>
+              ) : (
+                <span key="e" className="text-muted-foreground">—</span>
+              ),
+              <span key="w" className="text-xs text-muted-foreground">{e.error ?? ""}</span>,
+            ]
+          })}
+        />
+      </Panel>
     </div>
   )
 }
