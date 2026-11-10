@@ -101,7 +101,10 @@ function isLifinityPlan(plan: RzpPlanEntity) {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean)
-  return allow.includes(plan.id) || /lifinity|breathwork|valar/i.test(plan.item?.name ?? "")
+  const name = plan.item?.name ?? ""
+  // "… - TEST" plans were used to try checkout; they aren't real members.
+  if (/\btest\b/i.test(name)) return false
+  return allow.includes(plan.id) || /lifinity|breathwork|valar/i.test(name)
 }
 
 /** Emails and phone numbers of everyone with a Lifinity account. */

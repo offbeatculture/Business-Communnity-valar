@@ -43,18 +43,22 @@ export async function loadMembers(): Promise<Member[]> {
   )
   const byUser = new Map(profiles.map((p) => [p.user_id, p]))
 
+  // Every account, profile or not: people who paid but never finished setup
+  // have no profile, and leaving them out made them look like they had no
+  // account at all.
   return users
-    .filter((u) => byUser.has(u.id))
+    .filter((u) => u.email)
     .map((u) => {
-      const p = byUser.get(u.id)!
+      const p = byUser.get(u.id)
       return {
         userId: u.id,
         email: (u.email ?? "").toLowerCase(),
-        name: p.full_name,
-        phone: normalisePhone(p.phone) ?? normalisePhone(u.phone),
-        role: p.role,
+        name: p?.full_name ?? null,
+        phone: normalisePhone(p?.phone) ?? normalisePhone(u.phone),
+        role: p?.role ?? null,
         lastSignIn: u.last_sign_in_at ?? null,
         joinedAt: u.created_at ?? null,
+        hasProfile: !!p,
       }
     })
 }

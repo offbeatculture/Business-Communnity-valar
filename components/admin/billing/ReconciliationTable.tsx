@@ -133,6 +133,7 @@ export function ReconciliationTable({ rows }: { rows: ReconRow[] }) {
   const summary: { code: FlagCode; tone: Severity }[] = [
     { code: "paid_not_recorded", tone: "high" },
     { code: "paid_no_account", tone: "high" },
+    { code: "setup_unfinished", tone: "high" },
     { code: "tier_restricted", tone: "high" },
     { code: "no_payment", tone: "high" },
     { code: "amount_mismatch", tone: "medium" },

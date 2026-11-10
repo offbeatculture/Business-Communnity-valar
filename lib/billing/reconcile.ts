@@ -18,6 +18,8 @@ export type Member = {
   role: string | null
   lastSignIn: string | null
   joinedAt: string | null
+  /** False when the account exists but profile setup was never finished. */
+  hasProfile: boolean
 }
 
 export type DbSub = {
@@ -95,6 +97,7 @@ export type FlagCode =
   | "other_product_only"
   | "using_after_expiry"
   | "paid_no_account"
+  | "setup_unfinished"
 
 export type Severity = "high" | "medium" | "low" | "info"
 
@@ -138,6 +141,8 @@ export const LIFINITY_PRICES = new Set([99900, 149900, 999000, 1499900])
 export const YEARLY_PRICES = new Set([999000, 1499900])
 
 const STAFF_ROLES = new Set(["admin", "recording_admin", "staff"])
+/** Team accounts, whatever their role. */
+const STAFF_EMAIL_DOMAINS = ["@offbeatculture.co.in"]
 export const STAFF_COMP_LABEL = "Staff (complimentary)"
 export const KARMA_LABEL = "Karma Recode (lifetime)"
 const LIFETIME_ISO = "2099-12-31T18:29:59.000Z" // 23:59:59 IST
@@ -146,6 +151,8 @@ const DAY = 24 * 3600 * 1000
 const TOLERANCE = 1.5 * DAY
 
 const ENDED_RZP = new Set(["cancelled", "completed", "expired", "halted"])
+/** Razorpay states in which current_end really is paid for. */
+const PAID_UP_RZP = new Set(["active", "authenticated", "completed"])
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -288,15 +295,30 @@ export function reconcile(input: {
     )
     const lastLifinityPayment = lifinityPayments[lifinityPayments.length - 1] ?? null
 
+    // The payment that covers the furthest date. A ₹14,999 year bought in
+    // September outlasts ₹999 months paid since, so it — not simply the most
+    // recent payment — says what they've paid for.
+    const governingPayment =
+      [...lifinityPayments].sort((a, b) => paidUntilFromPayment(b) - paidUntilFromPayment(a))[0] ?? null
+
     // What Razorpay says they've paid up to.
     const candidates: number[] = []
-    if (rzpSub && (rzpSub.paid_count ?? 0) > 0 && rzpSub.current_end) candidates.push(ms(rzpSub.current_end))
-    if (lastLifinityPayment) candidates.push(paidUntilFromPayment(lastLifinityPayment))
+    // Razorpay's cycle end only means "paid until" while the subscription is
+    // in good standing. Once a charge fails (pending / halted) or it is
+    // paused or cancelled, the current cycle may never have been paid — so
+    // there we rely on the paid invoices themselves (governingPayment).
+    if (rzpSub && (rzpSub.paid_count ?? 0) > 0 && rzpSub.current_end && PAID_UP_RZP.has(rzpSub.status ?? "")) {
+      candidates.push(ms(rzpSub.current_end))
+    }
+    if (governingPayment) candidates.push(paidUntilFromPayment(governingPayment))
     const paidUntilMs = candidates.length ? Math.max(...candidates) : NaN
     const rzpPaidUntil = Number.isFinite(paidUntilMs) ? new Date(paidUntilMs).toISOString() : null
 
     const label = (dbSub?.plan_label ?? "").trim()
-    const isStaff = STAFF_ROLES.has(member.role ?? "") || label === STAFF_COMP_LABEL
+    const isStaff =
+      STAFF_ROLES.has(member.role ?? "") ||
+      STAFF_EMAIL_DOMAINS.some((d) => member.email.endsWith(d)) ||
+      label === STAFF_COMP_LABEL
     const category: MemberCategory = isStaff
       ? "staff"
       : label.startsWith("Karma Recode")
@@ -346,30 +368,31 @@ export function reconcile(input: {
         flags.push({
           code: "tier_restricted",
           severity: "high",
-          message: `Paid ${rupees(lastLifinityPayment?.amount)} but is on the restricted "${dbSub.tier}" tier.`,
+          message: `Paid ${rupees(governingPayment?.amount)} but is on the restricted "${dbSub.tier}" tier.`,
           fix: { action: "set_tier", subscriptionId: dbSub.id, label: "Give full membership" },
         })
       }
 
       // 3. Recorded amount isn't what they paid.
-      if (lastLifinityPayment && lastLifinityPayment.amount != null && dbSub.amount_paid !== lastLifinityPayment.amount) {
-        const yearly = YEARLY_PRICES.has(lastLifinityPayment.amount)
+      if (governingPayment && governingPayment.amount != null && dbSub.amount_paid !== governingPayment.amount) {
+        const yearly = YEARLY_PRICES.has(governingPayment.amount)
         flags.push({
           code: "amount_mismatch",
           severity: "medium",
-          message: `Recorded as ${rupees(dbSub.amount_paid)}, but their last Lifinity payment was ${rupees(lastLifinityPayment.amount)}${yearly ? " (yearly)" : ""}.`,
+          message: `Recorded as ${rupees(dbSub.amount_paid)}, but they paid ${rupees(governingPayment.amount)}${yearly ? " for a year" : ""} on ${fmt(governingPayment.created_at)}.`,
           fix: {
             action: "set_amount",
             subscriptionId: dbSub.id,
-            amountPaise: lastLifinityPayment.amount,
+            amountPaise: governingPayment.amount,
             yearly,
-            label: `Record ${rupees(lastLifinityPayment.amount)}${yearly ? " yearly" : ""}`,
+            label: `Record ${rupees(governingPayment.amount)}${yearly ? " yearly" : ""}`,
           },
         })
       }
 
       // 4. Payment exists but the record doesn't point at it.
-      if (!dbSub.razorpay_subscription_id && !dbSub.razorpay_payment_id && lastLifinityPayment) {
+      if (!dbSub.razorpay_subscription_id && !dbSub.razorpay_payment_id && governingPayment) {
+        const lastLifinityPayment = governingPayment
         const viaSub = lastLifinityPayment.kind === "lifinity_plan" ? lastLifinityPayment.subscription_id : null
         flags.push({
           code: "unlinked_payment",
@@ -424,6 +447,19 @@ export function reconcile(input: {
           },
         })
       }
+    }
+
+    // 8. Has an account (and often a payment) but never finished profile
+    //    setup, so the site keeps sending them to /setup. These looked like
+    //    "paid, no account" until accounts without profiles were included.
+    if (!member.hasProfile && category !== "staff") {
+      flags.push({
+        code: "setup_unfinished",
+        severity: lifinityPayments.length || rzpSub ? "high" : "low",
+        message: lifinityPayments.length || rzpSub
+          ? "Paid and has an account, but never finished profile setup — send them a login link and ask them to complete setup."
+          : "Has an account but never finished profile setup.",
+      })
     }
 
     // 7. Using the site after their membership ran out (access isn't enforced).
@@ -498,6 +534,7 @@ export const FLAG_LABELS: Record<FlagCode, string> = {
   other_product_only: "Other products only",
   using_after_expiry: "Using after expiry",
   paid_no_account: "Paid, no account",
+  setup_unfinished: "Setup never finished",
 }
 
 export const CATEGORY_LABELS: Record<MemberCategory, string> = {
