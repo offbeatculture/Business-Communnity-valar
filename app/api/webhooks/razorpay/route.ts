@@ -10,12 +10,12 @@ import {
 } from "@/lib/ses"
 import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
 import { sendValarPaymentAlert } from "@/lib/slack"
+import { getAllowedPlanIds } from "@/lib/billing/config"
 
 type AdminClient = ReturnType<typeof createAdminClient>
 
 const SINGLE_TIER: ProductTier = "membership"
 
-const DEFAULT_ALLOWED_RAZORPAY_PLAN_IDS = ["plan_T5PqUyQl2B5p4t"]
 
 function toNumber(value: unknown, fallback = 0) {
   if (typeof value === "number") return value
@@ -48,15 +48,6 @@ function getNotes(entity: Record<string, unknown>): Record<string, string> {
   }
 
   return result
-}
-
-function getAllowedPlanIds() {
-  const fromEnv = (process.env.RAZORPAY_ALLOWED_PLAN_IDS ?? "")
-    .split(",")
-    .map((id) => id.trim())
-    .filter(Boolean)
-
-  return fromEnv.length > 0 ? fromEnv : DEFAULT_ALLOWED_RAZORPAY_PLAN_IDS
 }
 
 function getRazorpayPlanIdFromNotes(notes: Record<string, unknown>) {
@@ -161,6 +152,45 @@ async function resolveWebhookPlanId(event: Record<string, unknown>) {
   return null
 }
 
+/** Rejected requests kept per hour, at most. Anyone can post here. */
+const MAX_REJECTED_PER_HOUR = 30
+
+/**
+ * Note a request whose signature didn't match. Real Razorpay deliveries
+ * failing this way means the webhook secret in Vercel and in Razorpay differ —
+ * which used to be invisible. Stores the claimed event type only; the body is
+ * unverified, so none of it is trusted or kept.
+ */
+async function recordRejected(adminClient: AdminClient, request: Request, body: string) {
+  try {
+    const since = new Date(Date.now() - 3600_000).toISOString()
+    const { count } = await adminClient
+      .from("webhook_events")
+      .select("id", { count: "exact", head: true })
+      .eq("outcome", "rejected")
+      .gte("created_at", since)
+    if ((count ?? 0) >= MAX_REJECTED_PER_HOUR) return
+
+    let claimedType = "unknown"
+    try {
+      claimedType = String((JSON.parse(body) as { event?: unknown }).event ?? "unknown").slice(0, 60)
+    } catch {
+      // not JSON
+    }
+
+    await adminClient.from("webhook_events").insert({
+      event_type: claimedType,
+      razorpay_event_id: `rejected:${crypto.randomUUID()}`,
+      payload: { rejected: true, had_signature: !!request.headers.get("x-razorpay-signature") },
+      outcome: "rejected",
+      error: "Signature did not match RAZORPAY_WEBHOOK_SECRET",
+      processed_at: new Date().toISOString(),
+    })
+  } catch (err) {
+    console.error("Could not record rejected webhook:", err)
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.text()
@@ -179,12 +209,18 @@ export async function POST(request: Request) {
       .update(body)
       .digest("hex")
 
+    const adminClient = createAdminClient()
+
     if (
       !isValidSignature({
         expectedSignature,
         receivedSignature: signature,
       })
     ) {
+      // Recorded so a wrong webhook secret shows up on the admin Webhooks
+      // page instead of failing silently. Capped, because anyone on the
+      // internet can post here.
+      await recordRejected(adminClient, request, body)
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
     }
 
@@ -194,24 +230,6 @@ export async function POST(request: Request) {
     if (!eventType) {
       return NextResponse.json({ error: "Missing event type" }, { status: 400 })
     }
-
-    const allowedPlanIds = getAllowedPlanIds()
-    const resolvedPlanId = await resolveWebhookPlanId(event)
-
-    if (!resolvedPlanId || !allowedPlanIds.includes(resolvedPlanId)) {
-      console.warn("[Valar webhook] ignored event for different Razorpay plan", {
-        eventType,
-        resolvedPlanId,
-        allowedPlanIds,
-      })
-
-      return NextResponse.json({
-        message: "Event ignored for different Razorpay plan",
-        planId: resolvedPlanId,
-      })
-    }
-
-    const adminClient = createAdminClient()
 
     const payload = asRecord(event.payload)
     const paymentEntity = asRecord(asRecord(payload.payment).entity)
@@ -234,37 +252,103 @@ export async function POST(request: Request) {
               .update(body)
               .digest("hex")}`)
 
-    const { error: dedupeError } = await adminClient
+    const allowedPlanIds = getAllowedPlanIds()
+    const resolvedPlanId = await resolveWebhookPlanId(event)
+    const entityId = paymentId ?? subscriptionId
+
+    if (!resolvedPlanId || !allowedPlanIds.includes(resolvedPlanId)) {
+      console.warn("[Valar webhook] ignored event for different Razorpay plan", {
+        eventType,
+        resolvedPlanId,
+        allowedPlanIds,
+      })
+
+      // Ignored events used to leave no trace, which is how renewals went
+      // unrecorded for weeks unnoticed. Record that it arrived and why it was
+      // dropped — but not the payload: these are mostly other businesses'
+      // customers on the same Razorpay account.
+      await adminClient.from("webhook_events").insert({
+        event_type: eventType,
+        razorpay_event_id: dedupeId,
+        payload: { ignored: true },
+        outcome: "ignored",
+        error: resolvedPlanId
+          ? `Plan ${resolvedPlanId} is not in the allowed list (${allowedPlanIds.join(", ") || "empty"})`
+          : "Could not work out which Razorpay plan this event belongs to",
+        plan_id: resolvedPlanId,
+        entity_id: entityId,
+        processed_at: new Date().toISOString(),
+      })
+
+      return NextResponse.json({
+        message: "Event ignored for different Razorpay plan",
+        planId: resolvedPlanId,
+      })
+    }
+
+    const { data: logged, error: dedupeError } = await adminClient
       .from("webhook_events")
       .insert({
         event_type: eventType,
         razorpay_event_id: dedupeId,
         payload: event,
+        plan_id: resolvedPlanId,
+        entity_id: entityId,
       })
+      .select("id")
+      .single()
 
     if (dedupeError?.code === "23505") {
       return NextResponse.json({ message: "Already processed" })
     }
 
+    let response: NextResponse
     switch (eventType) {
       case "payment.captured":
-        return handlePaymentCaptured(event, adminClient)
+        response = await handlePaymentCaptured(event, adminClient)
+        break
 
       case "subscription.activated":
-        return handleSubscriptionActivated(event, adminClient)
+        response = await handleSubscriptionActivated(event, adminClient)
+        break
 
       case "subscription.charged":
-        return handleSubscriptionCharged(event, adminClient)
+        response = await handleSubscriptionCharged(event, adminClient)
+        break
 
       case "subscription.cancelled":
-        return handleSubscriptionStatusChange(event, adminClient, "cancelled")
+        response = await handleSubscriptionStatusChange(event, adminClient, "cancelled")
+        break
 
       case "subscription.completed":
-        return handleSubscriptionCompleted(event, adminClient)
+        response = await handleSubscriptionCompleted(event, adminClient)
+        break
 
       default:
-        return NextResponse.json({ message: "Event ignored" })
+        response = NextResponse.json({ message: "Event ignored" })
     }
+
+    // Record what the handler actually did, so the admin Webhooks page shows
+    // "failed: …" rather than an event that looks fine.
+    if (logged?.id) {
+      let detail: string | null = null
+      try {
+        const body = (await response.clone().json()) as { error?: string; message?: string }
+        detail = body.error ?? body.message ?? null
+      } catch {
+        // non-JSON response
+      }
+      await adminClient
+        .from("webhook_events")
+        .update({
+          outcome: response.status < 300 ? "processed" : "failed",
+          error: response.status < 300 ? null : detail,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", logged.id)
+    }
+
+    return response
   } catch (error) {
     console.error("Webhook error:", error)
 
@@ -706,7 +790,7 @@ async function handleSubscriptionCharged(
   const newExpiry = new Date()
   newExpiry.setDate(newExpiry.getDate() + SINGLE_PLAN.durationDays)
 
-  await adminClient
+  let { error: renewError } = await adminClient
     .from("subscriptions")
     .update({
       expires_at: newExpiry.toISOString(),
@@ -715,6 +799,36 @@ async function handleSubscriptionCharged(
       updated_at: new Date().toISOString(),
     })
     .eq("id", subscription.id)
+
+  // 23505: they already hold another active membership — a complimentary
+  // lifetime one, say, with this Razorpay one retired beneath it. Record the
+  // charge without reactivating the old row; returning an error here would
+  // have Razorpay retry for a day and risk it disabling the webhook.
+  if (renewError?.code === "23505") {
+    ;({ error: renewError } = await adminClient
+      .from("subscriptions")
+      .update({
+        expires_at: newExpiry.toISOString(),
+        recurring_status: "active",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", subscription.id))
+  }
+
+  // This used to carry on regardless — invoice, confirmation email, "renewed"
+  // back to Razorpay — so a failed update left a paying member expired with
+  // nothing anywhere saying so. Fail loudly instead: Razorpay retries, and
+  // the admin Webhooks page shows the reason.
+  if (renewError) {
+    console.error("Webhook subscription.charged: renewal update failed", {
+      rzpSubscriptionId,
+      error: renewError,
+    })
+    return NextResponse.json(
+      { error: `Renewal not recorded: ${renewError.message}` },
+      { status: 500 }
+    )
+  }
 
   const renewalPaise =
     subscription.locked_price_paise ??

@@ -34,6 +34,11 @@ import {
   FileText,
   Mail,
   FolderOpen,
+  CreditCard,
+  Search,
+  Webhook,
+  ShoppingCart,
+  HeartPulse,
 } from "lucide-react"
 
 export type NavLeaf = { label: string; href: string; icon: LucideIcon }
@@ -60,6 +65,8 @@ export function isItemActive(pathname: string, href: string) {
   // /admin is a page in its own right, so a prefix match would light it up
   // on every console route.
   if (href === "/admin") return pathname === "/admin"
+  // Same for the billing index, which its sibling pages sit under.
+  if (href === "/admin/billing") return pathname === "/admin/billing"
   return pathname === href || pathname.startsWith(href + "/")
 }
 
@@ -152,6 +159,18 @@ export const adminNav: NavEntry[] = [
     children: [
       { label: "Recordings", href: "/admin/content", icon: BookOpen },
       { label: "Live Sessions", href: "/admin/events", icon: Calendar },
+    ],
+  },
+  {
+    label: "Billing",
+    icon: CreditCard,
+    match: ["/admin/billing"],
+    children: [
+      { label: "Reconciliation", href: "/admin/billing", icon: CreditCard },
+      { label: "Member Lookup", href: "/admin/billing/lookup", icon: Search },
+      { label: "Webhooks", href: "/admin/billing/webhooks", icon: Webhook },
+      { label: "Unfinished Checkouts", href: "/admin/billing/checkouts", icon: ShoppingCart },
+      { label: "Health Check", href: "/admin/billing/health", icon: HeartPulse },
     ],
   },
   {

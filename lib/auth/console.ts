@@ -37,6 +37,7 @@ export const COMMUNITY_HOME = "/dashboard"
  */
 export const STAFF_BLOCKED_PATHS = [
   "/admin/dashboard",
+  "/admin/billing",
   "/admin/members/create",
   "/admin/temp-password",
 ] as const
@@ -44,6 +45,7 @@ export const STAFF_BLOCKED_PATHS = [
 /** API routes staff may not call, matched the same way. */
 export const STAFF_BLOCKED_API = [
   "/api/admin/stats",
+  "/api/admin/billing",
   "/api/admin/members/create",
   "/api/admin/temp-password",
 ] as const
