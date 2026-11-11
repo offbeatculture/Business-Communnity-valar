@@ -5,6 +5,8 @@ import { requireAdmin, logAdminAction } from "@/lib/admin-audit"
 import { createMagicLoginToken } from "@/lib/magic-link"
 import { sendMagicLinkEmail } from "@/lib/ses"
 import { SINGLE_PLAN, formatINR } from "@/lib/plans"
+import { karmaRecodeExpiry } from "@/lib/karma-recode-dates"
+import { syncKarmaRecodeMembership } from "@/lib/karma-recode-admin"
 
 const schema = z.object({
   email: z.string().email().max(255),
@@ -21,6 +23,11 @@ const schema = z.object({
   // against the subscription as locked_price_paise, which is preserved for the
   // life of the membership even when list pricing moves.
   locked_price_rupees: z.number().int().min(0).max(1_000_000).optional(),
+  // Karma Recode buyer: Lifinity plus the Karma Recode tab for a year from
+  // purchase (from 1 June 2026 if bought earlier). Replaces access_days.
+  karma_recode: z.boolean().default(false),
+  karma_recode_purchased_on: z.iso.date().optional(),
+  phone: z.string().trim().max(30).optional(),
 })
 
 export async function POST(request: Request) {
@@ -46,6 +53,9 @@ export async function POST(request: Request) {
       note,
       password,
       locked_price_rupees,
+      karma_recode,
+      karma_recode_purchased_on,
+      phone,
     } = parsed.data
 
     const admin = createAdminClient()
@@ -67,7 +77,9 @@ export async function POST(request: Request) {
     if (existingId) {
       return NextResponse.json(
         {
-          error: "An account with that email already exists.",
+          error: karma_recode
+            ? "An account with that email already exists. Add them under Members → Karma Recode instead."
+            : "An account with that email already exists.",
           existingUserId: existingId,
         },
         { status: 409 },
@@ -106,7 +118,51 @@ export async function POST(request: Request) {
       .select("id")
       .single()
 
-    if (access_days > 0) {
+    // Karma Recode: ticked on the form, or already on the Karma Recode list
+    // (bought before they had an account). Either way their access runs for
+    // their Karma Recode year instead of the access days.
+    const krEmail = email.trim().toLowerCase()
+    let krExpiresAt: string | null = null
+    if (karma_recode) {
+      krExpiresAt = karmaRecodeExpiry(karma_recode_purchased_on ?? null)
+      const { error: krError } = await admin.from("karma_recode_members").upsert({
+        email: krEmail,
+        name: full_name,
+        phone: phone || null,
+        purchased_on: karma_recode_purchased_on ?? null,
+        expires_at: krExpiresAt,
+      })
+      if (krError) {
+        return NextResponse.json(
+          {
+            error: `${full_name} was created, but couldn't be added to Karma Recode: ${krError.message}`,
+            profileId: profile?.id ?? null,
+          },
+          { status: 500 },
+        )
+      }
+    } else {
+      const { data: listed } = await admin
+        .from("karma_recode_members")
+        .select("expires_at")
+        .eq("email", krEmail)
+        .maybeSingle()
+      krExpiresAt = (listed?.expires_at as string | undefined) ?? null
+    }
+
+    if (krExpiresAt) {
+      try {
+        await syncKarmaRecodeMembership(userId, krExpiresAt)
+      } catch (err) {
+        return NextResponse.json(
+          {
+            error: `${full_name} was created and is on Karma Recode, but their membership couldn't be set up: ${err instanceof Error ? err.message : err}`,
+            profileId: profile?.id ?? null,
+          },
+          { status: 500 },
+        )
+      }
+    } else if (access_days > 0) {
       const expiresAt = new Date(Date.now() + access_days * 86_400_000)
 
       const { error: subError } = await admin.from("subscriptions").insert({
@@ -164,13 +220,15 @@ export async function POST(request: Request) {
         // Whether a password was set, never the password itself — the audit
         // trail is readable by every admin and is kept indefinitely.
         password_set_by_admin: Boolean(password),
-        locked_price_paise: access_days > 0 ? lockedPricePaise : null,
+        locked_price_paise: access_days > 0 && !krExpiresAt ? lockedPricePaise : null,
+        karma_recode_until: krExpiresAt,
       },
       note: note ?? null,
     })
 
-    const accessNote =
-      access_days > 0
+    const accessNote = krExpiresAt
+      ? ` Karma Recode and Lifinity until ${new Date(krExpiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" })}.`
+      : access_days > 0
         ? ` Locked at ${formatINR(lockedPricePaise)}/month.`
         : ""
 

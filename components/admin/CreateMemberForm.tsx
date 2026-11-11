@@ -4,8 +4,17 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Eye, EyeOff, Loader2, RefreshCw, UserPlus } from "lucide-react"
+import { Eye, EyeOff, Loader2, RefreshCw, Sparkles, UserPlus } from "lucide-react"
 import { SINGLE_PLAN } from "@/lib/plans"
+import { karmaRecodeExpiry, karmaRecodeStart } from "@/lib/karma-recode-dates"
+
+const fmtDate = (iso: string) =>
+  new Date(iso.length === 10 ? `${iso}T00:00:00+05:30` : iso).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  })
 
 export function CreateMemberForm() {
   const router = useRouter()
@@ -19,6 +28,9 @@ export function CreateMemberForm() {
   const [lockedPrice, setLockedPrice] = useState(
     String(SINGLE_PLAN.amountRupees),
   )
+  const [karmaRecode, setKarmaRecode] = useState(false)
+  const [krPurchasedOn, setKrPurchasedOn] = useState("")
+  const [phone, setPhone] = useState("")
   const [busy, setBusy] = useState(false)
 
   // Blank is valid: it means "no password, send them a magic link instead".
@@ -61,6 +73,9 @@ export function CreateMemberForm() {
           password: password.length > 0 ? password : undefined,
           locked_price_rupees:
             lockedPrice.trim() === "" ? undefined : Number(lockedPrice),
+          karma_recode: karmaRecode,
+          karma_recode_purchased_on: karmaRecode && krPurchasedOn ? krPurchasedOn : undefined,
+          phone: phone.trim() || undefined,
         }),
       })
 
@@ -156,6 +171,67 @@ export function CreateMemberForm() {
         )}
       </Field>
 
+      <div
+        className={`rounded-lg border p-3 ${
+          karmaRecode ? "border-primary/40 bg-primary/5" : "border-border"
+        }`}
+      >
+        <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+          <input
+            type="checkbox"
+            checked={karmaRecode}
+            onChange={(e) => setKarmaRecode(e.target.checked)}
+            className="mt-0.5 size-4 accent-primary"
+          />
+          <span>
+            <span className="flex items-center gap-1.5 font-medium">
+              <Sparkles className="size-4 text-primary" />
+              Karma Recode member
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              Lifinity plus the Karma Recode tab, for one year from purchase.
+              Purchases before 1 June 2026 count from 1 June 2026.
+            </span>
+          </span>
+        </label>
+
+        {karmaRecode && (
+          <div className="mt-3 space-y-3 pl-6">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium">
+                  Date they bought Karma Recode
+                </label>
+                <input
+                  type="date"
+                  value={krPurchasedOn}
+                  onChange={(e) => setKrPurchasedOn(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium">
+                  Phone (optional)
+                </label>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <p className="text-xs">
+              Access counts from{" "}
+              <strong>{fmtDate(karmaRecodeStart(krPurchasedOn || null))}</strong>{" "}
+              and ends{" "}
+              <strong>{fmtDate(karmaRecodeExpiry(krPurchasedOn || null))}</strong>.
+              {!krPurchasedOn && " Add the purchase date if it was after 1 June 2026."}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {!karmaRecode && (
       <Field label="Access">
         <div className="flex flex-wrap items-center gap-2">
           {["30", "90", "365", "0"].map((d) => (
@@ -172,13 +248,16 @@ export function CreateMemberForm() {
         </div>
         <p className="mt-1.5 text-xs text-muted-foreground">
           &ldquo;No access yet&rdquo; creates the account without a
-          subscription — for someone who will pay separately.
+          subscription — for someone who will pay separately. If this email
+          is already on the Karma Recode list, they get their Karma Recode year
+          instead.
         </p>
       </Field>
+      )}
 
       {/* Only meaningful alongside a subscription. With no access there is no
           row to record the rate against. */}
-      {accessDays !== "0" && (
+      {!karmaRecode && accessDays !== "0" && (
         <Field label="Locked price">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">₹</span>
