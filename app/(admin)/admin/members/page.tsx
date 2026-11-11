@@ -1,17 +1,24 @@
-import { fetchAllMembers } from "@/lib/profile"
-import { MemberTable } from "@/components/admin/MemberTable"
+import { redirect } from "next/navigation"
+import { getConsoleViewer } from "@/lib/auth/console-viewer"
+import { loadMemberDirectory } from "@/lib/admin/member-directory"
+import { MemberDirectory } from "@/components/admin/MemberDirectory"
+import { PageHeader } from "@/components/admin/billing/ui"
+
+export const dynamic = "force-dynamic"
 
 export default async function AdminMembersPage() {
-  const { members, hasMore } = await fetchAllMembers({ page: 1, perPage: 20 })
+  const viewer = await getConsoleViewer()
+  if (!viewer) redirect("/dashboard")
+
+  const rows = await loadMemberDirectory()
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-1">Members</h1>
-      <p className="text-muted-foreground text-sm mb-6">
-        Manage community members, subscriptions, and accounts.
-      </p>
-
-      <MemberTable initialMembers={members} initialHasMore={hasMore} />
+    <div className="mx-auto max-w-7xl space-y-6">
+      <PageHeader
+        title="Members"
+        description="Everyone in one table. Use the cards and filters to narrow it down, and the ⋯ menu on a row to act on that member."
+      />
+      <MemberDirectory rows={rows} isAdmin={viewer.isAdmin} />
     </div>
   )
 }
