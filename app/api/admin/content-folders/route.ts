@@ -6,6 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin"
 const CreateFolderSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional().nullable(),
+  // Created from the Karma Recode content page.
+  is_karma_recode: z.boolean().optional(),
 })
 
 function createSlug(name: string) {
@@ -116,11 +118,25 @@ export async function POST(request: Request) {
     const folderName = parsed.data.name.trim()
     const baseSlug = createSlug(folderName)
 
+    const wantsKarmaRecode = parsed.data.is_karma_recode === true
     const { data: existingFolder } = await admin
       .from("content_folders")
-      .select("id, name, slug, description, cover_image_url, sort_order, parent_id, created_at")
+      .select(`id, name, slug, description, cover_image_url, sort_order, parent_id, created_at${wantsKarmaRecode ? ", is_karma_recode" : ""}`)
       .ilike("name", folderName)
       .maybeSingle()
+
+    // Names are unique across both halves; don't hand back a Recordings
+    // folder to the Karma Recode page (or the other way round).
+    if (existingFolder && wantsKarmaRecode !== !!(existingFolder as { is_karma_recode?: boolean }).is_karma_recode) {
+      return NextResponse.json(
+        {
+          error: wantsKarmaRecode
+            ? `There's already a Recordings folder called "${folderName}". Pick another name.`
+            : `There's already a Karma Recode folder called "${folderName}". Pick another name.`,
+        },
+        { status: 409 }
+      )
+    }
 
     if (existingFolder) {
       return NextResponse.json({ data: existingFolder }, { status: 200 })
@@ -132,8 +148,9 @@ export async function POST(request: Request) {
         name: folderName,
         slug: baseSlug,
         description: parsed.data.description?.trim() || null,
+        ...(wantsKarmaRecode ? { is_karma_recode: true } : {}),
       })
-      .select("id, name, slug, description, cover_image_url, sort_order, parent_id, created_at")
+      .select(`id, name, slug, description, cover_image_url, sort_order, parent_id, created_at${wantsKarmaRecode ? ", is_karma_recode" : ""}`)
       .single()
 
     if (error) {

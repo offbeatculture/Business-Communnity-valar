@@ -12,10 +12,15 @@ import {
 } from "@/components/ui/select"
 import { CheckCircle2, Loader2, SkipForward, Upload, XCircle } from "lucide-react"
 import { toast } from "sonner"
+import { foldersInScope, type ContentScope } from "@/lib/folder-tree"
 
 type ContentFolder = {
   id: string
   name: string
+  parent_id: string | null
+  sort_order: number
+  created_at: string
+  is_karma_recode?: boolean
 }
 
 type Outcome = {
@@ -27,7 +32,14 @@ type Outcome = {
 
 const MAX_VIDEOS = 50
 
-export function BulkVideoForm({ onSuccess }: { onSuccess?: () => void }) {
+export function BulkVideoForm({
+  onSuccess,
+  scope = "library",
+}: {
+  onSuccess?: () => void
+  /** Which folders to offer. */
+  scope?: ContentScope
+}) {
   const [folders, setFolders] = useState<ContentFolder[]>([])
   const [folderId, setFolderId] = useState("")
   const [urlsText, setUrlsText] = useState("")
@@ -41,14 +53,14 @@ export function BulkVideoForm({ onSuccess }: { onSuccess?: () => void }) {
         if (!res.ok) return
 
         const data = await res.json()
-        setFolders(data.data ?? [])
+        setFolders(foldersInScope((data.data ?? []) as ContentFolder[], scope))
       } catch {
         console.error("Failed to load folders")
       }
     }
 
     loadFolders()
-  }, [])
+  }, [scope])
 
   // One link per line, blank lines ignored, so pasting straight out of a
   // spreadsheet or a chat message works without tidying up first.

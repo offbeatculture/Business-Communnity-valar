@@ -166,3 +166,15 @@ export function karmaRecodeFolderIds<T extends FolderNode & { is_karma_recode?: 
   }
   return ids
 }
+
+/** Which half of the content a page works on: the library or Karma Recode. */
+export type ContentScope = "library" | "karma_recode"
+
+/** Only the folders that belong to `scope`. */
+export function foldersInScope<T extends FolderNode & { is_karma_recode?: boolean | null }>(
+  folders: T[],
+  scope: ContentScope
+): T[] {
+  const kr = karmaRecodeFolderIds(folders)
+  return folders.filter((f) => (scope === "karma_recode") === kr.has(f.id))
+}

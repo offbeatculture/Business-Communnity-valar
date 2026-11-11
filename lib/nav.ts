@@ -171,9 +171,10 @@ export const adminNav: NavEntry[] = [
   {
     label: "Content & Events",
     icon: FolderOpen,
-    match: ["/admin/content", "/admin/events"],
+    match: ["/admin/content", "/admin/karma-recode", "/admin/events"],
     children: [
       { label: "Recordings", href: "/admin/content", icon: BookOpen },
+      { label: "Karma Recode Content", href: "/admin/karma-recode", icon: Sparkles },
       { label: "Live Sessions", href: "/admin/events", icon: Calendar },
     ],
   },

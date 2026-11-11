@@ -20,10 +20,13 @@ import {
 } from "@/components/admin/VideoResourceField"
 import { toast } from "sonner"
 import type { Category } from "@/types"
+import { foldersInScope, type ContentScope } from "@/lib/folder-tree"
 
 type Props = {
   categories: Category[]
   onSuccess: () => void
+  /** Which folders to offer, and where a new folder goes. */
+  scope?: ContentScope
 }
 
 type ContentFolder = {
@@ -31,6 +34,10 @@ type ContentFolder = {
   name: string
   slug: string
   description: string | null
+  parent_id: string | null
+  sort_order: number
+  created_at: string
+  is_karma_recode?: boolean
 }
 
 type GeneratedSummary = {
@@ -71,7 +78,7 @@ function extractVideoId(url: string): string | null {
   }
 }
 
-export function VideoSummaryForm({ categories, onSuccess }: Props) {
+export function VideoSummaryForm({ categories, onSuccess, scope = "library" }: Props) {
   const [mode, setMode] = useState<"ai" | "manual">("ai")
 
   const [folders, setFolders] = useState<ContentFolder[]>([])
@@ -123,7 +130,7 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
       }
 
       const data = await res.json()
-      setFolders(data.data ?? [])
+      setFolders(foldersInScope((data.data ?? []) as ContentFolder[], scope))
     } catch {
       console.error("Failed to fetch content folders")
     } finally {
@@ -166,6 +173,7 @@ export function VideoSummaryForm({ categories, onSuccess }: Props) {
         body: JSON.stringify({
           name: newFolderName.trim(),
           description: newFolderDescription.trim() || null,
+          ...(scope === "karma_recode" ? { is_karma_recode: true } : {}),
         }),
       })
 
