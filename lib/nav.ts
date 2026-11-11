@@ -96,6 +96,21 @@ export const memberNav: NavEntry[] = [
   { label: "My Profile", href: "/profile", icon: User },
 ]
 
+/**
+ * The member menu for one person. Karma Recode buyers (and the team) get an
+ * extra "Karma Recode" tab straight after Recordings; everyone else never
+ * sees it.
+ */
+export function memberNavFor(showKarmaRecode: boolean): NavEntry[] {
+  if (!showKarmaRecode) return memberNav
+  const at = memberNav.findIndex((item) => !isGroup(item) && item.href === "/content")
+  return [
+    ...memberNav.slice(0, at + 1),
+    { label: "Karma Recode", href: "/karma-recode", icon: Sparkles },
+    ...memberNav.slice(at + 1),
+  ]
+}
+
 /** Bottom tab bar — five is the most that fits at 375px. */
 export const mobileTabs: NavLeaf[] = [
   { label: "Home", href: "/dashboard", icon: LayoutDashboard },
@@ -119,6 +134,7 @@ export const adminNav: NavEntry[] = [
     children: [
       { label: "All Members", href: "/admin/members", icon: Users },
       { label: "Add Member", href: "/admin/members/create", icon: UserPlus },
+      { label: "Karma Recode", href: "/admin/members/karma-recode", icon: Sparkles },
       { label: "Temp Password", href: "/admin/temp-password", icon: KeyRound },
     ],
   },

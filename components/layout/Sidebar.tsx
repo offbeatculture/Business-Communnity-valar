@@ -15,7 +15,7 @@ import {
   groupContainsRoute,
   isGroup,
   isItemActive,
-  memberNav,
+  memberNavFor,
   recordingAdminNav,
   type NavEntry,
   type NavGroup,
@@ -42,9 +42,11 @@ type SidebarProps = {
   } | null
   /** "admin" renders the dedicated console shell. Defaults to member. */
   variant?: "member" | "admin"
+  /** Adds the Karma Recode tab to the member menu. */
+  showKarmaRecode?: boolean
 }
 
-export function Sidebar({ profile, variant = "member" }: SidebarProps) {
+export function Sidebar({ profile, variant = "member", showKarmaRecode = false }: SidebarProps) {
   const pathname = usePathname()
   const entry = consoleEntry(profile?.role)
 
@@ -106,7 +108,7 @@ export function Sidebar({ profile, variant = "member" }: SidebarProps) {
       </div>
 
       <nav className="no-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4 pb-24">
-        <NavList items={memberNav} pathname={pathname} />
+        <NavList items={memberNavFor(showKarmaRecode)} pathname={pathname} />
 
         {profile?.role === "recording_admin" && (
           <>

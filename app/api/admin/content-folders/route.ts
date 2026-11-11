@@ -57,11 +57,19 @@ export async function GET() {
 
     const admin = createAdminClient()
 
-    const { data, error } = await admin
-      .from("content_folders")
-      .select("id, name, slug, description, cover_image_url, sort_order, parent_id, created_at")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false })
+    const columns = "id, name, slug, description, cover_image_url, sort_order, parent_id, created_at"
+    const load = (select: string) =>
+      admin
+        .from("content_folders")
+        .select(select)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false })
+
+    let { data, error } = await load(`${columns}, is_karma_recode`)
+    // Before the Karma Recode migration runs, the column doesn't exist yet.
+    if (error?.message.includes("is_karma_recode")) {
+      ;({ data, error } = await load(columns))
+    }
 
     if (error) {
       console.error("Fetch folders error:", error)

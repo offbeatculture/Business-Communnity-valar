@@ -23,6 +23,7 @@ import {
   // Heart,
   Video,
 } from "lucide-react"
+import { fetchKarmaRecodeFolderIds, outsideKarmaRecode } from "@/lib/karma-recode"
 
 type DashboardRecording = {
   id: string
@@ -241,12 +242,16 @@ export default async function DashboardPage() {
 async function fetchLatestRecordings(
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<DashboardRecording[]> {
-  const { data, error } = await supabase
+  // Karma Recode videos live in their own tab, never on the home page.
+  const outside = outsideKarmaRecode(await fetchKarmaRecodeFolderIds())
+  let query = supabase
     .from("video_summaries")
     .select(
       "id, title, youtube_video_id, youtube_url, thumbnail_url, video_duration_minutes, one_line_takeaway, full_summary, created_at"
     )
     .eq("is_published", true)
+  if (outside) query = query.or(outside)
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .limit(3)
 

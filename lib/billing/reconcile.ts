@@ -84,7 +84,7 @@ export type FixAction =
   | { action: "set_tier"; subscriptionId: string; label: string }
   | { action: "link_payment"; subscriptionId: string; paymentId?: string; rzpSubscriptionId?: string; label: string }
   | { action: "mark_expired"; subscriptionId: string; label: string }
-  | { action: "grant_complimentary"; userId: string; planLabel: "Staff (complimentary)" | "Karma Recode (lifetime)"; label: string }
+  | { action: "grant_complimentary"; userId: string; planLabel: "Staff (complimentary)"; label: string }
 
 export type FlagCode =
   | "paid_not_recorded"
@@ -144,7 +144,6 @@ const STAFF_ROLES = new Set(["admin", "recording_admin", "staff"])
 /** Team accounts, whatever their role. */
 const STAFF_EMAIL_DOMAINS = ["@offbeatculture.co.in"]
 export const STAFF_COMP_LABEL = "Staff (complimentary)"
-export const KARMA_LABEL = "Karma Recode (lifetime)"
 const LIFETIME_ISO = "2099-12-31T18:29:59.000Z" // 23:59:59 IST
 const DAY = 24 * 3600 * 1000
 /** Don't flag dates that differ by less than this — time zones, capture lag. */

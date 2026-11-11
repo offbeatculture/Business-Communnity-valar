@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/layout/Sidebar"
 import { TopBar } from "@/components/layout/TopBar"
 import { VisitTracker } from "@/components/engagement/VisitTracker"
 import { MobileNav } from "@/components/layout/MobileNav"
+import { getKarmaRecodeAccess } from "@/lib/karma-recode"
 
 export default async function ProtectedLayout({
   children,
@@ -20,20 +21,23 @@ export default async function ProtectedLayout({
     redirect("/login")
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, avatar_url, role")
-    .eq("user_id", user.id)
-    .single()
+  const [{ data: profile }, karmaRecode] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("full_name, avatar_url, role")
+      .eq("user_id", user.id)
+      .single(),
+    getKarmaRecodeAccess(),
+  ])
 
   return (
     <div className="min-h-screen bg-[#E8DDC8] text-[#4B3A25]">
       <VisitTracker />
 
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile} showKarmaRecode={karmaRecode.canView} />
 
       <div className="flex min-h-screen flex-col md:pl-64">
-        <TopBar profile={profile} />
+        <TopBar profile={profile} showKarmaRecode={karmaRecode.canView} />
 
         <main className="flex-1 bg-[#E8DDC8] p-4 pb-20 text-[#4B3A25] sm:p-6 md:pb-6">
           {children}

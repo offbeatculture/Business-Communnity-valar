@@ -32,7 +32,7 @@ const Fix = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("grant_complimentary"),
     userId: z.string().uuid(),
-    planLabel: z.enum(["Staff (complimentary)", "Karma Recode (lifetime)"]),
+    planLabel: z.enum(["Staff (complimentary)"]),
   }),
 ])
 

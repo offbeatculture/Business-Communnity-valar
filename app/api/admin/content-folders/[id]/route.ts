@@ -14,6 +14,8 @@ const UpdateFolderSchema = z
     cover_image_url: z.union([z.string().url(), z.literal("")]).nullable().optional(),
     // Lower sorts first in the library; negative pins above everything else.
     sort_order: z.number().int().min(-999).max(999).optional(),
+    // The folder and everything inside it move to the Karma Recode tab.
+    is_karma_recode: z.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
     message: "Nothing to update",
@@ -40,7 +42,11 @@ export async function PATCH(request: Request, { params }: Params) {
       )
     }
 
-    const updates: Record<string, string | number | null> = {}
+    const updates: Record<string, string | number | boolean | null> = {}
+
+    if (parsed.data.is_karma_recode !== undefined) {
+      updates.is_karma_recode = parsed.data.is_karma_recode
+    }
 
     if (parsed.data.sort_order !== undefined) {
       updates.sort_order = parsed.data.sort_order
@@ -64,7 +70,7 @@ export async function PATCH(request: Request, { params }: Params) {
       .from("content_folders")
       .update(updates)
       .eq("id", id)
-      .select("id, name, slug, description, cover_image_url, sort_order, parent_id, created_at")
+      .select("id, name, slug, description, cover_image_url, sort_order, parent_id, created_at, is_karma_recode")
       .single()
 
     if (error) {

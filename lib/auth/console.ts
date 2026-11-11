@@ -38,6 +38,7 @@ export const COMMUNITY_HOME = "/dashboard"
 export const STAFF_BLOCKED_PATHS = [
   "/admin/dashboard",
   "/admin/billing",
+  "/admin/members/karma-recode",
   "/admin/members/create",
   "/admin/temp-password",
 ] as const

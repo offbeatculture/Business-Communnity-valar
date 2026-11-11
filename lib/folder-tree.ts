@@ -150,3 +150,19 @@ export function moveFoldersError<T extends FolderNode>(
 
   return null
 }
+
+/**
+ * Folders that belong to the Karma Recode tab: every folder marked
+ * is_karma_recode, plus everything below it.
+ */
+export function karmaRecodeFolderIds<T extends FolderNode & { is_karma_recode?: boolean | null }>(
+  folders: T[]
+): Set<string> {
+  const ids = new Set<string>()
+  for (const f of folders) {
+    if (!f.is_karma_recode) continue
+    ids.add(f.id)
+    for (const d of descendantIds(folders, f.id)) ids.add(d)
+  }
+  return ids
+}

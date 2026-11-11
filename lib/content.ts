@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import type { Resource, VideoSummary, Category, ContentItem, ResourceDocument } from "@/types"
+import { fetchKarmaRecodeFolderIds, outsideKarmaRecode } from "@/lib/karma-recode"
 
 export async function fetchCategories(): Promise<Category[]> {
   const supabase = await createClient()
@@ -53,6 +54,8 @@ export async function fetchRelatedContent(
   limit = 3
 ): Promise<ContentItem[]> {
   const supabase = await createClient()
+  // Related videos never pull Karma Recode content into the main library.
+  const outside = outsideKarmaRecode(await fetchKarmaRecodeFolderIds())
 
   const [{ data: resources }, { data: videos }] = await Promise.all([
     supabase
@@ -62,13 +65,16 @@ export async function fetchRelatedContent(
       .eq("is_published", true)
       .neq("id", excludeId)
       .limit(limit),
-    supabase
-      .from("video_summaries")
-      .select("*")
-      .eq("category", category)
-      .eq("is_published", true)
-      .neq("id", excludeId)
-      .limit(limit),
+    (() => {
+      let q = supabase
+        .from("video_summaries")
+        .select("*")
+        .eq("category", category)
+        .eq("is_published", true)
+        .neq("id", excludeId)
+      if (outside) q = q.or(outside)
+      return q.limit(limit)
+    })(),
   ])
 
   const items: ContentItem[] = [

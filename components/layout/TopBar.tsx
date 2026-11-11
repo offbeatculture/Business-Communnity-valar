@@ -19,7 +19,7 @@ import {
   adminNav,
   flattenNav,
   isItemActive,
-  memberNav,
+  memberNavFor,
   recordingAdminNav,
 } from "@/lib/nav"
 // The admin console sidebar is hidden below md, so on mobile this drawer
@@ -44,9 +44,11 @@ type TopBarProps = {
     avatar_url: string | null
     role?: "member" | "staff" | "admin" | "recording_admin"
   } | null
+  /** Adds the Karma Recode tab to the mobile menu. */
+  showKarmaRecode?: boolean
 }
 
-export function TopBar({ profile }: TopBarProps) {
+export function TopBar({ profile, showKarmaRecode = false }: TopBarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -168,7 +170,7 @@ export function TopBar({ profile }: TopBarProps) {
             menuOpen ? "translate-y-0" : "-translate-y-4"
           )}
         >
-          {flattenNav(memberNav).map((item) => {
+          {flattenNav(memberNavFor(showKarmaRecode)).map((item) => {
             const isActive = isItemActive(pathname, item.href)
 
             return (

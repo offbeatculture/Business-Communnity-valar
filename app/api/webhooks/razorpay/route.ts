@@ -770,7 +770,7 @@ async function handleSubscriptionCharged(
   const { data: subscription } = await adminClient
     .from("subscriptions")
     .select(
-      "id, user_id, plan_label, base_amount_paise, locked_price_paise, starts_at"
+      "id, user_id, plan_label, base_amount_paise, locked_price_paise, starts_at, expires_at"
     )
     .eq("razorpay_subscription_id", rzpSubscriptionId)
     .maybeSingle()
@@ -789,6 +789,10 @@ async function handleSubscriptionCharged(
 
   const newExpiry = new Date()
   newExpiry.setDate(newExpiry.getDate() + SINGLE_PLAN.durationDays)
+  // A renewal only ever extends access. Someone given longer access by hand
+  // (a yearly payment, Karma Recode) must not be cut back to 30 days.
+  const currentExpiry = subscription.expires_at ? new Date(subscription.expires_at as string) : null
+  if (currentExpiry && currentExpiry > newExpiry) newExpiry.setTime(currentExpiry.getTime())
 
   let { error: renewError } = await adminClient
     .from("subscriptions")

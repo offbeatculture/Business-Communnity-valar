@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import type { ContentItem } from "@/types"
+import { fetchKarmaRecodeFolderIds, outsideKarmaRecode } from "@/lib/karma-recode"
 
 export async function GET(request: Request) {
   try {
@@ -59,6 +60,10 @@ export async function GET(request: Request) {
         .from("video_summaries")
         .select("*", { count: "exact" })
         .eq("is_published", true)
+
+      // Karma Recode videos are only listed in their own tab.
+      const outside = outsideKarmaRecode(await fetchKarmaRecodeFolderIds())
+      if (outside) query = query.or(outside)
 
       if (category) {
         query = query.eq("category", category)

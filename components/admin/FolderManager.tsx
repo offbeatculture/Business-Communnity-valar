@@ -11,6 +11,7 @@ import {
   ImageIcon,
   Loader2,
   Save,
+  Sparkles,
   Trash2,
   Upload,
   X,
@@ -21,6 +22,7 @@ import {
   descendantIds,
   flattenTree,
   folderPathLabel,
+  karmaRecodeFolderIds,
   moveFoldersError,
 } from "@/lib/folder-tree"
 
@@ -34,6 +36,8 @@ export type ContentFolder = {
   /** The folder this one sits inside. Null = top level of the library. */
   parent_id: string | null
   created_at: string
+  /** This folder and everything inside it belong to the Karma Recode tab. */
+  is_karma_recode?: boolean
 }
 
 /** Deeper than this and the cards get too narrow to edit comfortably. */
@@ -61,6 +65,8 @@ export function FolderManager({
   const rows = useMemo(() => flattenTree(folders), [folders])
 
   // Drop selections for folders that no longer exist (deleted elsewhere).
+  const krIds = useMemo(() => karmaRecodeFolderIds(folders), [folders])
+
   const liveSelected = useMemo(
     () => new Set([...selected].filter((id) => folders.some((f) => f.id === id))),
     [selected, folders]
@@ -203,6 +209,7 @@ export function FolderManager({
             selected={liveSelected.has(folder.id)}
             onToggle={() => toggle(folder.id)}
             onChanged={onChange}
+            inheritsKarmaRecode={!folder.is_karma_recode && krIds.has(folder.id)}
           />
         </div>
       ))}
@@ -223,17 +230,21 @@ function FolderRow({
   selected,
   onToggle,
   onChanged,
+  inheritsKarmaRecode,
 }: {
   folder: ContentFolder
   parentLabel: string | null
   selected: boolean
   onToggle: () => void
   onChanged: () => void | Promise<void>
+  /** A folder above this one is marked Karma Recode. */
+  inheritsKarmaRecode: boolean
 }) {
   const [name, setName] = useState(folder.name)
   const [description, setDescription] = useState(folder.description ?? "")
   const [coverUrl, setCoverUrl] = useState(folder.cover_image_url ?? "")
   const [sortOrder, setSortOrder] = useState(String(folder.sort_order))
+  const [karmaRecode, setKarmaRecode] = useState(!!folder.is_karma_recode)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -244,7 +255,8 @@ function FolderRow({
     name !== folder.name ||
     description !== (folder.description ?? "") ||
     coverUrl !== (folder.cover_image_url ?? "") ||
-    sortOrder !== String(folder.sort_order)
+    sortOrder !== String(folder.sort_order) ||
+    karmaRecode !== !!folder.is_karma_recode
 
   async function handleSave() {
     if (!name.trim()) {
@@ -266,6 +278,7 @@ function FolderRow({
           sort_order: Number.isFinite(Number(sortOrder)) && sortOrder.trim()
             ? Math.trunc(Number(sortOrder))
             : 0,
+          is_karma_recode: karmaRecode,
         }),
       })
 
@@ -471,6 +484,40 @@ function FolderRow({
               placeholder="Or paste an image URL instead of uploading"
               className="font-mono text-xs"
             />
+          </div>
+
+          <div
+            className={`rounded-lg border px-3 py-2.5 text-sm ${
+              karmaRecode || inheritsKarmaRecode
+                ? "border-primary/40 bg-primary/5"
+                : "border-border/70"
+            }`}
+          >
+            {inheritsKarmaRecode ? (
+              <p className="flex items-center gap-2 font-medium">
+                <Sparkles className="size-4 text-primary" />
+                Karma Recode — because a folder above it is
+              </p>
+            ) : (
+              <label className="flex cursor-pointer items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  checked={karmaRecode}
+                  onChange={(e) => setKarmaRecode(e.target.checked)}
+                  className="mt-0.5 size-4 cursor-pointer accent-primary"
+                />
+                <span>
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Sparkles className="size-4 text-primary" />
+                    Karma Recode only
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    This folder and everything inside it leave the Recordings library and appear only in the
+                    Karma Recode tab, for Karma Recode members.
+                  </span>
+                </span>
+              </label>
+            )}
           </div>
 
           <div className="flex items-center gap-2 pt-1">
