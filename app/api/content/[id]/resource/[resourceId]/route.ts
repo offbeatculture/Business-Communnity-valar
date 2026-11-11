@@ -43,6 +43,20 @@ export async function GET(
 
     const { id, resourceId } = await params
 
+    // The recording must be visible to this member. Read through their own
+    // session so the database rules apply: a Karma Recode recording comes back
+    // empty for anyone who isn't a current Karma Recode member, and so do its
+    // files.
+    const { data: video } = await supabase
+      .from("video_summaries")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle()
+
+    if (!video) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
+    }
+
     // Scoped to the recording in the URL, so a resource id cannot be used to
     // pull a file that belongs to a different session.
     const { data: resource, error } = await supabase
