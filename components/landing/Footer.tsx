@@ -43,10 +43,16 @@ export function Footer() {
           </div>
         </div>
 
-        <p className="text-xs text-[#E8DDC8]/55">
-          &copy; {new Date().getFullYear()} Dr. Valarmathi Srinivasan. All
-          rights reserved.
-        </p>
+        <div className="text-center text-xs leading-relaxed text-[#E8DDC8]/55 sm:text-right">
+          <p>
+            &copy; {new Date().getFullYear()} Offbeat Culture Private Limited.
+            All rights reserved.
+          </p>
+          <p>
+            Dr. Valarmathi Srinivasan is a brand of Offbeat Culture Private
+            Limited.
+          </p>
+        </div>
       </div>
     </footer>
   )

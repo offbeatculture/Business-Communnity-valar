@@ -44,7 +44,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#E8DDC8] p-4 text-[#4B3A25]">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[#E8DDC8] p-4 text-[#4B3A25]">
       <Card className="w-full max-w-md border-[#C89B3C]/25 bg-[#F7F0E3] text-[#4B3A25] shadow-2xl shadow-black/10">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
@@ -151,6 +151,17 @@ export default function LoginPage() {
           </p>
         </CardContent>
       </Card>
+
+      <footer className="max-w-md text-center text-xs leading-relaxed text-[#6F7358]">
+        <p>
+          &copy; {new Date().getFullYear()} Offbeat Culture Private Limited. All
+          rights reserved.
+        </p>
+        <p>
+          Dr. Valarmathi Srinivasan is a brand of Offbeat Culture Private
+          Limited.
+        </p>
+      </footer>
     </div>
   )
 }
