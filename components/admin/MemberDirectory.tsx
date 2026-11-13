@@ -48,7 +48,7 @@ import type { MemberRow } from "@/lib/admin/member-directory"
 const DAY = 86_400_000
 
 type Status = "all" | "active" | "expiring" | "expired" | "none"
-type Filters = {
+export type Filters = {
   q: string
   status: Status
   plan: string
@@ -137,11 +137,20 @@ const RENEW_LABEL: Record<MemberRow["autoRenew"], string> = {
 
 const PAGE = 50
 
-export function MemberDirectory({ rows, isAdmin }: { rows: MemberRow[]; isAdmin: boolean }) {
+export function MemberDirectory({
+  rows,
+  isAdmin,
+  initial,
+}: {
+  rows: MemberRow[]
+  isAdmin: boolean
+  /** Filters to start with, e.g. from a dashboard link (?status=expiring). */
+  initial?: Partial<Filters>
+}) {
   const router = useRouter()
   // Fixed for the life of the page so counts and filters agree with each other.
   const [now] = useState(() => Date.now())
-  const [f, setF] = useState<Filters>(DEFAULT_FILTERS)
+  const [f, setF] = useState<Filters>({ ...DEFAULT_FILTERS, ...initial })
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "joined", dir: -1 })
   const [shown, setShown] = useState(PAGE)
 
