@@ -1,6 +1,7 @@
 import type { Subscriptions } from "razorpay/dist/types/subscriptions"
 import { razorpay } from "@/lib/razorpay"
 import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
+import { CHECKOUT_PLAN_ID } from "@/lib/billing/plan-ids"
 
 // =============================================================================
 // Razorpay subscription helpers — Single Plan
@@ -8,23 +9,15 @@ import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
 // Single active plan:
 // Breathwork Community Membership — ₹1499/month
 //
-// Required env:
-// RAZORPAY_PLAN_ID_MONTHLY=plan_xxxxxxxxxxxxx
+// Plan ID: lib/billing/plan-ids.ts
 // =============================================================================
 
 const SINGLE_TIER: ProductTier = "membership"
 
 export function getRazorpayPlanIdForTier(_tier?: ProductTier): string {
-  const planId = process.env.RAZORPAY_PLAN_ID_MONTHLY
-
-  if (!planId) {
-    throw new Error(
-      "RAZORPAY_PLAN_ID_MONTHLY is not configured. " +
-        "Set this env var to the Razorpay plan ID for Breathwork Community Membership."
-    )
-  }
-
-  return planId
+  // Plan IDs live in lib/billing/plan-ids.ts, not in env vars, so a stale
+  // RAZORPAY_PLAN_ID_MONTHLY can't break checkout.
+  return CHECKOUT_PLAN_ID
 }
 
 export type CreateSubscriptionArgs = {
@@ -46,7 +39,7 @@ export async function createSubscription(
   const { email, sessionId } = args
 
   const tier = SINGLE_TIER
-  const planId = getRazorpayPlanIdForTier(tier)
+  const planId = args.planId ?? getRazorpayPlanIdForTier(tier)
 
   console.log("Creating Razorpay subscription:", {
     tier,

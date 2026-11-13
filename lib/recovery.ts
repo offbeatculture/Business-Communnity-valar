@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin"
+import { CHECKOUT_PLAN_ID } from "@/lib/billing/plan-ids"
 import { createMagicLoginToken } from "@/lib/magic-link"
 import { sendMagicLinkEmail } from "@/lib/ses"
 import { SINGLE_PLAN } from "@/lib/plans"
@@ -178,7 +179,7 @@ export async function recoverAccount(
             razorpay_subscription_id: rzpSubscriptionId,
             razorpay_payment_id: null,
             razorpay_order_id: null,
-            razorpay_plan_id: process.env.RAZORPAY_PLAN_ID_MONTHLY ?? null,
+            razorpay_plan_id: CHECKOUT_PLAN_ID,
 
             plan_id: SINGLE_PLAN.id,
             plan_name: SINGLE_PLAN.name,

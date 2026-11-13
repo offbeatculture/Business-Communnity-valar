@@ -7,3 +7,6 @@ export const PLAN_ID_1499 = "plan_Tze4Y6anrWMA1D"
 
 /** ₹999 / month — Lifinity */
 export const PLAN_ID_999 = "plan_Tze5ADCbb7BPKT"
+
+/** The plan new members subscribe to from the Plans / checkout page. */
+export const CHECKOUT_PLAN_ID = PLAN_ID_1499

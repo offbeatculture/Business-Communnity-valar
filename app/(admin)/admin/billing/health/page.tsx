@@ -7,6 +7,7 @@ import { readSyncState } from "@/lib/billing/sync"
 import { fmt, rupees } from "@/lib/billing/reconcile"
 import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react"
 import { PageHeader, Panel, Pill, StatCard, StatGrid, type Tone } from "@/components/admin/billing/ui"
+import { CHECKOUT_PLAN_ID } from "@/lib/billing/plan-ids"
 
 export const dynamic = "force-dynamic"
 
@@ -124,11 +125,11 @@ export default async function BillingHealthPage() {
   }
 
   // ── 5. Monthly plan used by checkout ───────────────────────────────────
-  const monthly = process.env.RAZORPAY_PLAN_ID_MONTHLY ?? ""
+  const monthly = CHECKOUT_PLAN_ID
   const monthlyPlan = (plans ?? []).find((p) => p.id === monthly)
   checks.push(
     !monthly
-      ? { title: "Checkout plan", status: "fail", detail: <>RAZORPAY_PLAN_ID_MONTHLY is not set — new members can&apos;t subscribe.</> }
+      ? { title: "Checkout plan", status: "fail", detail: <>No checkout plan is set in lib/billing/plan-ids.ts.</> }
       : !plans?.length
         ? { title: "Checkout plan", status: "warn", detail: <>Checkout sells <code>{monthly}</code>. Sync to check it.</> }
         : monthlyPlan
@@ -143,7 +144,7 @@ export default async function BillingHealthPage() {
                 </>
               ),
             }
-          : { title: "Checkout plan", status: "fail", detail: <>RAZORPAY_PLAN_ID_MONTHLY is <code>{monthly}</code>, which doesn&apos;t exist in Razorpay.</> }
+          : { title: "Checkout plan", status: "fail", detail: <>The checkout plan <code>{monthly}</code> (lib/billing/plan-ids.ts) doesn&apos;t exist in Razorpay.</> }
   )
 
   // ── 6. Renewals are arriving ───────────────────────────────────────────
