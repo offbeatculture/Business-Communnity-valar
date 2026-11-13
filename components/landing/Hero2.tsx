@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { PLAN_ID_1499 } from "@/lib/billing/plan-ids"
 import { Rocket, Check, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,7 +32,7 @@ export function Hero2() {
       const res = await fetch("/api/onboarding/start", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email: trimmed, planId: "plan_So30soR2w1VtxZ" }) // send the 1499 plan
+  body: JSON.stringify({ email: trimmed, planId: PLAN_ID_1499 }) // send the 1499 plan
 })
 
       const data = await res.json()

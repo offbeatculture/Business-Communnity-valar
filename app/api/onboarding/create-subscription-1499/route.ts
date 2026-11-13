@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { z } from "zod/v4"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { PLAN_ID_1499 } from "@/lib/billing/plan-ids"
 import { createSubscription } from "@/lib/razorpay-subscriptions"
 
 const createSubSchema = z.object({
@@ -88,26 +89,26 @@ export async function POST(request: Request) {
     console.log("CALLING createSubscription WITH FIXED PLAN ID:", {
       email: session.email,
       sessionId,
-      fixedPlanId: "plan_So30soR2w1VtxZ",
+      fixedPlanId: PLAN_ID_1499,
     })
 
     // Hardcoded Razorpay plan for 1499 / ai_monthly
     const { subscription: rzpSubscription } = await createSubscription({
       email: session.email,
       sessionId,
-      planId: "plan_So30soR2w1VtxZ",
+      planId: PLAN_ID_1499,
     })
 
     console.log("RAZORPAY SUBSCRIPTION CREATED:", {
       subscriptionId: rzpSubscription.id,
-      planId: "plan_So30soR2w1VtxZ",
+      planId: PLAN_ID_1499,
     })
 
     await supabase
       .from("onboarding_sessions")
       .update({
         razorpay_subscription_id: rzpSubscription.id,
-        plan_id: "plan_So30soR2w1VtxZ",
+        plan_id: PLAN_ID_1499,
         status: "payment_pending",
         updated_at: new Date().toISOString(),
       })
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
     console.log("ONBOARDING SESSION UPDATED:", {
       sessionId,
       subscriptionId: rzpSubscription.id,
-      plan_id: "plan_So30soR2w1VtxZ",
+      plan_id: PLAN_ID_1499,
     })
 
     return NextResponse.json({

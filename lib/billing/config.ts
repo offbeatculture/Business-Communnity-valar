@@ -1,14 +1,13 @@
+import { PLAN_ID_999, PLAN_ID_1499 } from "@/lib/billing/plan-ids"
 // Razorpay settings shared by the webhook and the billing Health page, so the
 // page reports exactly what the webhook enforces.
 
 /**
  * The plans the webhook accepts when RAZORPAY_ALLOWED_PLAN_IDS isn't set.
  *
- * Only the ₹999 Breathwork plan. The ₹1,499 Lifinity plan is NOT here, so
- * without the environment variable its events are ignored — the Health page
- * flags this.
+ * The ₹999 and ₹1,499 Lifinity plans (see plan-ids.ts).
  */
-export const DEFAULT_ALLOWED_RAZORPAY_PLAN_IDS = ["plan_T5PqUyQl2B5p4t"]
+export const DEFAULT_ALLOWED_RAZORPAY_PLAN_IDS = [PLAN_ID_999, PLAN_ID_1499]
 
 /** What the webhook accepts right now, and whether that came from Vercel. */
 export function getAllowedPlanIds() {
