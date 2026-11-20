@@ -53,8 +53,8 @@ export function BootcampSheetSync({ onSynced }: { onSynced: () => void }) {
             <div>
               <p className="font-semibold">Bootcamps from the Ops sheet</p>
               <p className="text-sm text-muted-foreground">
-                Each bootcamp gets its own folder. New links added to the sheet are picked up every
-                morning, or press Sync now.
+                Each bootcamp gets its own folder. After new links are added to the sheet, press
+                Sync now to bring them in.
               </p>
             </div>
           </div>

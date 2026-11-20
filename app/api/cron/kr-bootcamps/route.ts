@@ -1,8 +1,6 @@
 // Sync Karma Recode bootcamp videos from the Ops Playbook sheet.
 //
-// GET  — called by Vercel Cron (see vercel.json). Vercel sends
-//        "Authorization: Bearer $CRON_SECRET".
-// POST — the "Sync from sheet" button on Admin → Karma Recode Content
+// POST — the "Sync now" button on Admin → Karma Recode Content
 //        (admins and recording admins).
 
 import { NextResponse } from "next/server"
@@ -24,14 +22,6 @@ async function run() {
       { status: 500 }
     )
   }
-}
-
-export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  return run()
 }
 
 export async function POST() {

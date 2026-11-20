@@ -7,7 +7,7 @@ import "server-only"
 //   column D  Session    the video title
 //   column E  Link       YouTube link (filled in as each recording is ready)
 //
-// Every run:
+// Each run (Admin → Karma Recode Content → Sync now):
 //   - each bootcamp gets its own Karma Recode folder (created once, found again
 //     by its slug, so renaming the folder in the admin is safe);
 //   - every row with a YouTube link that isn't in the portal yet is added to
