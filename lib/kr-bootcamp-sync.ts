@@ -111,12 +111,21 @@ async function readSheet(): Promise<SheetRow[]> {
 
   const rows = parseCsv(await res.text())
   const out: SheetRow[] = []
+  // The team often fills the Bootcamp cell only on a bootcamp's first row, so a
+  // blank cell means "same bootcamp as the row above". A fully blank row ends it.
+  let current = ""
   rows.forEach((cells, i) => {
-    const bootcamp = tidy(cells[2] ?? "")
+    const named = tidy(cells[2] ?? "")
     const session = cleanTitle(cells[3] ?? "")
     const link = tidy(cells[4] ?? "")
-    if (!bootcamp || !session || /^bootcamp$/i.test(bootcamp)) return // blank or header
-    out.push({ bootcamp, session, link, row: i + 1 })
+    if (!named && !session && !link) {
+      current = ""
+      return
+    }
+    if (/^bootcamp$/i.test(named)) return // header
+    if (named) current = named
+    if (!current || !session) return
+    out.push({ bootcamp: current, session, link, row: i + 1 })
   })
   return out
 }
