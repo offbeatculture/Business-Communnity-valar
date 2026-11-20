@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { VideoSummaryForm } from "@/components/admin/VideoSummaryForm"
 import { BulkVideoForm } from "@/components/admin/BulkVideoForm"
+import { BootcampSheetSync } from "@/components/admin/BootcampSheetSync"
 import {
   FolderManager,
   type ContentFolder,
@@ -113,6 +114,8 @@ export function AdminContentManager({ scope }: { scope: ContentScope }) {
             : "Create and manage Dr Valar's breathwork session videos, YouTube summaries, and recording resources. Karma Recode videos are managed under Karma Recode Content."}
         </p>
       </div>
+
+      {isKr && <BootcampSheetSync onSynced={refreshAll} />}
 
       {/* Create Video Content */}
       <Card className="border-border/70 bg-card shadow-sm">

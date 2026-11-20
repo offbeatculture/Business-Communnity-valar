@@ -62,6 +62,11 @@ if (pathname === "/api/debug-set-password") {
     return supabaseResponse
   }
 
+  // Scheduled jobs — pass through (each route checks CRON_SECRET itself)
+  if (pathname.startsWith("/api/cron/")) {
+    return supabaseResponse
+  }
+
   // Onboarding API routes — pass through (no auth required)
   if (pathname.startsWith("/api/onboarding") || pathname.startsWith("/api/auth/magic-link")) {
     return supabaseResponse
