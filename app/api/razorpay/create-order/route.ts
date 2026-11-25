@@ -3,11 +3,9 @@ import { z } from "zod/v4"
 import { createClient } from "@/lib/supabase/server"
 import { razorpay } from "@/lib/razorpay"
 import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
+import { getRenewalPricePaise } from "@/lib/billing/renewal-price"
 
 const SINGLE_TIER: ProductTier = "membership"
-
-/** Prices a member can be locked at. Anything else renews at the current price. */
-const RENEWAL_PRICES_PAISE = new Set([99900, 149900])
 
 const CreateOrderSchema = z.object({
   // There is one membership plan. The /renew page still sends its old plan
@@ -45,19 +43,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Renew at the member's own price: a ₹999 member stays at ₹999. The latest
-    // subscription row holds it (locked_price_paise); new or unknown prices
-    // fall back to the current plan price.
-    const { data: lastSub } = await supabase
-      .from("subscriptions")
-      .select("locked_price_paise")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    const locked = Number(lastSub?.locked_price_paise)
-    const amountPaise = RENEWAL_PRICES_PAISE.has(locked) ? locked : SINGLE_PLAN.amountPaise
+    // Renew at the member's own price (₹999 members stay at ₹999).
+    const amountPaise = await getRenewalPricePaise(supabase, user.id)
 
     const receipt = `ord_${Date.now()}_${user.id.slice(0, 8)}`
 

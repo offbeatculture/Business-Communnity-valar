@@ -143,9 +143,9 @@ if (!skipSetupCheck && !isProfileComplete) {
   )
 
   if (!isNoSubRoute && !pathname.startsWith("/api/")) {
-    // Expired members go to /subscription, which shows their plan and a Renew
-    // button at their own price. Access is decided by the expiry date, not by
-    // `status`: nothing flips a lapsed row away from 'active'.
+    // Expired members go to /renew, the renewal page, at their own price.
+    // Access is decided by the expiry date, not by `status`: nothing flips a
+    // lapsed row away from 'active'.
     const nowIso = new Date().toISOString()
 
     const [{ data: subs }, { data: who }, { data: kr }] = await Promise.all([
@@ -174,7 +174,7 @@ if (!skipSetupCheck && !isProfileComplete) {
 
     if (!isTeam && !hasLiveSub && !hasLiveKarmaRecode && !autopayGrace) {
       const url = request.nextUrl.clone()
-      url.pathname = "/subscription"
+      url.pathname = "/renew"
       url.search = ""
       return NextResponse.redirect(url)
     }
