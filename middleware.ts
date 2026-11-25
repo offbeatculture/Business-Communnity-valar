@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server"
 const publicRoutes = ["/", "/login", "/reset-password", "/plans", "/payment-success", "/set-password" , "/access-account", "/1499" , "/plans/1499",]
 
 // Routes that authenticated users can access even without active subscription
-const noSubscriptionRoutes = ["/subscription", "/profile", "/setup", "/renew"]
+const noSubscriptionRoutes = ["/subscription", "/profile", "/setup", "/renew", "/community-support"]
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -143,19 +143,41 @@ if (!skipSetupCheck && !isProfileComplete) {
   )
 
   if (!isNoSubRoute && !pathname.startsWith("/api/")) {
-   
-    // Check subscription — access depends only on active status + membership tier + future expiry
-const { data: subscription } = await supabase
-  .from("subscriptions")
-  .select("expires_at")
-  .eq("user_id", user.id)
-  .eq("status", "active")
-  .eq("tier", "membership")
-  .gt("expires_at", new Date().toISOString())
-  .order("expires_at", { ascending: false })
-  .limit(1)
-  .maybeSingle()
-    
+    // Expired members go to /subscription, which shows their plan and a Renew
+    // button at their own price. Access is decided by the expiry date, not by
+    // `status`: nothing flips a lapsed row away from 'active'.
+    const nowIso = new Date().toISOString()
+
+    const [{ data: subs }, { data: who }, { data: kr }] = await Promise.all([
+      supabase
+        .from("subscriptions")
+        .select("status, tier, expires_at, recurring_status, razorpay_subscription_id")
+        .eq("user_id", user.id),
+      supabase.from("profiles").select("role").eq("user_id", user.id).maybeSingle(),
+      // Database helper: true for current Karma Recode members (and the team).
+      supabase.rpc("can_view_karma_recode"),
+    ])
+
+    const isTeam = ["admin", "recording_admin", "staff"].includes(who?.role ?? "")
+    const hasLiveSub = (subs ?? []).some(
+      (s) => s.status === "active" && s.tier === "membership" && s.expires_at > nowIso
+    )
+    const hasLiveKarmaRecode = kr === true
+
+    // TEMPORARY grace: members whose autopay is still on keep access. Their
+    // subscriptions are on the old Razorpay account, whose renewals no longer
+    // reach the portal, so an old expiry date here does not mean they stopped
+    // paying. Remove once those renewals are reconciled.
+    const autopayGrace = (subs ?? []).some(
+      (s) => s.recurring_status === "active" && !!s.razorpay_subscription_id
+    )
+
+    if (!isTeam && !hasLiveSub && !hasLiveKarmaRecode && !autopayGrace) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/subscription"
+      url.search = ""
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
