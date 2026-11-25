@@ -6,8 +6,13 @@ import { SINGLE_PLAN, type ProductTier } from "@/lib/plans"
 
 const SINGLE_TIER: ProductTier = "membership"
 
+/** Prices a member can be locked at. Anything else renews at the current price. */
+const RENEWAL_PRICES_PAISE = new Set([99900, 149900])
+
 const CreateOrderSchema = z.object({
-  planId: z.literal(SINGLE_PLAN.id).optional(),
+  // There is one membership plan. The /renew page still sends its old plan
+  // ids, so any id is accepted; the price comes from the member's record.
+  planId: z.string().max(50).optional(),
 })
 
 export async function POST(request: Request) {
@@ -40,17 +45,31 @@ export async function POST(request: Request) {
       )
     }
 
+    // Renew at the member's own price: a ₹999 member stays at ₹999. The latest
+    // subscription row holds it (locked_price_paise); new or unknown prices
+    // fall back to the current plan price.
+    const { data: lastSub } = await supabase
+      .from("subscriptions")
+      .select("locked_price_paise")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const locked = Number(lastSub?.locked_price_paise)
+    const amountPaise = RENEWAL_PRICES_PAISE.has(locked) ? locked : SINGLE_PLAN.amountPaise
+
     const receipt = `ord_${Date.now()}_${user.id.slice(0, 8)}`
 
     const order = await razorpay.orders.create({
-      amount: SINGLE_PLAN.amountPaise,
+      amount: amountPaise,
       currency: "INR",
       receipt,
       notes: {
         user_id: user.id,
         plan_id: SINGLE_PLAN.id,
         plan_label: SINGLE_PLAN.name,
-        base_amount: SINGLE_PLAN.amountPaise.toString(),
+        base_amount: amountPaise.toString(),
         duration_days: SINGLE_PLAN.durationDays.toString(),
         tier: SINGLE_TIER,
         purpose: "renewal",
@@ -60,14 +79,14 @@ export async function POST(request: Request) {
     console.log("RAZORPAY ORDER CREATED:", {
       orderId: order.id,
       planId: SINGLE_PLAN.id,
-      amount: SINGLE_PLAN.amountPaise,
+      amount: amountPaise,
       tier: SINGLE_TIER,
       planName: SINGLE_PLAN.name,
     })
 
     return NextResponse.json({
       orderId: order.id,
-      amount: SINGLE_PLAN.amountPaise,
+      amount: amountPaise,
       currency: "INR",
       planId: SINGLE_PLAN.id,
       planLabel: SINGLE_PLAN.name,
